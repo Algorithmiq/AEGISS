@@ -1,10 +1,14 @@
 [project]
 name = "aegiss"
 version = "0.1.0"
-description = "Add your description here"
+description = "AEGISS: Atomic Orbital and Entropy based Guided Inference for Space Selection"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "block2>=0.5.3",
     "pyscf>=2.12.1",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
