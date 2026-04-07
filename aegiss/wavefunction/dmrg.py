@@ -47,8 +47,8 @@ def run_dmrg(mf,
     print(
         f"System parameters: n_sites={driver.n_sites}, n_elec={driver.n_elec}, spin=0, symm_type={symm_type}"
     )
-    print("Scratch directory: %s", scratch_dir)
-    print("Number of threads: %d", n_threads)
+    print(f"Scratch directory: {scratch_dir}")
+    print(f"Number of threads: {n_threads}")
 
     bond_dims, noises, thrds = _default_dmrg_schedule(init_bond_dim=init_bond_dim)
 

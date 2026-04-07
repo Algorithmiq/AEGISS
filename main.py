@@ -73,23 +73,19 @@ def run_aegiss(
 
 
 if __name__ == "__main__":
-    # Example usage
+    
     from aegiss.initial_guess import run_scf, build_mol
-    from aegiss.localization.orbital_localization import localize
     from aegiss.wavefunction.dmrg import run_dmrg
-    from aegiss.utils.dump_intermediates import  dump_qmi
-    #water
+
     atom =  " O 0 0 0; H 0 0 0.95; H 0.95 0 0"
-    mol = build_mol(atom)
+    mol = build_mol(atom, verbose=4)
     mf = run_scf(mol)
-    
-    _, soe1, _ , minfo = run_dmrg(mf, 
-                                            ncas=7, 
-                                            nelecas=mol.tot_electrons(), 
-                                            symm_type='SZ',
-                                            init_bond_dim=10, 
-                                            get_qmi=True)
-    
-    dump_qmi(minfo=soe1, soe1=minfo, path="./qmi_water.npz")
-    # mf.mo_coeff = localize(method='fnos', mf= mf, correlated_method='cisd',active=[2,3,4])
+
+    _, soe1, _ , minfo = run_dmrg(  mf, 
+                                    ncas=7, 
+                                    nelecas=mol.tot_electrons(), 
+                                    symm_type='SZ',
+                                    init_bond_dim=10,
+                                    verbosity=0, 
+                                    get_qmi=True)
     

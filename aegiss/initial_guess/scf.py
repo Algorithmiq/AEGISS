@@ -24,6 +24,7 @@ def build_mol(atom, **kwargs):
     mol = scf.gto.Mole()
     mol.atom = atom
     for key, val in kwargs.items():
+        print(f"Setting mol.{key} = {val}")
         setattr(mol, key, val)
     mol.build()
     return mol
