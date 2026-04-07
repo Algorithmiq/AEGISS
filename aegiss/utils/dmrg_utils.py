@@ -1,0 +1,66 @@
+
+import numpy as np
+from pyblock2.driver.core import DMRGDriver
+
+def _default_dmrg_schedule(
+    init_bond_dim: int = 20,
+) -> tuple[list[int], list[float], list[float]]:
+    """Define a default DMRG schedule for Block2  ``DMRGDriver.solve`` method.
+
+    Args:
+        init_bond_dim: Initial bond dimension for the first two sweeps. The
+            subsequent bond dimensions are multiples of this value.
+
+    Returns:
+        A tuple of three lists: bond dimensions, noise values, and convergence
+        thresholds for each sweep.
+    """
+    if init_bond_dim <= 0:
+        raise ValueError("init_bond_dim must be a positive integer")
+
+    multipliers = [1, 1, 1, 1, 2, 2, 2, 2, 4, 4, 4, 4, 6, 6, 6, 6]
+    bond_dims = [init_bond_dim * m for m in multipliers]
+    noises = [
+        1e-4,
+        1e-4,
+        1e-4,
+        1e-4,
+        1e-5,
+        1e-5,
+        1e-5,
+        1e-5,
+        1e-6,
+        1e-6,
+        1e-6,
+        1e-6,
+        0.0,
+        0.0,
+    ]
+    thrds = [
+        1e-6,
+        1e-6,
+        1e-7,
+        1e-7,
+        1e-8,
+        1e-8,
+        1e-9,
+        1e-9,
+        1e-10,
+        1e-10,
+        1e-10,
+        1e-10,
+        1e-10,
+        1e-10,
+    ]
+    return bond_dims, noises, thrds
+
+
+
+def compute_qmi(driver: DMRGDriver, 
+                ket):
+    ordm1 = driver.get_orbital_entropies(ket, orb_type=1)
+    ordm2 = driver.get_orbital_entropies(ket, orb_type=2)
+    
+    minfo = 0.5 * (ordm1[:, None] + ordm1[None, :] - ordm2) * (1 - np.identity(len(ordm1)))
+    
+    return ordm1, ordm2, minfo

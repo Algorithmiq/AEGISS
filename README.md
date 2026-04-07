@@ -8,5 +8,6 @@ Complete repository for AEGISS method
 ## Setup
 ```
 uv venv
+uv sync
 source .venv/bin/activate
 ```
