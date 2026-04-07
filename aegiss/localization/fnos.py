@@ -2,28 +2,42 @@
 from __future__ import annotations
 
 import numpy as np
-from aegiss.localization.nos import compute_nos
+from aegiss.utils.orbital_indices import get_orbital_spaces
 
 
-def compute_fnos(wfn_obj, occ_threshold: float = 1e-4):
+def compute_fnos(
+                 wfn_obj, 
+                 frozen: list[int], 
+                 active: list[int]) -> np.ndarray:
     """Construct frozen natural orbitals by truncating weakly occupied NOs.
 
     Parameters
     ----------
+    mf: PySCF mean-field object.
     wfn_obj : correlated PySCF solver object
-    occ_threshold : float
-        Natural orbitals with occupation below this value are frozen.
-
+        Must expose a ``make_rdm1`` method returning the 1-RDM in the MO basis.
+    frozen : list of int
+        Indices of orbitals to be frozen (0-based indexing).
+    active : list of int
+        Indices of orbitals to be retained in the active space (0-based indexing).
+    
     Returns
     -------
-    occ_active : np.ndarray
-        Occupation numbers of retained NOs.
-    fnos : np.ndarray, shape (nao, n_active)
-        FNO coefficients in the AO basis.
-    frozen_mask : np.ndarray of bool
-        True for NOs that were frozen (occupation < threshold).
+    mo_coeff : np.ndarray, shape (nao, nmo)
+        FNO coefficients in the AO basis, including both frozen and active orbitals.
     """
-    occ, nos = compute_nos(wfn_obj)
-    frozen_mask = occ < occ_threshold
-    active_mask = ~frozen_mask
-    return occ[active_mask], nos[:, active_mask], frozen_mask
+    rdm1 = wfn_obj.make_rdm1()
+    
+    nocc = len(frozen) + len(active)
+    print("1-RDM in MO basis:\n", rdm1.shape)
+    print(f"Diagonalizing virtual block of the 1-RDM to construct FNOs for virtual orbitals.")
+    dm_vv = rdm1[nocc:, nocc:]
+    occ_vv, u_vv = np.linalg.eigh(dm_vv)
+    idx_vv = np.argsort(occ_vv)[::-1]
+    occ_vv = occ_vv[idx_vv]
+    u_vv = u_vv[:, idx_vv]
+    
+    mo_coeff_vv = wfn_obj.mo_coeff[:, nocc:]@ u_vv
+    mo_coeff_oo = wfn_obj.mo_coeff[:, :nocc]
+    fnos = np.hstack((mo_coeff_oo, mo_coeff_vv)) 
+    return fnos

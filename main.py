@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Callable
 import numpy as np
-from pyscf import gto
+from pyscf import gto, mp, ci
 
 
 def run_aegiss(
@@ -76,7 +76,9 @@ if __name__ == "__main__":
     # Example usage
     from aegiss.initial_guess import run_scf, build_mol
     from aegiss.localization.orbital_localization import localize
-    mol = build_mol("H 0 0 0; H 0 0 0.95")
+    #water
+    atom =  " O 0 0 0; H 0 0 0.95; H 0.95 0 0"
+    mol = build_mol(atom)
     mf = run_scf(mol)
-    mf_loc = localize(method='nos', mf= mf, correlated_method='cisd')
-    print(mf_loc)
+    mf.mo_coeff = localize(method='fnos', mf= mf, correlated_method='cisd',active=[2,3,4])
+    

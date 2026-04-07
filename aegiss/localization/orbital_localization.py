@@ -5,6 +5,7 @@ from typing import Any, Literal, Optional
 import numpy as np
 from pyscf import lo, gto
 from aegiss.wavefunction.methods import build_correlated_wfn
+from aegiss.utils.orbital_indices import get_orbital_spaces
 
 
 # ---------------------------------------------------------------------------
@@ -101,25 +102,59 @@ def localize_pipek_mezey(
     return np.hstack((loc_occ, loc_virt))
 
 
+def localize_fnos(
+    mf,
+    correlated_method: Literal['mp2', 'cisd', 'ccsd'],
+    active: bool | list[int] = True
+) -> np.ndarray:
+    """Frozen Natural orbital (FNO) localization.
+
+    Parameters
+    ----------
+    mf: SCF object
+    correlated_method : {'mp2', 'cisd', 'ccsd'}
+        Correlated method used to compute the NOs. See *build_correlated_wfn* for details.
+    active : bool | list[int]
+        If ``True``, all the occupied orbitals will be used for the NO costruction. 
+        If a list of integers is provided, these will be the indices of the orbitals to be frozen (0-based indexing).
+    Returns
+    -------
+    occ : np.ndarray
+        Natural occupation numbers (active NOs only when ``frozen=True``).
+    nos : np.ndarray, shape (nao, n_active)
+        Natural orbital coefficients in the AO basis.
+    """
+    from aegiss.localization.fnos import compute_fnos
+
+    
+    print(f"Computing FNOs using {correlated_method.upper()}")
+    
+    frozen_orbs, active_orbs, _,frozen_virt = get_orbital_spaces(mf, orbital_list=active if isinstance(active, list) else [], unique_virt_space=True)
+    wfn_obj = build_correlated_wfn(mf, correlated_method, frozen=frozen_orbs)
+    print("Frozen orbitals: ", frozen_orbs)
+    print("Active orbitals: ", active_orbs)
+    print("Frozen virtual orbitals: ", frozen_virt)
+          
+    
+    return compute_fnos(wfn_obj, frozen=frozen_orbs, active=active_orbs)
+
+
 def localize_nos(
     mf,
-    correlated_method: Literal['mp2', 'cisd', 'ccsd', 'casci', 'casscf'],
-    frozen: bool = False,
-    occ_threshold: float = 1e-4,
-    cas_size: Optional[tuple[int, int]] = (6, 6),
-):
+    correlated_method: Literal['mp2', 'cisd', 'ccsd'],
+    *,
+    split: bool = False,
+) -> np.ndarray:
     """Natural orbital (NO) localization.
 
     Parameters
     ----------
     mf: SCF object
-    correlated_method : {'mp2', 'cisd', 'ccsd', 'casci', 'casscf'}
+    correlated_method : {'mp2', 'cisd', 'ccsd'}
         Correlated method used to compute the NOs. See *build_correlated_wfn* for details.
-    frozen : bool
-        If ``True``, return frozen natural orbitals (FNOs): weakly occupied
-        NOs below *occ_threshold* are removed.
-    occ_threshold : float
-        Occupation cutoff used when ``frozen=True``.
+    split : bool
+        Obtain the Natural Orbital basis by diagonalizing the 1-RDM in the occupied and virtual subspaces separately. 
+        This can be useful for certain post-HF methods where the occupied and virtual spaces are treated differently.
 
     Returns
     -------
@@ -127,22 +162,16 @@ def localize_nos(
         Natural occupation numbers (active NOs only when ``frozen=True``).
     nos : np.ndarray, shape (nao, n_active)
         Natural orbital coefficients in the AO basis.
-    frozen_mask : np.ndarray of bool or None
-        Boolean mask of frozen NOs when ``frozen=True``, else ``None``.
     """
     from aegiss.localization.nos import compute_nos
 
-    print(mf, correlated_method)
-    wfn_obj = build_correlated_wfn(mf,correlated_method)
-    occ, nos = compute_nos(wfn_obj)
+    print(f"Computing NOs using {correlated_method.upper()}")
+    wfn_obj = build_correlated_wfn(mf, correlated_method)
+    print("Using standard NOs without freezing. ", "With Splitted NOs." if split else "Without Split NOs.")
+    return compute_nos(wfn_obj, split_nos=split)
     # if not frozen:
     #     return occ, nos, None
 
-
-
-# ---------------------------------------------------------------------------
-# Registry and dispatcher
-# ---------------------------------------------------------------------------
 
 _METHODS: dict[str, Any] = {
     "boys":     localize_boys,
@@ -151,7 +180,7 @@ _METHODS: dict[str, Any] = {
     "pm":       localize_pipek_mezey,
     "pipek":    localize_pipek_mezey,
     "nos":      localize_nos,
-    "fnos":     localize_nos,          # alias: fnos always uses frozen=True
+    "fnos":     localize_fnos,         
 }
 
 
@@ -177,6 +206,4 @@ def localize(method: str, *args, **kwargs):
             f"Unknown localization method {method!r}. "
             f"Choose from: {sorted(_METHODS)}"
         )
-    if method == "fnos":
-        kwargs.setdefault("frozen", True)
     return _METHODS[method](*args, **kwargs)

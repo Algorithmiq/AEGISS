@@ -2,22 +2,7 @@
 from __future__ import annotations
 
 from typing import Literal, Any
-from pyscf import ci, cc, fci as _fci, mcscf
-
-
-def run_fci(mf, ncas: int, nelecas: int, **kwargs):
-    """Run FCI in an active space.
-
-    Returns
-    -------
-    mc : pyscf.mcscf.CASCI
-    """
-    mc = mcscf.CASCI(mf, ncas, nelecas)
-    for key, val in kwargs.items():
-        setattr(mc, key, val)
-    mc.kernel()
-    return mc
-
+from pyscf import ci, cc, mp
 
 def run_cisd(mf, **kwargs):
     """Run CISD on top of a mean-field reference.
@@ -26,6 +11,7 @@ def run_cisd(mf, **kwargs):
     -------
     myci : pyscf.ci.CISD
     """
+    print("Running CISD with options:", kwargs)
     myci = ci.CISD(mf)
     for key, val in kwargs.items():
         setattr(myci, key, val)
@@ -39,7 +25,8 @@ def run_mp2(mf, **kwargs):
     -------
     mymp2 : pyscf.mp.MP2
     """
-    mymp2 = mf.MP2()
+    print("Running MP2 with options:", kwargs)
+    mymp2 = mp.MP2(mf)
     for key, val in kwargs.items():
         setattr(mymp2, key, val)
     mymp2.kernel()
@@ -52,21 +39,20 @@ def run_ccsd(mf, **kwargs):
     -------
     mycc : pyscf.cc.CCSD
     """
+    print("Running CCSD with options:", kwargs)
     mycc = cc.CCSD(mf)
     for key, val in kwargs.items():
         setattr(mycc, key, val)
     mycc.kernel()
     return mycc
 
-def build_correlated_wfn(mf, method: Literal['mp2', 'cisd', 'ccsd', 'casci', 'casscf'], ncas: int = 6, nelecas: int = 6) -> Any:
+def build_correlated_wfn(mf, method: Literal['mp2', 'cisd', 'ccsd'], *args, **kwargs) -> Any:
     """Helper to build a correlated wavefunction object for NO computation."""
     if method == 'mp2':
-        return run_mp2(mf)
+        return run_mp2(mf, **kwargs)
     elif method == 'cisd':
-        return run_cisd(mf)
+        return run_cisd(mf, **kwargs)
     elif method == 'ccsd':
-        return run_ccsd(mf)
-    elif method in ['casci', 'casscf']:
-        return run_fci(mf, ncas=6, nelecas=6)  # Example active space
+        return run_ccsd(mf, **kwargs)
     else:
         raise ValueError(f"Unsupported method for NOs: {method}")
