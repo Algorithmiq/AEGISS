@@ -53,3 +53,46 @@ def get_orbital_spaces(mf, orbital_list: list[int],
     frozen_virt = np.array([i for i in all_virt if i not in selected])
 
     return frozen_occ, active_occ, active_virt, frozen_virt
+
+def get_subspaces_from_cas(mf, ncas: int, nelecas: int) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Partition MO indices into active and virtual spaces based on a CAS definition.
+    
+    Parameters
+    ----------
+    mf : PySCF SCF object
+        Converged mean-field object exposing ``mo_occ``.
+    ncas : int
+        Number of active orbitals in the CAS.
+    nelecas : int
+        Number of active electrons in the CAS.
+    
+    Returns
+    -------
+    active_orbs : np.ndarray of int
+        Orbital indices (0-based) of the active space.
+    virt_orbs : np.ndarray of int
+        Orbital indices (0-based) of the virtual space (not in the active space).
+    """
+    print(f"\n----------DMRG CAS Subspace Selection (ncas={ncas}, nelecas={nelecas})----------")
+    nmos = mf.mol.nao
+    neletot = int(np.sum(mf.mo_occ))
+    assert ncas <= nmos, "Number of active orbitals cannot exceed total number of MOs."
+    assert nelecas >= 0, "Number of active electrons cannot be negative."
+    assert nelecas <= neletot, "Number of active electrons cannot exceed total number of electrons."
+    
+    nocc = np.count_nonzero(mf.mo_occ > 0)
+    print(f"\n\nTotal MOs: {nmos}, Occupied MOs: {nocc}, Virtual MOs: {nmos - nocc}")
+    
+    n_active_occ = nelecas//2  # Number of active occupied orbitals
+    n_active_virt = ncas - n_active_occ  # Number of active virtual orbitals
+    assert nmos - nocc - n_active_virt >= 0, "Not enough virtual orbitals to accommodate the active space."
+    print(f"Active occupied orbitals: {n_active_occ}")
+    print(f"Active virtual orbitals: {n_active_virt}")
+    
+    active_occ = np.arange(nocc-n_active_occ, nocc)
+    active_virt = np.arange(nocc, nocc + n_active_virt)
+    print(f"Active occupied orbital indices: {active_occ}")
+    print(f"Active virtual orbital indices: {active_virt}\n\n")
+    
+    return active_occ, active_virt

@@ -27,6 +27,7 @@ def run_dmrg(mf,
     else:
         raise ValueError(f"Unsupported symmetry type: {symm_type}")
 
+    print(f"\n----------------DMRG Calculation (symmetry: {symm_type})----------------\n")
     driver = DMRGDriver(scratch=scratch_dir,
                         symm_type=symm, 
                         n_threads=n_threads,

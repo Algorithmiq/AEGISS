@@ -73,6 +73,8 @@ def run_scf(mol, method="RHF", xc="b3lyp", solvent_info: tuple[str, float] | Non
     """
     method = method.upper()
 
+    print(f"\n----------SCF Calculation (Method {method}----------")
+    
     if method in ("RHF", "UHF"):
         mf = getattr(scf, method)(mol)
     elif method in ("RKS", "UKS"):
