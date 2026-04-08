@@ -21,8 +21,11 @@ def build_mol(atom, **kwargs):
     mol : pyscf.gto.Mole
         Molecule object with specified geometry and basis set.
     """
+    print("\n----------Building Molecule----------")
     mol = scf.gto.Mole()
     mol.atom = atom
+    print('Molecular geometry:')
+    print(mol.atom)
     for key, val in kwargs.items():
         print(f"Setting mol.{key} = {val}")
         setattr(mol, key, val)
@@ -73,7 +76,7 @@ def run_scf(mol, method="RHF", xc="b3lyp", solvent_info: tuple[str, float] | Non
     """
     method = method.upper()
 
-    print(f"\n----------SCF Calculation (Method {method}----------")
+    print(f"\n----------SCF Calculation (Method {method})----------")
     
     if method in ("RHF", "UHF"):
         mf = getattr(scf, method)(mol)

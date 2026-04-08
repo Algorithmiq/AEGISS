@@ -2,9 +2,19 @@
 from __future__ import annotations
 
 from typing import Callable
+import os
 import numpy as np
 from pyscf import gto, mp, ci
 
+from aegiss.utils.banner import print_banner
+from aegiss.initial_guess import run_scf, build_mol
+from aegiss.wavefunction.dmrg import run_dmrg
+from aegiss.active_space.entropy_screening import select_by_entropy
+from aegiss.active_space.ao_projection import select_by_ao_projection
+from aegiss.utils.orbital_indices import get_subspaces_from_cas
+
+os.environ["OMP_NUM_THREADS"] = "4"
+os.environ["SCRATCH_DIR"] = "./aegiss/examples/tmp"
 
 def run_aegiss(
     mol: gto.Mole,
@@ -74,17 +84,12 @@ def run_aegiss(
 
 if __name__ == "__main__":
     
-    from aegiss.initial_guess import run_scf, build_mol
-    from aegiss.wavefunction.dmrg import run_dmrg
-    from aegiss.active_space.entropy_screening import select_by_entropy
-    from aegiss.active_space.ao_projection import select_by_ao_projection
-    from aegiss.utils.orbital_indices import get_subspaces_from_cas
-
-    atom =  " O.1 0 0 0; H.0 0 0 0.95; H.2 0.95 0 0"
-    mol = build_mol(atom, verbose=2)
+    print_banner()
+    atom = './aegiss/examples/data/water.xyz'
+    mol = build_mol(atom,basis='sto3g', verbose=4)
     mf = run_scf(mol)
-    print(mol._atom)
     dmrg_ncas, dmrg_nelecas = 7, 10
+    
     active_orbs, virt_orbs = get_subspaces_from_cas(mf, ncas=dmrg_ncas, nelecas=dmrg_nelecas)
     _, soe1, _ , minfo = run_dmrg(  mf, 
                                     ncas=dmrg_ncas, 
@@ -99,12 +104,12 @@ if __name__ == "__main__":
                                  soe1=soe1, 
                                  fraction=0.1,
                                  fraction_type='r')
-    
     select_by_ao_projection(mol, mf,
                             ao_labels=["O.1 2p", "H.0 1s", "H.2 1s"],
-                            contribution=0.9,
-                            contribution_type='r',
-                            restricted_space=screened_occ + screened_virt)
+                            contribution=0.5,
+                            projected_basis='minao',
+                            contribution_type='a',
+                            restricted_space=(screened_occ,screened_virt))
     
     
     

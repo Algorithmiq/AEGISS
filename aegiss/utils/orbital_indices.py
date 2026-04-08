@@ -4,6 +4,16 @@ from __future__ import annotations
 import numpy as np
 
 
+def combine_candidate_entropies(occ_orbs: list[tuple[int, float]], 
+                                virt_orbs: list[tuple[int, float]]) ->list[tuple[int, float]]:
+    combined_space = []
+    for idx, s1 in occ_orbs:
+        combined_space.append((idx, s1))
+    for idx, s1 in virt_orbs:
+        combined_space.append((idx, s1))
+    combined_space.sort(key=lambda x: x[0])
+    return combined_space
+    
 def get_orbital_spaces(mf, orbital_list: list[int],
                        *,
                        unique_virt_space: bool = False) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:

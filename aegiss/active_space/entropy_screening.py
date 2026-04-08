@@ -10,7 +10,7 @@ def select_by_entropy(occ_orbs: np.ndarray,
                       soe1: np.ndarray,
                       fraction: float =  0.1,
                       fraction_type: Literal['r', 'a'] = 'r'
-                      ) -> np.ndarray:
+                      ) -> tuple[list[tuple[int, float]], list[tuple[int, float]]]:
     """Select active orbitals by single-orbital entanglement entropy.
     
     Parameters
