@@ -58,7 +58,8 @@ def _compute_contribution(s22: np.ndarray,
             print('\t' + '-'*10 + 'below' + '-'*10)
             first_below = True
         print(f"\tOrbital {idx}: contribution = {tmp:.4f}")
-    return None, None
+
+    return  [(idx, tmp) for idx, tmp in sorted_weights if tmp >= contribution]
 
 def select_by_ao_projection(
     mol,
@@ -125,6 +126,10 @@ def select_by_ao_projection(
 
     s21 = _get_secondary_basis_s21(mol, projected_basis)
     
+    if top_n is not None:
+        print("\nSelecting top orbitals based on contribution. Ignoring contribution threshold.")
+        contribution = 0.0  # set to 0 to include all orbitals in the top_n selection
     for label in ao_labels:
         s22 = _get_s22_from_ao_labels(mol, label, s21, active_mo_coeff=mf.mo_coeff)
-        s, above_threshold = _compute_contribution(s22, label, restricted_space, contribution, contribution_type)
+        above_threshold = _compute_contribution(s22, label, restricted_space, contribution, contribution_type)
+        
