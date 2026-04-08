@@ -61,6 +61,43 @@ def _compute_contribution(s22: np.ndarray,
 
     return  [(idx, tmp) for idx, tmp in sorted_weights if tmp >= contribution]
 
+
+def select_by_label(label: str | list[str],
+                    s21: np.ndarray,
+                    mol, 
+                    active_mo_coeff,
+                    space,
+                    contribution, 
+                    contribution_type) -> List[int]:
+    """Select orbitals based on their contribution to a specific AO label.
+    
+    Parameters
+    ----------
+    label : str or list of str
+        AO label(s) to compute contributions for. Each label should be in the format "Element.Index AtomicOrbital", e.g. "O.1 1s" for the second oxygen
+        atom. If a list of labels is provided, the contributions will be computed for each label separately and combined.
+    s21 : np.ndarray
+        Overlap matrix between the secondary basis (used for projection) and the original basis of the molecule.
+    mol : pyscf.gto.Mole
+        Molecule object containing the geometry and basis set information.
+    active_mo_coeff : np.ndarray
+        Coefficients of the active molecular orbitals in the original basis.
+    space : list of int
+        List of orbital indices to restrict the selection to. Only orbitals in this list will be considered for selection.
+    contribution : float
+        Threshold for selecting orbitals based on their contribution to the target AO label(s).
+    contribution_type : {'r', 'a'}
+        Type of contribution to use for selection. 'r' for relative contribution (normalized by the maximum contribution among the orbitals), 'a' for absolute contribution.        
+    
+    Returns
+    -------
+    selected_indices : list of int
+        List of orbital indices selected based on their contribution to the target AO label(s).
+    """
+    
+    s22 = _get_s22_from_ao_labels(mol, label, s21, active_mo_coeff=active_mo_coeff)
+    return  _compute_contribution(s22, label, space, contribution, contribution_type)
+    
 def select_by_ao_projection(
     mol,
     mf,
@@ -98,38 +135,62 @@ def select_by_ao_projection(
     top_n : int or list of int, optional
         Alternative to *contribution* thresholding. If specified, selects the top N orbitals with the highest contribution to the target AOs.
         If a list is provided, it should have the same length as *ao_labels* and specify the number of orbitals to select for each group separately.
-
+        
     Returns
     -------
     active_indices : np.ndarray of int
         Array of orbital indices selected for the active space.
     """
+    
     print("\n----------------AO Projection Screening for AEGISS----------------\n")
     print("AO labels for projection:", ao_labels)
     if contribution is not None:
         print("Contribution threshold:", contribution)
         print("Contribution type:", contribution_type)
+        
     if top_n is not None:
         print("Top N orbitals to select:", top_n)
+        
     if restricted_space is not None:
         if isinstance(restricted_space, tuple):
             restricted_space = combine_candidate_entropies(*restricted_space)
-        print(
-            "Restricting selection to orbitals with indices: ",
-            [int(idx[0]) for idx in restricted_space],
-        )
-
-    if projected_basis is not None:
-        print("Using projected basis for AO projection:", projected_basis)
+            print(
+                "Combining candidate orbitals from different groups: ",
+                [int(idx[0]) for idx in restricted_space],
+            )
     else:
-        print("Using molecule for AO projection")
+        print("No restriction on orbital indices for selection. Using all orbitals.")
+        restricted_space = [(idx, 0.0) for idx in range(mf.mo_coeff.shape[1])]
+    
+    if projected_basis is not None:
+        print("\nUsing projected basis for AO projection:", projected_basis)
+    else:
+        print("\nUsing molecule for AO projection")
 
     s21 = _get_secondary_basis_s21(mol, projected_basis)
     
     if top_n is not None:
         print("\nSelecting top orbitals based on contribution. Ignoring contribution threshold.")
         contribution = 0.0  # set to 0 to include all orbitals in the top_n selection
+    
+    selected_indices = set()
     for label in ao_labels:
-        s22 = _get_s22_from_ao_labels(mol, label, s21, active_mo_coeff=mf.mo_coeff)
-        above_threshold = _compute_contribution(s22, label, restricted_space, contribution, contribution_type)
+        selected_indices_for_label = select_by_label(label, 
+                                                     s21, 
+                                                     mol, 
+                                                     mf.mo_coeff, 
+                                                     restricted_space, 
+                                                     contribution, 
+                                                     contribution_type)
+        if top_n is not None:
+            selected_indices_for_label = selected_indices_for_label[:top_n]  # select only the top N orbitals for this label
+        selected_indices.update(idx for idx, _ in selected_indices_for_label)
         
+    print("\nFinal selected orbital indices:", sorted(selected_indices))
+    return np.array(sorted(selected_indices))
+    
+
+    
+    
+        
+    

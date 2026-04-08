@@ -102,9 +102,11 @@ if __name__ == "__main__":
     screened_occ, screened_virt = select_by_entropy(occ_orbs=active_orbs, 
                                  virt_orbs=virt_orbs, 
                                  soe1=soe1, 
+                                 ranking='relative',
                                  fraction=0.1,
                                  fraction_type='r')
-    select_by_ao_projection(mol, mf,
+    
+    final_space = select_by_ao_projection(mol, mf,
                             ao_labels=["O.1 2p", "H.0 1s", "H.2 1s"],
                             contribution=0.5,
                             projected_basis='minao',
