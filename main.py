@@ -93,7 +93,7 @@ if __name__ == "__main__":
     active_orbs, virt_orbs = get_subspaces_from_cas(mf, ncas=dmrg_ncas, nelecas=dmrg_nelecas)
     _, soe1, _ , minfo = run_dmrg(  mf, 
                                     ncas=dmrg_ncas, 
-                                    nelecas=mol.tot_electrons(), 
+                                    nelecas=dmrg_nelecas, 
                                     symm_type='SZ',
                                     init_bond_dim=dmrg_nelecas,
                                     verbosity=0, 
@@ -103,12 +103,12 @@ if __name__ == "__main__":
                                  virt_orbs=virt_orbs, 
                                  soe1=soe1, 
                                  ranking='relative',
-                                 fraction=0.1,
+                                 fraction=0,
                                  fraction_type='r')
     
     final_space = select_by_ao_projection(mol, mf,
                             ao_labels=["O.1 2p", "H.0 1s", "H.2 1s"],
-                            contribution=0.5,
+                            contribution=0.4,
                             projected_basis='minao',
                             contribution_type='a',
                             restricted_space=(screened_occ,screened_virt))

@@ -60,11 +60,13 @@ def _global_entropy_ranking(soe1,
 def _relative_entropy_ranking(soe1,
                             fraction_type, 
                             fraction,
-                            n_orbs,
                             subspace) ->  tuple[list[tuple[int, float]], list[tuple[int, float]]]:
+    
     
     max_s1 = np.max(soe1)
     max_s1_index = np.argmax(soe1)
+    
+    n_orbs = len(soe1)
     
     ths_lists = soe1
     print("S(1) values for candidate orbitals:")
@@ -146,10 +148,19 @@ def select_by_entropy(occ_orbs: np.ndarray,
         selected_occ, selected_virt = _global_entropy_ranking(soe1, fraction_type, fraction, n_orbs, occ_orbs, virt_orbs)
     else:
         print("Using relative ranking of orbitals by entropy values within the subspace.")
-        soe1_occ = soe1[occ_orbs]
-        soe1_virt = soe1[virt_orbs]
-        selected_occ = _relative_entropy_ranking(soe1_occ, fraction_type, fraction, n_orbs, occ_orbs)
-        selected_virt = _relative_entropy_ranking(soe1_virt, fraction_type, fraction, n_orbs, virt_orbs)
+        soe1_occ = []
+        for idx in range(len(occ_orbs)):
+            soe1_occ.append(soe1[idx])
+        soe1_occ = np.array(soe1_occ)
+        
+        soe1_virt = []
+        off_set = len(occ_orbs)
+        for idx in range(len(virt_orbs)):
+            soe1_virt.append(soe1[off_set + idx])
+        soe1_virt = np.array(soe1_virt)
+        
+        selected_occ = _relative_entropy_ranking(soe1_occ, fraction_type, fraction, occ_orbs)
+        selected_virt = _relative_entropy_ranking(soe1_virt, fraction_type, fraction, virt_orbs)
     
     for i in selected_occ:
         print(f"\tSelected occupied orbital {i[0]}: S(1) = {i[1]:.4f}")
