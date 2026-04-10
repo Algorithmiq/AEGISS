@@ -84,35 +84,62 @@ def run_aegiss(
 
 if __name__ == "__main__":
     
+    # print_banner()
+    # atom = './aegiss/examples/data/water.xyz'
+    # mol = build_mol(atom,basis='sto3g', verbose=4)
+    # mf = run_scf(mol)
+    # dmrg_ncas, dmrg_nelecas = 6, 8
+    
+    # active_orbs, virt_orbs = get_subspaces_from_cas(mf, ncas=dmrg_ncas, nelecas=dmrg_nelecas)
+    # _, soe1, _ , minfo = run_dmrg(  mf, 
+    #                                 ncas=dmrg_ncas, 
+    #                                 nelecas=dmrg_nelecas, 
+    #                                 symm_type='SZ',
+    #                                 init_bond_dim=dmrg_nelecas,
+    #                                 verbosity=0, 
+    #                                 get_qmi=True)
+    
+    # screened_occ, screened_virt = select_by_entropy(occ_orbs=active_orbs, 
+    #                              virt_orbs=virt_orbs, 
+    #                              soe1=soe1, 
+    #                              ranking='relative',
+    #                              fraction=0,
+    #                              fraction_type='r')
+    # print(screened_occ, screened_virt)
+    # final_space = select_by_ao_projection(mol, mf,
+    #                         ao_labels=["O.1 2p", "H.0 1s", "H.2 1s"],
+    #                         contribution=0.4,
+    #                         projected_basis='minao',
+    #                         contribution_type='a',
+    #                         restricted_space=(screened_occ,screened_virt))
+    
+    
+    
     print_banner()
-    atom = './aegiss/examples/data/water.xyz'
-    mol = build_mol(atom,basis='sto3g', verbose=4)
+    atom = './aegiss/examples/data/benzene_wanky.xyz'
+    mol = build_mol(atom,basis='ccpvdz', symmetry=False, verbose=2)
     mf = run_scf(mol)
-    dmrg_ncas, dmrg_nelecas = 7, 10
-    
+    dmrg_ncas, dmrg_nelecas = 20, 20
+
     active_orbs, virt_orbs = get_subspaces_from_cas(mf, ncas=dmrg_ncas, nelecas=dmrg_nelecas)
-    _, soe1, _ , minfo = run_dmrg(  mf, 
-                                    ncas=dmrg_ncas, 
-                                    nelecas=dmrg_nelecas, 
-                                    symm_type='SZ',
-                                    init_bond_dim=dmrg_nelecas,
-                                    verbosity=0, 
-                                    get_qmi=True)
-    
-    screened_occ, screened_virt = select_by_entropy(occ_orbs=active_orbs, 
-                                 virt_orbs=virt_orbs, 
-                                 soe1=soe1, 
-                                 ranking='relative',
-                                 fraction=0,
-                                 fraction_type='r')
-    
-    final_space = select_by_ao_projection(mol, mf,
-                            ao_labels=["O.1 2p", "H.0 1s", "H.2 1s"],
-                            contribution=0.4,
-                            projected_basis='minao',
-                            contribution_type='a',
-                            restricted_space=(screened_occ,screened_virt))
-    
-    
-    
-    
+    _, soe1, _ , minfo = run_dmrg( mf,
+                    ncas=dmrg_ncas,
+                    nelecas=dmrg_nelecas,
+                    symm_type='SZ',
+                    init_bond_dim=10,
+                    verbosity=0,
+                    get_qmi=True)
+
+    screened_occ, screened_virt = select_by_entropy(occ_orbs=active_orbs,
+                    virt_orbs=virt_orbs,
+                    soe1=soe1,
+                    ranking='relative',
+                    fraction=0.1,
+                    fraction_type='r')
+
+    final_space = select_by_ao_projection(mf,
+                ao_labels=["C.1 2pz","C.2 2pz", "C.3 2pz","C.4 2pz","C.5 2pz","C.6 2pz"],
+                contribution=0.5,
+                projected_basis='minao',
+                contribution_type='a',
+                restricted_space=(screened_occ,screened_virt))

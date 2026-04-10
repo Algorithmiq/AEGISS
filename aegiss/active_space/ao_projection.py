@@ -8,43 +8,44 @@ from aegiss.utils.orbital_indices import combine_candidate_entropies
 from typing import List, Union, Literal
 
 
-def _get_secondary_basis_s21(
-    mol, secondary_basis: str | None = 'minao'
-) -> np.ndarray:
-
-    projection_mol = mol.copy()  # extended basis
+def _compute_contribution( mf, 
+                            label: Union[str, list[str]], 
+                            active_mo_coeff: np.ndarray,
+                            reduced_space_indices: list[int],
+                            contribution: float, 
+                            contribution_type: Literal["r", "a"],
+                            secondary_basis: str | None = 'minao',
+                          ) -> np.ndarray:
+    
+    mol2 = mf.mol  # original basis
+    projection_mol = mol2.copy()  # extended basis
     if secondary_basis is not None:
-        projection_mol.atom = mol._atom
+        projection_mol.atom = mol2._atom
         projection_mol.unit = (
             "B"  # in Bohr because `mol._atom` returns the coordinates in Bohr
         )
         projection_mol.symmetry = False
         projection_mol.basis = secondary_basis
         projection_mol.build(False, False)
-    return gto.intor_cross('int1e_ovlp', projection_mol, mol)
-
-def _get_s22_from_ao_labels(projected_mol, 
-                            label: Union[str, list[str]], 
-                            s21: np.ndarray, 
-                            active_mo_coeff: np.ndarray) -> np.ndarray:
-    baslst = projected_mol.search_ao_label(label)
+    else:
+        print("No secondary basis provided. Using original molecule for projection.")
+    baslst = projection_mol.search_ao_label(label)
+    s21 = gto.intor_cross('int1e_ovlp', projection_mol, mol2)[baslst]
     if len(baslst) == 0:
         return np.zeros(active_mo_coeff)
+    assert s21.shape[1] == active_mo_coeff.shape[0], "Mismatch in number of orbitals between s21 and active_mo_coeff"
     
-    return np.dot(s21[baslst], active_mo_coeff)
-
-def _compute_contribution(s22: np.ndarray, 
-                          label: Union[str, list[str]],
-                          reduced_space_indices: list[int],
-                          contribution: float, 
-                          contribution_type: Literal["r", "a"]) -> np.ndarray:
+    reduced_mos = active_mo_coeff[:, np.array([idx for idx, _ in reduced_space_indices])]
+    
+    s22 = np.dot(s21, reduced_mos[:,:])
     projected_weights = []
     print(f"\nComputing contributions for AO label(s): {label}")
-    for idx, _ in reduced_space_indices:
+    for idx in range(len(s22[0,:])):
         tmp = 0
         for j in s22[:, idx]:
             tmp += abs(j)
-        projected_weights.append((idx, tmp))
+        orb = reduced_space_indices[idx][0]
+        projected_weights.append((orb, tmp))
     
     if contribution_type == "r":
         max_contribution = max(weight for _, weight in projected_weights)
@@ -57,17 +58,17 @@ def _compute_contribution(s22: np.ndarray,
         if tmp < contribution and not first_below:
             print('\t' + '-'*10 + 'below' + '-'*10)
             first_below = True
-        print(f"\tOrbital {idx}: contribution = {tmp:.4f}")
+        print(f"\tOrbital {idx}: contribution = {tmp:.8f}")
 
     return  [(idx, tmp) for idx, tmp in sorted_weights if tmp >= contribution]
 
 
 def select_by_label(label: str | list[str],
-                    s21: np.ndarray,
-                    mol, 
+                    mf, 
                     active_mo_coeff,
                     space,
                     contribution, 
+                    projected_basis: str | None,
                     contribution_type) -> List[int]:
     """Select orbitals based on their contribution to a specific AO label.
     
@@ -95,11 +96,15 @@ def select_by_label(label: str | list[str],
         List of orbital indices selected based on their contribution to the target AO label(s).
     """
     
-    s22 = _get_s22_from_ao_labels(mol, label, s21, active_mo_coeff=active_mo_coeff)
-    return  _compute_contribution(s22, label, space, contribution, contribution_type)
+    return  _compute_contribution(mf,
+                                 label, 
+                                 active_mo_coeff,
+                                 space,
+                                 contribution, 
+                                 contribution_type,
+                                 projected_basis)
     
 def select_by_ao_projection(
-    mol,
     mf,
     ao_labels: Union[List[str], List[List[str]]],
     projected_basis: str | None = 'minao',
@@ -166,8 +171,6 @@ def select_by_ao_projection(
         print("\nUsing projected basis for AO projection:", projected_basis)
     else:
         print("\nUsing molecule for AO projection")
-
-    s21 = _get_secondary_basis_s21(mol, projected_basis)
     
     if top_n is not None:
         print("\nSelecting top orbitals based on contribution. Ignoring contribution threshold.")
@@ -175,13 +178,13 @@ def select_by_ao_projection(
     
     selected_indices = set()
     for label in ao_labels:
-        selected_indices_for_label = select_by_label(label, 
-                                                     s21, 
-                                                     mol, 
-                                                     mf.mo_coeff, 
-                                                     restricted_space, 
-                                                     contribution, 
-                                                     contribution_type)
+        selected_indices_for_label = select_by_label(label=label, 
+                                                     projected_basis=projected_basis, 
+                                                     mf=mf, 
+                                                     active_mo_coeff=mf.mo_coeff, 
+                                                     space=restricted_space, 
+                                                     contribution=contribution, 
+                                                     contribution_type=contribution_type)
         if top_n is not None:
             selected_indices_for_label = selected_indices_for_label[:top_n]  # select only the top N orbitals for this label
         selected_indices.update(idx for idx, _ in selected_indices_for_label)
