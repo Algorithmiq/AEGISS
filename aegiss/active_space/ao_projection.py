@@ -32,7 +32,7 @@ def _compute_contribution( mf,
     baslst = projection_mol.search_ao_label(label)
     s21 = gto.intor_cross('int1e_ovlp', projection_mol, mol2)[baslst]
     if len(baslst) == 0:
-        return np.zeros(active_mo_coeff)
+        return np.zeros(active_mo_coeff.shape)
     assert s21.shape[1] == active_mo_coeff.shape[0], "Mismatch in number of orbitals between s21 and active_mo_coeff"
     
     reduced_mos = active_mo_coeff[:, np.array([idx for idx, _ in reduced_space_indices])]
