@@ -3,4 +3,5 @@ __all__ = [
     "wavefunction",
     "localization",
     "active_space",
+    "utils"
 ]
