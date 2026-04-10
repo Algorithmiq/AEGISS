@@ -12,6 +12,7 @@ from aegiss.wavefunction.dmrg import run_dmrg
 from aegiss.active_space.entropy_screening import select_by_entropy
 from aegiss.active_space.ao_projection import select_by_ao_projection
 from aegiss.utils.orbital_indices import get_subspaces_from_cas
+from aegiss.utils.dump_info import save_orbitals_from_entropies, save_orbitals
 
 os.environ["OMP_NUM_THREADS"] = "4"
 os.environ["SCRATCH_DIR"] = "./aegiss/examples/tmp"
@@ -116,7 +117,7 @@ if __name__ == "__main__":
     
     
     print_banner()
-    atom = './aegiss/examples/data/benzene_wanky.xyz'
+    atom = './aegiss/examples/data/benzene.xyz'
     mol = build_mol(atom,basis='ccpvdz', symmetry=False, verbose=2)
     mf = run_scf(mol)
     dmrg_ncas, dmrg_nelecas = 20, 20
@@ -136,10 +137,28 @@ if __name__ == "__main__":
                     ranking='relative',
                     fraction=0.1,
                     fraction_type='r')
+    
+    save_orbitals_from_entropies(mol,
+                                    mf.mo_coeff, 
+                                    screened_occ, 
+                                    filename_prefix="benzene_entropy",
+                                    folder="./aegiss/examples/orbs/")
+
+    save_orbitals_from_entropies(mol,
+                                    mf.mo_coeff, 
+                                    screened_virt, 
+                                    filename_prefix="benzene_entropy",
+                                    folder="./aegiss/examples/orbs/")
 
     final_space = select_by_ao_projection(mf,
-                ao_labels=["C.1 2pz","C.2 2pz", "C.3 2pz","C.4 2pz","C.5 2pz","C.6 2pz"],
+                ao_labels=["C 2pz"],
                 contribution=0.5,
                 projected_basis='minao',
                 contribution_type='a',
                 restricted_space=(screened_occ,screened_virt))
+    
+    save_orbitals(mol,
+                mf.mo_coeff, 
+                final_space, 
+                filename_prefix="benzene_aegiss",
+                folder="./aegiss/examples/orbs/")
