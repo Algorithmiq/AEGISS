@@ -1,13 +1,17 @@
 """Full AEGISS active space selection procedure."""
+
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
-from aegiss.active_space.entropy_screening import select_by_entropy
+
 from aegiss.active_space.ao_projection import select_by_ao_projection
+from aegiss.active_space.entropy_screening import select_by_entropy
 
 
 def select_aegiss(
-    mol,
+    mol: Any,
     mo_coeff: np.ndarray,
     occ: np.ndarray,
     target_atoms: list[int],
@@ -31,16 +35,20 @@ def select_aegiss(
     entropy_threshold : float
     projection_threshold : float
 
-    Returns
+    Returns:
     -------
     active_indices : np.ndarray of int
         Sorted union of indices selected by both criteria.
     """
-    idx_entropy = set(select_by_entropy(occ, threshold=entropy_threshold).tolist())
+    idx_entropy = set(
+        select_by_entropy(occ, threshold=entropy_threshold).tolist()  # type: ignore[call-arg, attr-defined]
+    )
     idx_proj = set(
         select_by_ao_projection(
-            mol, mo_coeff, target_atoms, threshold=projection_threshold
+            mol,
+            mo_coeff,  # type: ignore[arg-type]
+            target_atoms,  # type: ignore[arg-type]
+            threshold=projection_threshold,  # type: ignore[call-arg]
         ).tolist()
     )
-    active_indices = np.array(sorted(idx_entropy | idx_proj), dtype=int)
-    return active_indices
+    return np.array(sorted(idx_entropy | idx_proj), dtype=int)

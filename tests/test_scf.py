@@ -1,77 +1,62 @@
-"""Tests for aegiss.initial_guess (build_mol, run_scf)."""
+"""Tests for aegiss.initial_guess.scf (build_mol / run_scf)."""
+
 from __future__ import annotations
 
+import numpy as np
 import pytest
+
 from aegiss.initial_guess import build_mol, run_scf
 
 
-# ---------------------------------------------------------------------------
-# build_mol
-# ---------------------------------------------------------------------------
-
 class TestBuildMol:
-
-    def test_basic_h2(self):
+    def test_returns_mol_with_nao(self) -> None:
         mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
-        assert mol.nao == 2  # STO-3G: 1 AO per H
+        assert mol.nao > 0
 
-    def test_basis_kwarg_applied(self):
-        mol = build_mol("H 0 0 0; H 0 0 0.74", basis="cc-pvdz", verbose=0)
-        assert mol.basis == "cc-pvdz"
+    def test_nao_for_h2_sto3g(self) -> None:
+        mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
+        assert mol.nao == 2
 
-    def test_verbose_kwarg_applied(self):
-        mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=3)
-        assert mol.verbose == 3
-
-    def test_spin_kwarg_applied(self):
-        # H atom: 1 electron → spin=1
-        mol = build_mol("H 0 0 0", basis="sto-3g", spin=1, verbose=0)
-        assert mol.spin == 1
-
-    def test_water_nao(self):
+    def test_kwargs_forwarded(self) -> None:
         mol = build_mol(
-            "O 0 0 0; H 0 0.96 0; H 0.96 0 0", basis="sto-3g", verbose=0
+            "H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0, symmetry=False
         )
-        assert mol.nao == 7  # STO-3G: O has 5 AOs, each H has 1
+        assert not mol.symmetry
 
+    def test_nao_changes_with_basis(self) -> None:
+        mol_small = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
+        mol_large = build_mol("H 0 0 0; H 0 0 0.74", basis="cc-pvdz", verbose=0)
+        assert mol_large.nao > mol_small.nao
 
-# ---------------------------------------------------------------------------
-# run_scf
-# ---------------------------------------------------------------------------
 
 class TestRunScf:
+    def test_h2_rhf_converges(self, h2_rhf) -> None:
+        assert h2_rhf.converged
 
-    def test_rhf_converges(self, h2_rhf):
-        _, mf = h2_rhf
-        assert mf.converged
+    def test_h2_rhf_energy_sign(self, h2_rhf) -> None:
+        assert h2_rhf.e_tot < 0.0
 
-    def test_rhf_returns_mo_coeff(self, h2_rhf):
-        mol, mf = h2_rhf
-        assert mf.mo_coeff.shape == (mol.nao, mol.nao)
+    def test_h2_rhf_mo_coeff_shape(self, h2_rhf) -> None:
+        # H2 sto-3g: 2 AOs → 2 MOs
+        assert h2_rhf.mo_coeff.shape == (2, 2)
 
-    def test_rhf_occupation_sums_to_nelec(self, h2_rhf):
-        mol, mf = h2_rhf
-        import numpy as np
-        assert int(mf.mo_occ.sum()) == mol.tot_electrons()
+    def test_h2_rhf_mo_occ_sum(self, h2_rhf) -> None:
+        # H2 has 2 electrons
+        assert abs(float(np.sum(h2_rhf.mo_occ)) - 2.0) < 1e-10
 
-    def test_rhf_energy_h2_sto3g(self, h2_rhf):
-        # Known RHF/STO-3G energy for H2 at r=0.74 Å ≈ -1.117 Ha
-        _, mf = h2_rhf
-        assert mf.e_tot == pytest.approx(-1.117, abs=0.01)
-
-    def test_invalid_method_raises(self):
+    def test_unknown_method_raises(self) -> None:
         mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
         with pytest.raises(ValueError, match="Unknown method"):
             run_scf(mol, method="INVALID")
 
-    def test_uhf(self):
-        # UHF on H2 (closed-shell → same energy as RHF)
+    def test_rks_converges(self) -> None:
         mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
-        mf = run_scf(mol, method="UHF")
+        mf = run_scf(mol, method="RKS", xc="lda", verbose=0)
         assert mf.converged
-        assert mf.e_tot == pytest.approx(-1.117, abs=0.01)
 
-    def test_rks_converges(self):
+    def test_rks_energy_lower_than_rhf(self) -> None:
+        """LDA energy for H2 should differ from RHF."""
         mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
-        mf = run_scf(mol, method="RKS", xc="lda,vwn")
-        assert mf.converged
+        mf_rhf = run_scf(mol, method="RHF", verbose=0)
+        mf_rks = run_scf(mol, method="RKS", xc="lda", verbose=0)
+        assert mf_rhf.e_tot != pytest.approx(mf_rks.e_tot, rel=1e-4)

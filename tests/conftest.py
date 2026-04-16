@@ -1,39 +1,42 @@
 """Shared pytest fixtures for AEGISS tests."""
+
 from __future__ import annotations
 
-import types
+from typing import Any
+from unittest.mock import MagicMock
+
 import numpy as np
 import pytest
 
+from aegiss.initial_guess import build_mol, run_scf
+
 
 @pytest.fixture
-def mock_mf_7mo():
-    """Mock SCF object for a 7-MO system: 5 occupied, 2 virtual (water STO-3G-like)."""
-    mf = types.SimpleNamespace()
-    mf.mo_occ = np.array([2., 2., 2., 2., 2., 0., 0.])
-    mol = types.SimpleNamespace()
+def mock_mf_7mo() -> MagicMock:
+    """Mock mean-field object with 7 MOs (4 occ, 3 virt)."""
+    mf = MagicMock()
+    mf.mo_occ = np.array([2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0])
+    mf.mo_coeff = np.eye(7)
+    mol = MagicMock()
     mol.nao = 7
-    mol.tot_electrons = lambda: 10
     mf.mol = mol
     return mf
 
 
 @pytest.fixture
-def mock_mf_6mo():
-    """Mock SCF object: 3 occ, 3 virt."""
-    mf = types.SimpleNamespace()
-    mf.mo_occ = np.array([2., 2., 2., 0., 0., 0.])
-    mol = types.SimpleNamespace()
+def mock_mf_6mo() -> MagicMock:
+    """Mock mean-field object with 6 MOs (3 occ, 3 virt)."""
+    mf = MagicMock()
+    mf.mo_occ = np.array([2.0, 2.0, 2.0, 0.0, 0.0, 0.0])
+    mf.mo_coeff = np.eye(6)
+    mol = MagicMock()
     mol.nao = 6
-    mol.tot_electrons = lambda: 6
     mf.mol = mol
     return mf
 
 
 @pytest.fixture(scope="session")
-def h2_rhf():
-    """Actual RHF/STO-3G calculation on H2 for PySCF integration tests."""
-    from aegiss.initial_guess import build_mol, run_scf
-    mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
-    mf = run_scf(mol, method="RHF")
-    return mol, mf
+def h2_rhf() -> Any:
+    """H2 RHF/sto-3g mean-field object — computed once per session."""
+    mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", symmetry=False, verbose=0)
+    return run_scf(mol, method="RHF", verbose=0)

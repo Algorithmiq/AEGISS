@@ -1,113 +1,264 @@
 """Tests for aegiss.active_space.ao_projection."""
+
 from __future__ import annotations
 
 import numpy as np
 import pytest
+
 from aegiss.active_space.ao_projection import (
     _compute_contribution,
-    _get_s22_from_ao_labels,
-    _get_secondary_basis_s21,
+    select_by_ao_projection,
+    select_by_label,
 )
 
 
-# ---------------------------------------------------------------------------
-# _get_secondary_basis_s21  (requires PySCF)
-# ---------------------------------------------------------------------------
-
-class TestGetSecondaryBasisS21:
-
-    def test_shape_minao(self, h2_rhf):
-        mol, _ = h2_rhf
-        s21 = _get_secondary_basis_s21(mol, secondary_basis="minao")
-        # rows = n_minao AOs, cols = n_original AOs
-        assert s21.ndim == 2
-        assert s21.shape[1] == mol.nao  # columns match original basis
-
-    def test_identity_basis_is_square(self, h2_rhf):
-        """When projected_basis matches the mol basis (sto-3g), result is square."""
-        mol, _ = h2_rhf
-        s21 = _get_secondary_basis_s21(mol, secondary_basis="sto-3g")
-        assert s21.shape[0] == s21.shape[1]
-
-    def test_none_basis_uses_original_mol(self, h2_rhf):
-        """secondary_basis=None returns integrals against mol itself → square."""
-        mol, _ = h2_rhf
-        s21 = _get_secondary_basis_s21(mol, secondary_basis=None)
-        assert s21.shape[0] == mol.nao
-        assert s21.shape[1] == mol.nao
-
-
-# ---------------------------------------------------------------------------
-# _get_s22_from_ao_labels  (requires PySCF)
-# ---------------------------------------------------------------------------
-
-class TestGetS22FromAoLabels:
-
-    def test_valid_label_returns_matrix(self, h2_rhf):
-        mol, mf = h2_rhf
-        s21 = _get_secondary_basis_s21(mol, secondary_basis="minao")
-        # H 1s labels are present in minao for H2
-        s22 = _get_s22_from_ao_labels(mol, "H 1s", s21, mf.mo_coeff)
-        assert s22.ndim == 2
-        assert s22.shape[1] == mf.mo_coeff.shape[1]  # one col per MO
-
-    def test_output_shape_matches_n_mos(self, h2_rhf):
-        mol, mf = h2_rhf
-        s21 = _get_secondary_basis_s21(mol, secondary_basis="minao")
-        s22 = _get_s22_from_ao_labels(mol, "H 1s", s21, mf.mo_coeff)
-        assert s22.shape[1] == mf.mo_coeff.shape[1]
-
-
-# ---------------------------------------------------------------------------
-# _compute_contribution  (pure numpy, no PySCF needed)
-# ---------------------------------------------------------------------------
-
 class TestComputeContribution:
-    """_compute_contribution currently always returns (None, None).
-    Tests document the expected interface and verify the current behaviour.
-    """
+    def test_returns_list_of_tuples(self, h2_rhf) -> None:
+        space = [(0, 0.0), (1, 0.0)]
+        result = _compute_contribution(
+            mf=h2_rhf,
+            label="H 1s",
+            active_mo_coeff=h2_rhf.mo_coeff,
+            reduced_space_indices=space,
+            contribution=0.0,
+            contribution_type="r",
+            secondary_basis="minao",
+        )
+        assert isinstance(result, list)
+        for item in result:
+            assert len(item) == 2
 
-    def _make_s22(self, n_aos=3, n_mos=4):
-        rng = np.random.default_rng(0)
-        return rng.random((n_aos, n_mos))
+    def test_returns_empty_for_bad_label(self, h2_rhf) -> None:
+        """A label matching no AOs in the projection mol returns []."""
+        space = [(0, 0.0), (1, 0.0)]
+        result = _compute_contribution(
+            mf=h2_rhf,
+            label="Xe 1s",  # no Xe in H2
+            active_mo_coeff=h2_rhf.mo_coeff,
+            reduced_space_indices=space,
+            contribution=0.0,
+            contribution_type="a",
+            secondary_basis="minao",
+        )
+        assert result == []
 
-    def test_returns_two_values(self):
-        s22 = self._make_s22()
-        reduced = [(i, 0.5) for i in range(s22.shape[1])]
-        result = _compute_contribution(s22, "H 1s", reduced, 0.3, "a")
+    def test_high_threshold_filters_all(self, h2_rhf) -> None:
+        """Contribution threshold of 2.0 (relative) should select nothing."""
+        space = [(0, 0.0), (1, 0.0)]
+        result = _compute_contribution(
+            mf=h2_rhf,
+            label="H 1s",
+            active_mo_coeff=h2_rhf.mo_coeff,
+            reduced_space_indices=space,
+            contribution=2.0,
+            contribution_type="r",
+            secondary_basis="minao",
+        )
+        assert result == []
+
+    def test_zero_threshold_selects_all(self, h2_rhf) -> None:
+        """Contribution threshold of 0.0 selects every orbital."""
+        space = [(0, 0.0), (1, 0.0)]
+        result = _compute_contribution(
+            mf=h2_rhf,
+            label="H 1s",
+            active_mo_coeff=h2_rhf.mo_coeff,
+            reduced_space_indices=space,
+            contribution=0.0,
+            contribution_type="a",
+            secondary_basis="minao",
+        )
         assert len(result) == 2
 
-    def test_currently_returns_none_none(self):
-        # NOTE: _compute_contribution does not yet return selection results.
-        # This test documents the known incomplete state; update when implemented.
-        s22 = self._make_s22()
-        reduced = [(i, 0.5) for i in range(s22.shape[1])]
-        s, above = _compute_contribution(s22, "test", reduced, 0.3, "a")
-        assert s is None
-        assert above is None
+    def test_no_secondary_basis_uses_original(self, h2_rhf) -> None:
+        space = [(0, 0.0), (1, 0.0)]
+        result = _compute_contribution(
+            mf=h2_rhf,
+            label="H 1s",
+            active_mo_coeff=h2_rhf.mo_coeff,
+            reduced_space_indices=space,
+            contribution=0.0,
+            contribution_type="a",
+            secondary_basis=None,
+        )
+        assert isinstance(result, list)
 
-    def test_relative_mode_normalises_by_max(self, capsys):
-        # With contribution_type='r', contributions are normalised by the max.
-        # The max normalised value should be 1.0 (printed to stdout).
-        s22 = np.array([[1.0, 0.0, 0.5]])  # 1 AO row, 3 MOs
-        reduced = [(0, 0.8), (1, 0.6), (2, 0.4)]
-        _compute_contribution(s22, "test", reduced, 0.5, "r")
-        captured = capsys.readouterr().out
-        # Orbital 0 has max contribution → normalised to 1.0
-        assert "1.0000" in captured
+    def test_mismatched_mo_coeff_raises(self, h2_rhf) -> None:
+        """Wrong-shape active_mo_coeff should raise ValueError."""
+        bad_coeff = np.zeros((5, 2))  # 5 rows instead of 2
+        space = [(0, 0.0), (1, 0.0)]
+        with pytest.raises(ValueError, match="Mismatch"):
+            _compute_contribution(
+                mf=h2_rhf,
+                label="H 1s",
+                active_mo_coeff=bad_coeff,
+                reduced_space_indices=space,
+                contribution=0.0,
+                contribution_type="a",
+                secondary_basis="minao",
+            )
 
-    def test_absolute_mode_uses_raw_contribution(self, capsys):
-        # Raw sum of |j| for orbital 0 is 1.0; should appear in output
-        s22 = np.array([[1.0, 0.2]])
-        reduced = [(0, 0.8), (1, 0.6)]
-        _compute_contribution(s22, "test", reduced, 0.5, "a")
-        captured = capsys.readouterr().out
-        assert "1.0000" in captured
+    def test_weights_are_non_negative(self, h2_rhf) -> None:
+        space = [(0, 0.0), (1, 0.0)]
+        result = _compute_contribution(
+            mf=h2_rhf,
+            label="H 1s",
+            active_mo_coeff=h2_rhf.mo_coeff,
+            reduced_space_indices=space,
+            contribution=0.0,
+            contribution_type="a",
+            secondary_basis="minao",
+        )
+        for _, w in result:
+            assert w >= 0.0
 
-    def test_above_below_separator_printed(self, capsys):
-        s22 = np.array([[0.8, 0.3]])
-        reduced = [(0, 0.5), (1, 0.5)]
-        _compute_contribution(s22, "O 2p", reduced, 0.5, "a")
-        out = capsys.readouterr().out
-        assert "above" in out
-        assert "below" in out
+
+class TestSelectByLabel:
+    """select_by_label is a thin wrapper — just verify it delegates correctly."""
+
+    def test_returns_list(self, h2_rhf) -> None:
+        space = [(0, 0.0), (1, 0.0)]
+        result = select_by_label(
+            label="H 1s",
+            mf=h2_rhf,
+            active_mo_coeff=h2_rhf.mo_coeff,
+            space=space,
+            contribution=0.0,
+            projected_basis="minao",
+            contribution_type="a",
+        )
+        assert isinstance(result, list)
+
+    def test_consistent_with_compute_contribution(self, h2_rhf) -> None:
+        space = [(0, 0.0), (1, 0.0)]
+        direct = _compute_contribution(
+            mf=h2_rhf,
+            label="H 1s",
+            active_mo_coeff=h2_rhf.mo_coeff,
+            reduced_space_indices=space,
+            contribution=0.5,
+            contribution_type="r",
+            secondary_basis="minao",
+        )
+        via_label = select_by_label(
+            label="H 1s",
+            mf=h2_rhf,
+            active_mo_coeff=h2_rhf.mo_coeff,
+            space=space,
+            contribution=0.5,
+            projected_basis="minao",
+            contribution_type="r",
+        )
+        assert direct == via_label
+
+
+class TestSelectByAoProjection:
+    def test_returns_ndarray(self, h2_rhf) -> None:
+        result = select_by_ao_projection(
+            mf=h2_rhf,
+            ao_labels=["H 1s"],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+        )
+        assert isinstance(result, np.ndarray)
+
+    def test_indices_in_valid_range(self, h2_rhf) -> None:
+        result = select_by_ao_projection(
+            mf=h2_rhf,
+            ao_labels=["H 1s"],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+        )
+        n_mo = h2_rhf.mo_coeff.shape[1]
+        assert all(0 <= idx < n_mo for idx in result)
+
+    def test_sorted_output(self, h2_rhf) -> None:
+        result = select_by_ao_projection(
+            mf=h2_rhf,
+            ao_labels=["H 1s"],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+        )
+        assert list(result) == sorted(result)
+
+    def test_no_duplicates(self, h2_rhf) -> None:
+        result = select_by_ao_projection(
+            mf=h2_rhf,
+            ao_labels=["H 1s"],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+        )
+        assert len(result) == len(set(result.tolist()))
+
+    def test_high_threshold_gives_fewer_orbitals(self, h2_rhf) -> None:
+        low = select_by_ao_projection(
+            mf=h2_rhf,
+            ao_labels=["H 1s"],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+        )
+        high = select_by_ao_projection(
+            mf=h2_rhf,
+            ao_labels=["H 1s"],
+            projected_basis="minao",
+            contribution=0.9,
+            contribution_type="r",
+        )
+        assert len(high) <= len(low)
+
+    def test_top_n_limits_selection(self, h2_rhf) -> None:
+        result = select_by_ao_projection(
+            mf=h2_rhf,
+            ao_labels=["H 1s"],
+            projected_basis="minao",
+            top_n=1,
+        )
+        assert len(result) <= 1
+
+    def test_restricted_space_tuple(self, h2_rhf) -> None:
+        """Tuple restricted_space (occ, virt) is combined internally."""
+        occ_space = [(0, 0.5)]
+        virt_space = [(1, 0.2)]
+        result = select_by_ao_projection(
+            mf=h2_rhf,
+            ao_labels=["H 1s"],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+            restricted_space=(occ_space, virt_space),
+        )
+        assert isinstance(result, np.ndarray)
+        # All returned indices must be from the restricted space
+        allowed = {0, 1}
+        for idx in result:
+            assert idx in allowed
+
+    def test_restricted_space_list(self, h2_rhf) -> None:
+        """List restricted_space is used directly."""
+        restricted = [(0, 0.5), (1, 0.2)]
+        result = select_by_ao_projection(
+            mf=h2_rhf,
+            ao_labels=["H 1s"],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+            restricted_space=restricted,
+        )
+        allowed = {0, 1}
+        for idx in result:
+            assert idx in allowed
+
+    def test_no_projection_basis(self, h2_rhf) -> None:
+        result = select_by_ao_projection(
+            mf=h2_rhf,
+            ao_labels=["H 1s"],
+            projected_basis=None,
+            contribution=0.0,
+            contribution_type="a",
+        )
+        assert isinstance(result, np.ndarray)
