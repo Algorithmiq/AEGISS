@@ -50,11 +50,11 @@ def compute_nos(wfn_obj: Any, *, split_nos: bool = False) -> np.ndarray:
         # Combine occupied and virtual NOs back into a single MO coefficient matrix
         nos_occ = wfn_obj.mo_coeff[:, :nocc] @ u_occ
         nos_virt = wfn_obj.mo_coeff[:, nocc:] @ u_virt
-        return np.ndarray(np.hstack((nos_occ, nos_virt)))
+        return np.hstack((nos_occ, nos_virt))
     print("Building standard NOs by diagonalizing the full 1-RDM.")
     occ_mo, u = np.linalg.eigh(rdm1_mo)
     # sort descending
     idx = np.argsort(occ_mo)[::-1]
     u = u[:, idx]
     mo_coeff = wfn_obj._scf.mo_coeff if hasattr(wfn_obj, "_scf") else wfn_obj.mo_coeff
-    return np.ndarray(mo_coeff @ u)
+    return mo_coeff @ u
