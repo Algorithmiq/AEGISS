@@ -19,10 +19,22 @@ os.environ["SCRATCH_DIR"] = "./aegiss/examples/tmp"
 
 def run_aegiss(
     mol: gto.Mole,
-    initial_guess_fn: Callable,
-    wavefunction_fn: Callable,
-    localization_fn: Callable,
-    active_space_fn: Callable,
+    mf,
+    large_cas_dmrg: tuple[int, int],
+    init_dmrg_bd: int,
+    soe_raking: str = "global",
+    soe_fraction: float = 0.1,
+    soe_fraction_type: str = "r",
+    ao_ranking: str = "global",
+    ao_projection_projected_basis: str | None = "minao",
+    ao_projection_labels: list[str] = ["C 2pz"],
+    ao_projection_contribution: float = 0.5,
+    ao_projection_contribution_type: str = "a",
+
+
+    verbose: int = 0,
+
+
 ) -> np.ndarray:
     """Run the full AEGISS pipeline.
 
@@ -76,33 +88,73 @@ def run_aegiss(
     ...     active_space_fn=partial(select_aegiss, target_atoms=[0, 1]),
     ... )
     """
-    mf = initial_guess_fn(mol)
-    wfn = wavefunction_fn(mf)
-    occ, loc_coeff = localization_fn(wfn)
-    active_indices = active_space_fn(mol, loc_coeff, occ)
-    return active_indices
+    dmrg_ncas, dmrg_nelecas = large_cas_dmrg
+    active_orbs, virt_orbs = get_subspaces_from_cas(mf,
+                                                    ncas=dmrg_ncas,
+                                                    nelecas=dmrg_nelecas)
+    _, soe1, _ , _ = run_dmrg( mf,
+                    ncas=dmrg_ncas,
+                    nelecas=dmrg_nelecas,
+                    symm_type='SZ',
+                    init_bond_dim=init_dmrg_bd,
+                    verbosity=verbose,
+                    get_qmi=False)
+
+    screened_occ, screened_virt = select_by_entropy(occ_orbs=active_orbs,
+                    virt_orbs=virt_orbs,
+                    soe1=soe1,
+                    ranking='relative',
+                    fraction=0.1,
+                    fraction_type='r')
+
+    save_orbitals_from_entropies(mol,
+                                    mf.mo_coeff,
+                                    screened_occ,
+                                    filename_prefix="benzene_entropy",
+                                    folder="./aegiss/examples/orbs/")
+
+    save_orbitals_from_entropies(mol,
+                                    mf.mo_coeff,
+                                    screened_virt,
+                                    filename_prefix="benzene_entropy",
+                                    folder="./aegiss/examples/orbs/")
+
+    final_space = select_by_ao_projection(mf,
+                ao_labels=["C 2pz"],
+                contribution=0.5,
+                projected_basis='minao',
+                contribution_type='a',
+                restricted_space=(screened_occ,screened_virt))
+
+    save_orbitals(mol,
+                mf.mo_coeff,
+                final_space,
+                filename_prefix="benzene_aegiss",
+                folder="./aegiss/examples/orbs/")
+
+    return final_space
 
 
 if __name__ == "__main__":
-    
+
     # print_banner()
     # atom = './aegiss/examples/data/water.xyz'
     # mol = build_mol(atom,basis='sto3g', verbose=4)
     # mf = run_scf(mol)
     # dmrg_ncas, dmrg_nelecas = 6, 8
-    
+
     # active_orbs, virt_orbs = get_subspaces_from_cas(mf, ncas=dmrg_ncas, nelecas=dmrg_nelecas)
-    # _, soe1, _ , minfo = run_dmrg(  mf, 
-    #                                 ncas=dmrg_ncas, 
-    #                                 nelecas=dmrg_nelecas, 
+    # _, soe1, _ , minfo = run_dmrg(  mf,
+    #                                 ncas=dmrg_ncas,
+    #                                 nelecas=dmrg_nelecas,
     #                                 symm_type='SZ',
     #                                 init_bond_dim=dmrg_nelecas,
-    #                                 verbosity=0, 
+    #                                 verbosity=0,
     #                                 get_qmi=True)
-    
-    # screened_occ, screened_virt = select_by_entropy(occ_orbs=active_orbs, 
-    #                              virt_orbs=virt_orbs, 
-    #                              soe1=soe1, 
+
+    # screened_occ, screened_virt = select_by_entropy(occ_orbs=active_orbs,
+    #                              virt_orbs=virt_orbs,
+    #                              soe1=soe1,
     #                              ranking='relative',
     #                              fraction=0,
     #                              fraction_type='r')
@@ -113,52 +165,13 @@ if __name__ == "__main__":
     #                         projected_basis='minao',
     #                         contribution_type='a',
     #                         restricted_space=(screened_occ,screened_virt))
-    
-    
-    
+
+
+
     print_banner()
     atom = './aegiss/examples/data/benzene.xyz'
-    mol = build_mol(atom,basis='ccpvdz', symmetry=False, verbose=2)
+    mol = build_mol(atom,basis='ccpvdz',
+                    symmetry=False,
+                    verbose=2)
     mf = run_scf(mol)
     dmrg_ncas, dmrg_nelecas = 20, 20
-
-    active_orbs, virt_orbs = get_subspaces_from_cas(mf, ncas=dmrg_ncas, nelecas=dmrg_nelecas)
-    _, soe1, _ , minfo = run_dmrg( mf,
-                    ncas=dmrg_ncas,
-                    nelecas=dmrg_nelecas,
-                    symm_type='SZ',
-                    init_bond_dim=10,
-                    verbosity=0,
-                    get_qmi=True)
-
-    screened_occ, screened_virt = select_by_entropy(occ_orbs=active_orbs,
-                    virt_orbs=virt_orbs,
-                    soe1=soe1,
-                    ranking='relative',
-                    fraction=0.1,
-                    fraction_type='r')
-    
-    save_orbitals_from_entropies(mol,
-                                    mf.mo_coeff, 
-                                    screened_occ, 
-                                    filename_prefix="benzene_entropy",
-                                    folder="./aegiss/examples/orbs/")
-
-    save_orbitals_from_entropies(mol,
-                                    mf.mo_coeff, 
-                                    screened_virt, 
-                                    filename_prefix="benzene_entropy",
-                                    folder="./aegiss/examples/orbs/")
-
-    final_space = select_by_ao_projection(mf,
-                ao_labels=["C 2pz"],
-                contribution=0.5,
-                projected_basis='minao',
-                contribution_type='a',
-                restricted_space=(screened_occ,screened_virt))
-    
-    save_orbitals(mol,
-                mf.mo_coeff, 
-                final_space, 
-                filename_prefix="benzene_aegiss",
-                folder="./aegiss/examples/orbs/")
