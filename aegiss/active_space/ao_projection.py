@@ -189,7 +189,10 @@ def select_by_ao_projection(
             selected_indices_for_label = selected_indices_for_label[:top_n]  # select only the top N orbitals for this label
         selected_indices.update(idx for idx, _ in selected_indices_for_label)
         
-    print("\nFinal selected orbital indices:", sorted(selected_indices))
+    
+    print("\nFinal selected orbital indices:")
+    for idx in sorted(selected_indices):
+        print(f"\tOrbital {idx}")
     return np.array(sorted(selected_indices))
     
 
