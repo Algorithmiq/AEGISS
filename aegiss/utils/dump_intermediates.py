@@ -24,8 +24,7 @@ def dump_qmi(
     soe2 : np.ndarray or None
         Double orbital entropy values, or ``None`` if not computed.
     path : Path or str
-        Output file path. If the ``.npz`` suffix is omitted, ``numpy.savez``
-        appends it automatically.
+        Output file path (without extension; ``.npz`` is appended by numpy).
     """
     filename = Path(path)
     data: dict[str, np.ndarray] = {"minfo": minfo, "soe1": soe1}
