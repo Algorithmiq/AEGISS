@@ -17,16 +17,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          activate-environment: true
-          enable-cache: true
-          python-version: "3.12"
-
-      - name: Install dev dependencies
-        run: uv sync --group dev
-
       - name: Run pre-commit for linting
         uses: pre-commit/action@v3.0.1
         env:
