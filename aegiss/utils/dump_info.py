@@ -34,11 +34,12 @@ def save_orbitals(
     folder : str
         Output directory path. Created if it does not exist.
     """
-    Path(folder).mkdir(parents=True, exist_ok=True)
+    output_dir = Path(folder)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     for i in candidate_indices:
-        filename = f"{folder}{filename_prefix}_{i}.cube"
-        cubegen.orbital(mol, filename, mo_coeff[:, i])
+        filename = output_dir / f"{filename_prefix}_{i}.cube"
+        cubegen.orbital(mol, str(filename), mo_coeff[:, i])
 
 
 def save_orbitals_from_entropies(
@@ -64,8 +65,9 @@ def save_orbitals_from_entropies(
     folder : str
         Output directory path. Created if it does not exist.
     """
-    Path(folder).mkdir(parents=True, exist_ok=True)
+    output_dir = Path(folder)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     for i, _ in candidate_indices:
-        filename = f"{folder}{filename_prefix}_{i}.cube"
-        cubegen.orbital(mol, filename, mo_coeff[:, i])
+        filename = output_dir / f"{filename_prefix}_{i}.cube"
+        cubegen.orbital(mol, str(filename), mo_coeff[:, i])
