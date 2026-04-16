@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 from aegiss.initial_guess import build_mol, run_scf
@@ -17,7 +18,9 @@ class TestBuildMol:
         assert mol.nao == 2
 
     def test_kwargs_forwarded(self) -> None:
-        mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0, symmetry=False)
+        mol = build_mol(
+            "H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0, symmetry=False
+        )
         assert not mol.symmetry
 
     def test_nao_changes_with_basis(self) -> None:
@@ -39,8 +42,6 @@ class TestRunScf:
 
     def test_h2_rhf_mo_occ_sum(self, h2_rhf) -> None:
         # H2 has 2 electrons
-        import numpy as np
-
         assert abs(float(np.sum(h2_rhf.mo_occ)) - 2.0) < 1e-10
 
     def test_unknown_method_raises(self) -> None:

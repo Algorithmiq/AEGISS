@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -35,7 +36,7 @@ def mock_mf_6mo() -> MagicMock:
 
 
 @pytest.fixture(scope="session")
-def h2_rhf():
+def h2_rhf() -> Any:
     """H2 RHF/sto-3g mean-field object — computed once per session."""
     mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", symmetry=False, verbose=0)
     return run_scf(mol, method="RHF", verbose=0)

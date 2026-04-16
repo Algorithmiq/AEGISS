@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+from typing import TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from unittest.mock import MagicMock
 import pytest
 
 from aegiss.utils.orbital_indices import (
@@ -50,8 +53,8 @@ class TestGetOrbitalSpaces:
         frozen_occ, active_occ, active_virt, frozen_virt = get_orbital_spaces(
             mock_mf_7mo, [2, 3, 4, 5]
         )
-        assert len(frozen_occ) == 2   # 0,1
-        assert len(active_occ) == 2   # 2,3
+        assert len(frozen_occ) == 2  # 0,1
+        assert len(active_occ) == 2  # 2,3
         assert len(active_virt) == 2  # 4,5
         assert len(frozen_virt) == 1  # 6
 
@@ -71,13 +74,17 @@ class TestGetOrbitalSpaces:
         _, _, _, frozen_virt = get_orbital_spaces(mock_mf_7mo, [2, 3, 4, 5])
         np.testing.assert_array_equal(frozen_virt, [6])
 
-    def test_unique_virt_space_active_virt_is_empty(self, mock_mf_7mo: MagicMock) -> None:
+    def test_unique_virt_space_active_virt_is_empty(
+        self, mock_mf_7mo: MagicMock
+    ) -> None:
         _, _, active_virt, _ = get_orbital_spaces(
             mock_mf_7mo, [2, 3], unique_virt_space=True
         )
         assert len(active_virt) == 0
 
-    def test_unique_virt_space_frozen_virt_is_all_virt(self, mock_mf_7mo: MagicMock) -> None:
+    def test_unique_virt_space_frozen_virt_is_all_virt(
+        self, mock_mf_7mo: MagicMock
+    ) -> None:
         _, _, _, frozen_virt = get_orbital_spaces(
             mock_mf_7mo, [2, 3], unique_virt_space=True
         )
@@ -103,9 +110,7 @@ class TestGetSubspacesFromCas:
     def test_basic_cas(self, mock_mf_7mo: MagicMock) -> None:
         """ncas=4, nelecas=4 → 2 active occ + 2 active virt."""
         mock_mf_7mo.mol.nao = 7
-        active_occ, active_virt = get_subspaces_from_cas(
-            mock_mf_7mo, ncas=4, nelecas=4
-        )
+        active_occ, active_virt = get_subspaces_from_cas(mock_mf_7mo, ncas=4, nelecas=4)
         assert len(active_occ) == 2
         assert len(active_virt) == 2
 
@@ -144,8 +149,6 @@ class TestGetSubspacesFromCas:
 
     def test_returns_ndarrays(self, mock_mf_7mo: MagicMock) -> None:
         mock_mf_7mo.mol.nao = 7
-        active_occ, active_virt = get_subspaces_from_cas(
-            mock_mf_7mo, ncas=4, nelecas=4
-        )
+        active_occ, active_virt = get_subspaces_from_cas(mock_mf_7mo, ncas=4, nelecas=4)
         assert isinstance(active_occ, np.ndarray)
         assert isinstance(active_virt, np.ndarray)

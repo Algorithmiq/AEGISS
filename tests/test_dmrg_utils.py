@@ -46,41 +46,43 @@ class TestDefaultDmrgSchedule:
         assert all(t > 0.0 for t in thrds)
 
     def test_invalid_init_bond_dim_raises(self) -> None:
-        with pytest.raises(ValueError, match="init_bond_dim must be a positive integer"):
+        with pytest.raises(
+            ValueError, match="init_bond_dim must be a positive integer"
+        ):
             _default_dmrg_schedule(init_bond_dim=0)
 
     def test_negative_init_bond_dim_raises(self) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError, match="init_bond_dim must be a positive integer"
+        ):
             _default_dmrg_schedule(init_bond_dim=-5)
 
 
 class TestComputeQmi:
     def test_returns_three_arrays(self) -> None:
-        n = 4
         soe1 = np.array([0.1, 0.5, 0.4, 0.2])
         soe2 = np.outer(soe1, soe1) * 2.0
 
         driver = type("FakeDriver", (), {})()
 
-        def _get_orbital_entropies(ket: object, orb_type: int) -> np.ndarray:
+        def _get_orbital_entropies(_ket: object, orb_type: int) -> np.ndarray:
             return soe1 if orb_type == 1 else soe2
 
         driver.get_orbital_entropies = _get_orbital_entropies  # type: ignore[attr-defined]
 
         ordm1, ordm2, minfo = compute_qmi(driver, ket=None)
 
-        assert ordm1.shape == (n,)
-        assert ordm2.shape == (n, n)
-        assert minfo.shape == (n, n)
+        assert ordm1.shape == (4,)
+        assert ordm2.shape == (4, 4)
+        assert minfo.shape == (4, 4)
 
     def test_minfo_diagonal_is_zero(self) -> None:
-        n = 4
         soe1 = np.array([0.1, 0.5, 0.4, 0.2])
         soe2 = np.outer(soe1, soe1) * 2.0
 
         driver = type("FakeDriver", (), {})()
 
-        def _get_orbital_entropies(ket: object, orb_type: int) -> np.ndarray:
+        def _get_orbital_entropies(_ket: object, orb_type: int) -> np.ndarray:
             return soe1 if orb_type == 1 else soe2
 
         driver.get_orbital_entropies = _get_orbital_entropies  # type: ignore[attr-defined]
@@ -101,7 +103,7 @@ class TestComputeQmi:
 
         driver = type("FakeDriver", (), {})()
 
-        def _get_orbital_entropies(ket: object, orb_type: int) -> np.ndarray:
+        def _get_orbital_entropies(_ket: object, orb_type: int) -> np.ndarray:
             return soe1 if orb_type == 1 else soe2
 
         driver.get_orbital_entropies = _get_orbital_entropies  # type: ignore[attr-defined]

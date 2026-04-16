@@ -37,7 +37,7 @@ class TestGlobalEntropyRanking:
         all_sel = occ_sel + virt_sel
         # All selected should have s1 / max_s1 >= 0.5
         max_s1 = np.max(soe1)
-        for idx, s in all_sel:
+        for _idx, s in all_sel:
             assert s / max_s1 >= 0.5
 
     def test_absolute_threshold(self, simple_orbs) -> None:
@@ -47,7 +47,7 @@ class TestGlobalEntropyRanking:
         )
         all_sel = occ_sel + virt_sel
         # absolute: raw soe1 values >=0.5
-        for idx, s in all_sel:
+        for idx, _s in all_sel:
             assert soe1[np.where(np.concatenate((occ, virt)) == idx)[0][0]] >= 0.5
 
     def test_all_selected_when_threshold_zero(self, simple_orbs) -> None:
@@ -175,10 +175,10 @@ class TestSelectByEntropy:
     def test_default_fraction_type_is_relative(self, simple_orbs) -> None:
         occ, virt, soe1 = simple_orbs
         # default fraction_type="r" — result should differ from absolute
-        sel_occ_r, sel_virt_r = select_by_entropy(
+        sel_occ_r, _ = select_by_entropy(
             occ, virt, soe1, fraction=0.5, fraction_type="r", ranking="relative"
         )
-        sel_occ_a, sel_virt_a = select_by_entropy(
+        sel_occ_a, _ = select_by_entropy(
             occ, virt, soe1, fraction=0.5, fraction_type="a", ranking="relative"
         )
         # The results may differ; at minimum both calls should succeed
