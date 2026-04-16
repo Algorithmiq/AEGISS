@@ -158,7 +158,7 @@ def _relative_entropy_ranking(
 def select_by_entropy(
     occ_orbs: np.ndarray,
     virt_orbs: np.ndarray,
-    soe1: np.ndarray,
+    soe1: np.ndarray | None,
     fraction: float = 0.1,
     fraction_type: Literal["r", "a"] = "r",
     ranking: Literal["global", "relative"] = "global",
@@ -190,6 +190,9 @@ def select_by_entropy(
         Selected virtual orbitals with entropy values.
     """
     print("\n----------------Entropy Screening for AEGISS----------------\n")
+    if soe1 is None:
+        print("No single-orbital entropies provided. Returning empty selection.")
+        return [], []
     n_orbs = len(soe1)
 
     if ranking == "global":
