@@ -57,4 +57,4 @@ def compute_nos(wfn_obj: Any, *, split_nos: bool = False) -> np.ndarray:
     idx = np.argsort(occ_mo)[::-1]
     u = u[:, idx]
     mo_coeff = wfn_obj._scf.mo_coeff if hasattr(wfn_obj, "_scf") else wfn_obj.mo_coeff
-    return mo_coeff @ u
+    return np.asarray(mo_coeff @ u)
