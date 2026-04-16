@@ -80,7 +80,10 @@ def _compute_contribution(
     projected_weights: list[tuple[int, float]]
     if contribution_type == "r":
         max_contribution = max(weight for _, weight in raw_weights)
-        projected_weights = [(i, w / max_contribution) for i, w in raw_weights]
+        if max_contribution == 0.0:
+            projected_weights = [(i, 0.0) for i, _ in raw_weights]
+        else:
+            projected_weights = [(i, w / max_contribution) for i, w in raw_weights]
     else:
         projected_weights = raw_weights
     sorted_weights = sorted(projected_weights, key=lambda x: x[1], reverse=True)
