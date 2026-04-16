@@ -1,11 +1,19 @@
+"""DMRG utilities: default schedule and quantum mutual information computation."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from pyblock2.driver.core import DMRGDriver
+
+if TYPE_CHECKING:
+    from pyblock2.driver.core import DMRGDriver
+
 
 def _default_dmrg_schedule(
     init_bond_dim: int = 20,
 ) -> tuple[list[int], list[float], list[float]]:
-    """Define a default DMRG schedule for Block2  ``DMRGDriver.solve`` method.
+    """Define a default DMRG schedule for Block2 ``DMRGDriver.solve`` method.
 
     Args:
         init_bond_dim: Initial bond dimension for the first two sweeps. The
@@ -55,12 +63,33 @@ def _default_dmrg_schedule(
     return bond_dims, noises, thrds
 
 
+def compute_qmi(
+    driver: DMRGDriver,
+    ket: Any,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute quantum mutual information (QMI) from a DMRG state.
 
-def compute_qmi(driver: DMRGDriver, 
-                ket):
+    Parameters
+    ----------
+    driver : DMRGDriver
+        Block2 DMRG driver after a completed calculation.
+    ket : MPS
+        Many-particle state (MPS) from which entropies are extracted.
+
+    Returns:
+    -------
+    ordm1 : np.ndarray
+        Single-orbital entropies.
+    ordm2 : np.ndarray
+        Two-orbital entropies.
+    minfo : np.ndarray
+        Quantum mutual information matrix.
+    """
     ordm1 = driver.get_orbital_entropies(ket, orb_type=1)
     ordm2 = driver.get_orbital_entropies(ket, orb_type=2)
-    
-    minfo = 0.5 * (ordm1[:, None] + ordm1[None, :] - ordm2) * (1 - np.identity(len(ordm1)))
-    
+
+    minfo = (
+        0.5 * (ordm1[:, None] + ordm1[None, :] - ordm2) * (1 - np.identity(len(ordm1)))
+    )
+
     return ordm1, ordm2, minfo

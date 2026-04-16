@@ -1,3 +1,5 @@
-from aegiss.initial_guess.scf import run_scf, build_mol
+"""Initial guess construction: HF and DFT mean-field calculations."""
 
-__all__ = ["run_scf", "build_mol"]
+from aegiss.initial_guess.scf import build_mol, run_scf
+
+__all__ = ["build_mol", "run_scf"]

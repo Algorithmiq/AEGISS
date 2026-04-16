@@ -1,24 +1,61 @@
 """DMRG wavefunction retrieval via block2/PySCF DMRGSCF."""
+
 from __future__ import annotations
 
 import os
 import time
-import numpy as np
-from pyscf import mcscf, ao2mo
+from typing import TYPE_CHECKING, Any
+
 from pyblock2.driver.core import DMRGDriver, SymmetryTypes
+from pyscf import ao2mo, mcscf
+
 from aegiss.utils.dmrg_utils import _default_dmrg_schedule, compute_qmi
 
+if TYPE_CHECKING:
+    import numpy as np
 
-def run_dmrg(mf, 
-             ncas: int, 
-             nelecas: int, 
-             init_bond_dim: int = 10, 
-             symm_type: str = "SU2",
-             verbosity: int = 0,
-             *,
-             get_qmi = False) -> tuple[float, np.ndarray | None, np.ndarray | None, np.ndarray | None]:
-    
-    n_threads = int(os.environ.get("OMP_NUM_THREADS", 4))
+
+def run_dmrg(
+    mf: Any,
+    ncas: int,
+    nelecas: int,
+    init_bond_dim: int = 10,
+    symm_type: str = "SU2",
+    verbosity: int = 0,
+    *,
+    get_qmi: bool = False,
+) -> tuple[float, np.ndarray | None, np.ndarray | None, np.ndarray | None]:
+    """Run a DMRG calculation using block2 via a PySCF CASCI integral driver.
+
+    Parameters
+    ----------
+    mf : pyscf.scf.hf.SCF
+        Converged mean-field object.
+    ncas : int
+        Number of active orbitals.
+    nelecas : int
+        Number of active electrons.
+    init_bond_dim : int
+        Initial bond dimension for the DMRG schedule.
+    symm_type : {'SU2', 'SZ'}
+        Spin symmetry type for block2.
+    verbosity : int
+        Verbosity level for block2 output.
+    get_qmi : bool
+        If ``True``, compute and return quantum mutual information.
+
+    Returns:
+    -------
+    energy : float
+        DMRG ground-state energy.
+    soe1 : np.ndarray or None
+        Single-orbital entropies (``None`` if *get_qmi* is ``False``).
+    soe2 : np.ndarray or None
+        Two-orbital entropies (``None`` if *get_qmi* is ``False``).
+    minfo : np.ndarray or None
+        Quantum mutual information matrix (``None`` if *get_qmi* is ``False``).
+    """
+    n_threads = int(os.environ.get("OMP_NUM_THREADS", "4"))
     scratch_dir = os.environ.get("SCRATCH_DIR", "./tmp")
     if symm_type == "SU2":
         symm = SymmetryTypes.SU2
@@ -27,26 +64,24 @@ def run_dmrg(mf,
     else:
         raise ValueError(f"Unsupported symmetry type: {symm_type}")
 
-    print(f"\n----------------DMRG Calculation (symmetry: {symm_type})----------------\n")
-    driver = DMRGDriver(scratch=scratch_dir,
-                        symm_type=symm, 
-                        n_threads=n_threads,
-                        n_mkl_threads=1)
-    
+    print(
+        f"\n----------------DMRG Calculation (symmetry: {symm_type})----------------\n"
+    )
+    driver = DMRGDriver(
+        scratch=scratch_dir, symm_type=symm, n_threads=n_threads, n_mkl_threads=1
+    )
+
     mycas = mcscf.CASCI(mf, ncas, nelecas)
     print("Using pyscf.CASCI to obtain integrals for DMRG...")
     print(f"CAS (ncas={ncas}, nelecas={nelecas})")
     h1e, ecore = mycas.get_h1eff()
     g2e = ao2mo.restore(1, mycas.get_h2eff(), ncas)
-    
-    driver.initialize_system(
-        n_sites=ncas,
-        n_elec=nelecas,
-        spin=0
-    )
+
+    driver.initialize_system(n_sites=ncas, n_elec=nelecas, spin=0)
 
     print(
-        f"System parameters: n_sites={driver.n_sites}, n_elec={driver.n_elec}, spin=0, symm_type={symm_type}"
+        f"System parameters: n_sites={driver.n_sites}, n_elec={driver.n_elec},"
+        f" spin=0, symm_type={symm_type}"
     )
     print(f"Scratch directory: {scratch_dir}")
     print(f"Number of threads: {n_threads}")
@@ -56,7 +91,9 @@ def run_dmrg(mf,
     n_sweeps = len(bond_dims)
     twosite_to_onesite = max(n_sweeps - 2, 0)
     print(
-        f"DMRG settings: n_sweeps = {n_sweeps}, init_bond_dim = {init_bond_dim}, final_bond_dim = {bond_dims[-1]}, twosite_to_onesite = {twosite_to_onesite}"
+        f"DMRG settings: n_sweeps = {n_sweeps}, init_bond_dim = {init_bond_dim},"
+        f" final_bond_dim = {bond_dims[-1]},"
+        f" twosite_to_onesite = {twosite_to_onesite}"
     )
     print(f"DMRG Noise: init = {noises[0]}, final = {noises[-1]}")
     print(f"DMRG Threshold: init = {thrds[0]}, final = {thrds[-1]}\n")
@@ -86,7 +123,7 @@ def run_dmrg(mf,
     soe1, soe2, minfo = None, None, None
     if symm_type == "SU2":
         print("Mapping SU(2) MPS and MPO to SZ")
-        
+
         driver.align_mps_center(ket, ref=0)
         zket = driver.mps_change_to_sz(ket, "ZKET")
 
@@ -99,9 +136,8 @@ def run_dmrg(mf,
         print(f"SZ Energy: {driver.expectation(zket, mpo, zket):.8f}")
         if get_qmi:
             soe1, soe2, minfo = compute_qmi(driver, zket)
-        
+
     elif get_qmi:
         soe1, soe2, minfo = compute_qmi(driver, ket)
-    
-    return energy, soe1, soe2, minfo
 
+    return energy, soe1, soe2, minfo

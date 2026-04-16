@@ -133,6 +133,8 @@ ignore = [
     "PLR0915", # pylint refactor: too many statements
     "PLR2004", # pylint refactor: magic value used in comparison
     "W191",    # tab-indentation: enforced by the formatter
+    "T201",    # print: intentional progress output in scientific code
+    "ANN401",  # Any type: needed for pyscf/block2 untyped objects
 ]
 unfixable = [
     "ERA",  # removes commented-out code

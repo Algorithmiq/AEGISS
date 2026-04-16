@@ -1,22 +1,25 @@
 """HF and DFT initial guesses via PySCF."""
+
 from __future__ import annotations
 
-from typing import Literal, overload
+from typing import Any, Literal, overload
 
 from pyscf import dft, scf
 
-def build_mol(atom, **kwargs):
+
+def build_mol(atom: Any, **kwargs: Any) -> Any:
     """Helper function to build a PySCF molecule object.
 
     Parameters
     ----------
     atom : str or list of str
-        Atomic geometry in PySCF format, e.g. "N 0 0 0; N 0 0 1.1" or
-        ["N 0 0 0", "N 0 0 1.1"].
+        Atomic geometry in PySCF format, e.g. ``"N 0 0 0; N 0 0 1.1"`` or
+        ``["N 0 0 0", "N 0 0 1.1"]``.
     **kwargs
-        Additional keyword arguments to pass to the Mole object, e.g. ``basis="ccpvdz"``.
-        
-    Returns
+        Additional keyword arguments to pass to the Mole object,
+        e.g. ``basis="ccpvdz"``.
+
+    Returns:
     -------
     mol : pyscf.gto.Mole
         Molecule object with specified geometry and basis set.
@@ -24,7 +27,7 @@ def build_mol(atom, **kwargs):
     print("\n----------Building Molecule----------")
     mol = scf.gto.Mole()
     mol.atom = atom
-    print('Molecular geometry:')
+    print("Molecular geometry:")
     print(mol.atom)
     for key, val in kwargs.items():
         print(f"Setting mol.{key} = {val}")
@@ -32,11 +35,12 @@ def build_mol(atom, **kwargs):
     mol.build()
     return mol
 
+
 @overload
 def run_scf(
     mol: scf.hf.SCF,
     method: Literal["RHF", "rhf", "UHF", "uhf"] = ...,
-    **kwargs,
+    **kwargs: Any,
 ) -> scf.hf.SCF: ...
 
 
@@ -45,11 +49,17 @@ def run_scf(
     mol: scf.hf.SCF,
     method: Literal["RKS", "rks", "UKS", "uks"] = ...,
     xc: str = ...,
-    **kwargs,
+    **kwargs: Any,
 ) -> dft.rks.KohnShamDFT: ...
 
 
-def run_scf(mol, method="RHF", xc="b3lyp", solvent_info: tuple[str, float] | None = None, **kwargs):
+def run_scf(
+    mol: Any,
+    method: str = "RHF",
+    xc: str = "b3lyp",
+    solvent_info: tuple[str, float] | None = None,
+    **kwargs: Any,
+) -> Any:
     """Run an HF or KS-DFT mean-field calculation.
 
     Parameters
@@ -62,14 +72,13 @@ def run_scf(mol, method="RHF", xc="b3lyp", solvent_info: tuple[str, float] | Non
         Exchange-correlation functional; only used when *method* is
         ``'RKS'`` or ``'UKS'``. Default is ``'b3lyp'``.
     solvent_info : tuple[str, float], optional
-        Solvent model to use, specified as a tuple of (model, dielectric constant),
+        Solvent model to use, specified as ``(model, dielectric_constant)``,
         e.g. ``('PCM', 78.4)`` for water. Default is ``None`` (no solvent).
-        
     **kwargs
         Additional attributes forwarded to the PySCF mean-field object
         (e.g. ``max_cycle=50``).
 
-    Returns
+    Returns:
     -------
     mf : pyscf.scf.SCF or pyscf.dft.KohnShamDFT
         Converged mean-field object.
@@ -77,7 +86,7 @@ def run_scf(mol, method="RHF", xc="b3lyp", solvent_info: tuple[str, float] | Non
     method = method.upper()
 
     print(f"\n----------SCF Calculation (Method {method})----------")
-    
+
     if method in ("RHF", "UHF"):
         mf = getattr(scf, method)(mol)
     elif method in ("RKS", "UKS"):
@@ -88,17 +97,17 @@ def run_scf(mol, method="RHF", xc="b3lyp", solvent_info: tuple[str, float] | Non
 
     for key, val in kwargs.items():
         setattr(mf, key, val)
-    
+
     if solvent_info is not None:
-        from pyscf import solvent
-        from pyscf.solvent import PCM, DDCOSMO
+        from pyscf.solvent import DDCOSMO, PCM  # noqa: PLC0415, F401
+
         model, eps = solvent_info
         model = model.upper()
-        if 'PCM' in model:
+        if "PCM" in model:
             mf = mf.PCM()
             mf.with_solvent.method = model
             mf.with_solvent.eps = eps
-        elif 'DDCOSMO' in model:
+        elif "DDCOSMO" in model:
             mf = mf.DDCOSMO()
             mf.with_solvent.method = model
             mf.with_solvent.eps = eps
