@@ -9,7 +9,6 @@ import pytest
 
 from aegiss.active_space.aegiss import select_aegiss
 
-
 _MODULE = "aegiss.active_space.aegiss"
 
 _SCREENED_OCC = [(2, 0.8), (3, 0.6)]
@@ -50,17 +49,20 @@ def pipeline_patches():
         yield {"save": mock_save, "save_ent": mock_save_ent}
 
 
+@pytest.mark.usefixtures("pipeline_patches")
 class TestRelativeProjectionRanking:
     def test_ao_projection_called_per_subspace(
-        self, mol_mock: MagicMock, mf_mock: MagicMock, pipeline_patches: dict
+        self, mol_mock: MagicMock, mf_mock: MagicMock
     ) -> None:
         with patch(
             f"{_MODULE}.select_by_ao_projection",
             side_effect=[np.array([2, 3]), np.array([5])],
         ) as mock_proj:
             select_aegiss(
-                mol_mock, mf_mock,
-                dmrg_ncas=4, dmrg_nelecas=4,
+                mol_mock,
+                mf_mock,
+                dmrg_ncas=4,
+                dmrg_nelecas=4,
                 projection_ranking="relative",
                 save_orb=False,
             )
@@ -68,15 +70,17 @@ class TestRelativeProjectionRanking:
         assert mock_proj.call_count == 2
 
     def test_passes_occ_and_virt_separately(
-        self, mol_mock: MagicMock, mf_mock: MagicMock, pipeline_patches: dict
+        self, mol_mock: MagicMock, mf_mock: MagicMock
     ) -> None:
         with patch(
             f"{_MODULE}.select_by_ao_projection",
             side_effect=[np.array([2, 3]), np.array([5])],
         ) as mock_proj:
             select_aegiss(
-                mol_mock, mf_mock,
-                dmrg_ncas=4, dmrg_nelecas=4,
+                mol_mock,
+                mf_mock,
+                dmrg_ncas=4,
+                dmrg_nelecas=4,
                 projection_ranking="relative",
                 save_orb=False,
             )
@@ -85,15 +89,17 @@ class TestRelativeProjectionRanking:
         assert mock_proj.call_args_list[1].kwargs["restricted_space"] == _SCREENED_VIRT
 
     def test_returns_sorted_ndarray(
-        self, mol_mock: MagicMock, mf_mock: MagicMock, pipeline_patches: dict
+        self, mol_mock: MagicMock, mf_mock: MagicMock
     ) -> None:
         with patch(
             f"{_MODULE}.select_by_ao_projection",
             side_effect=[np.array([3, 2]), np.array([5])],
         ):
             result = select_aegiss(
-                mol_mock, mf_mock,
-                dmrg_ncas=4, dmrg_nelecas=4,
+                mol_mock,
+                mf_mock,
+                dmrg_ncas=4,
+                dmrg_nelecas=4,
                 projection_ranking="relative",
                 save_orb=False,
             )
@@ -102,15 +108,17 @@ class TestRelativeProjectionRanking:
         assert list(result) == [2, 3, 5]
 
     def test_duplicate_indices_deduplicated(
-        self, mol_mock: MagicMock, mf_mock: MagicMock, pipeline_patches: dict
+        self, mol_mock: MagicMock, mf_mock: MagicMock
     ) -> None:
         with patch(
             f"{_MODULE}.select_by_ao_projection",
             side_effect=[np.array([2, 3]), np.array([3, 5])],
         ):
             result = select_aegiss(
-                mol_mock, mf_mock,
-                dmrg_ncas=4, dmrg_nelecas=4,
+                mol_mock,
+                mf_mock,
+                dmrg_ncas=4,
+                dmrg_nelecas=4,
                 projection_ranking="relative",
                 save_orb=False,
             )
@@ -118,17 +126,20 @@ class TestRelativeProjectionRanking:
         assert list(result) == [2, 3, 5]
 
 
+@pytest.mark.usefixtures("pipeline_patches")
 class TestGlobalProjectionRanking:
     def test_ao_projection_called_once(
-        self, mol_mock: MagicMock, mf_mock: MagicMock, pipeline_patches: dict
+        self, mol_mock: MagicMock, mf_mock: MagicMock
     ) -> None:
         with patch(
             f"{_MODULE}.select_by_ao_projection",
             return_value=np.array([2, 3, 5]),
         ) as mock_proj:
             select_aegiss(
-                mol_mock, mf_mock,
-                dmrg_ncas=4, dmrg_nelecas=4,
+                mol_mock,
+                mf_mock,
+                dmrg_ncas=4,
+                dmrg_nelecas=4,
                 projection_ranking="global",
                 save_orb=False,
             )
@@ -136,31 +147,38 @@ class TestGlobalProjectionRanking:
         mock_proj.assert_called_once()
 
     def test_passes_combined_tuple(
-        self, mol_mock: MagicMock, mf_mock: MagicMock, pipeline_patches: dict
+        self, mol_mock: MagicMock, mf_mock: MagicMock
     ) -> None:
         with patch(
             f"{_MODULE}.select_by_ao_projection",
             return_value=np.array([2, 3, 5]),
         ) as mock_proj:
             select_aegiss(
-                mol_mock, mf_mock,
-                dmrg_ncas=4, dmrg_nelecas=4,
+                mol_mock,
+                mf_mock,
+                dmrg_ncas=4,
+                dmrg_nelecas=4,
                 projection_ranking="global",
                 save_orb=False,
             )
 
-        assert mock_proj.call_args.kwargs["restricted_space"] == (_SCREENED_OCC, _SCREENED_VIRT)
+        assert mock_proj.call_args.kwargs["restricted_space"] == (
+            _SCREENED_OCC,
+            _SCREENED_VIRT,
+        )
 
     def test_returns_sorted_ndarray(
-        self, mol_mock: MagicMock, mf_mock: MagicMock, pipeline_patches: dict
+        self, mol_mock: MagicMock, mf_mock: MagicMock
     ) -> None:
         with patch(
             f"{_MODULE}.select_by_ao_projection",
             return_value=np.array([5, 2, 3]),
         ):
             result = select_aegiss(
-                mol_mock, mf_mock,
-                dmrg_ncas=4, dmrg_nelecas=4,
+                mol_mock,
+                mf_mock,
+                dmrg_ncas=4,
+                dmrg_nelecas=4,
                 projection_ranking="global",
                 save_orb=False,
             )
@@ -178,8 +196,10 @@ class TestOrbitalSaving:
             return_value=np.array([2, 3, 5]),
         ):
             select_aegiss(
-                mol_mock, mf_mock,
-                dmrg_ncas=4, dmrg_nelecas=4,
+                mol_mock,
+                mf_mock,
+                dmrg_ncas=4,
+                dmrg_nelecas=4,
                 save_orb=True,
             )
 
@@ -194,8 +214,10 @@ class TestOrbitalSaving:
             return_value=np.array([2, 3, 5]),
         ):
             select_aegiss(
-                mol_mock, mf_mock,
-                dmrg_ncas=4, dmrg_nelecas=4,
+                mol_mock,
+                mf_mock,
+                dmrg_ncas=4,
+                dmrg_nelecas=4,
                 save_orb=False,
             )
 
@@ -210,12 +232,18 @@ class TestOrbitalSaving:
             return_value=np.array([2]),
         ):
             select_aegiss(
-                mol_mock, mf_mock,
-                dmrg_ncas=4, dmrg_nelecas=4,
+                mol_mock,
+                mf_mock,
+                dmrg_ncas=4,
+                dmrg_nelecas=4,
                 saving_prefix="mytest",
                 save_orb=True,
             )
 
         for call_args in pipeline_patches["save_ent"].call_args_list:
             assert call_args.kwargs["filename_prefix"].startswith("mytest")
-        assert pipeline_patches["save"].call_args.kwargs["filename_prefix"].startswith("mytest")
+        assert (
+            pipeline_patches["save"]
+            .call_args.kwargs["filename_prefix"]
+            .startswith("mytest")
+        )
