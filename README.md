@@ -23,6 +23,7 @@ satisfies *either* condition.
 - [Environment variables](#environment-variables)
 - [Tutorial — benzene π system](#tutorial--benzene-π-system)
 - [API reference](#api-reference)
+  - [select_aegiss](#select_aegiss)
   - [build_mol](#build_mol)
   - [run_scf](#run_scf)
   - [run_dmrg](#run_dmrg)
@@ -178,6 +179,62 @@ Cube files can be opened in VESTA, VMD, or Avogadro.
 ---
 
 ## API reference
+
+### `select_aegiss`
+
+```python
+from aegiss.active_space.aegiss import select_aegiss
+
+active_indices = select_aegiss(
+    mol, mf,
+    dmrg_ncas, dmrg_nelecas,
+    init_bond_dim=10,
+    symm_type="SZ",
+    entropy_ranking="relative",
+    entropy_fraction=0.1,
+    entropy_fraction_type="r",
+    projection_basis="minao",
+    projection_ao_labels=["C 2pz"],
+    projection_contribution=0.5,
+    projection_contribution_type="a",
+    projection_top_n=None,
+    projection_ranking="relative",
+    saving_folder="./orbs/",
+    saving_prefix="molecule",
+    verbosity=0,
+    save_orb=True,
+)
+```
+
+High-level entry point that runs the full pipeline in a single call: DMRG on the
+specified CAS → entropy screening → AO projection. An orbital is kept when it passes
+*either* the entropy or projection criterion.
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `mol` | `pyscf.gto.Mole` | — | Molecular geometry and basis set |
+| `mf` | SCF object | — | Converged mean-field |
+| `dmrg_ncas` | `int` | — | Number of active orbitals for the DMRG calculation |
+| `dmrg_nelecas` | `int` | — | Number of active electrons for the DMRG calculation |
+| `init_bond_dim` | `int` | `10` | Initial DMRG bond dimension; grows automatically |
+| `symm_type` | `str` | `"SZ"` | Spin symmetry: `"SZ"` (required for entropies) or `"SU2"` (faster) |
+| `entropy_ranking` | `str` | `"relative"` | `"relative"`: threshold per subspace; `"global"`: all orbitals ranked together |
+| `entropy_fraction` | `float` | `0.1` | Entropy threshold value (see `entropy_fraction_type`) |
+| `entropy_fraction_type` | `str` | `"r"` | `"r"`: keep S(1) ≥ fraction × max S(1); `"a"`: absolute threshold |
+| `projection_basis` | `str` or `None` | `"minao"` | Basis for AO projection; `None` uses the original molecular basis |
+| `projection_ao_labels` | `list[str]` | `["C 2pz"]` | AO labels to project onto — same format as `select_by_ao_projection` |
+| `projection_contribution` | `float` | `0.5` | Projection weight threshold |
+| `projection_contribution_type` | `str` | `"a"` | `"a"`: absolute; `"r"`: relative to maximum weight |
+| `projection_top_n` | `int` or `None` | `None` | Keep top-N orbitals per label instead of thresholding |
+| `projection_ranking` | `str` | `"relative"` | `"relative"`: project occ and virt subspaces separately; `"global"`: project combined set |
+| `saving_folder` | `str` | `"./aegiss/examples/orbs/"` | Directory for output cube files |
+| `saving_prefix` | `str` | `"benzene"` | Prefix for cube file names |
+| `verbosity` | `int` | `0` | block2 output verbosity |
+| `save_orb` | `bool` | `True` | Write cube files for screened and final orbitals |
+
+Returns `np.ndarray` of sorted orbital indices.
+
+---
 
 ### `build_mol`
 

@@ -249,4 +249,4 @@ def select_by_ao_projection(
     print("\nFinal selected orbital indices:")
     for idx in sorted(selected_indices):
         print(f"\tOrbital {idx}")
-    return np.array(sorted(selected_indices))
+    return np.asarray(sorted(selected_indices))
