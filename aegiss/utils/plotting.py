@@ -26,7 +26,7 @@ def plot_ao_contribution(
     """Plot AO contributions as a bar chart (not yet implemented)."""
 
 
-def SOE_heatmap(  # noqa: N802
+def soe_heatmap(  # noqa: N802
     so1_entropies: list[tuple[int, float]],
     n_occ: int = 0,
     folder: str = "./",
@@ -138,7 +138,7 @@ def _define_cas_size(selected_ones: np.ndarray, occ_index: int) -> tuple[int, in
     return (len(selected_ones), 2 * int(np.sum(selected_ones < occ_index)))
 
 
-def TH_plots(  # noqa: N802
+def th_plots(  # noqa: N802
     so1_entropies: list[tuple[int, float]],
     folder: str = "./",
     occ_index: int = 0,

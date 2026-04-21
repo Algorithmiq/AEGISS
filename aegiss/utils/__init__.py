@@ -6,15 +6,15 @@ from aegiss.utils.dump_info import save_orbitals
 from aegiss.utils.dump_intermediates import dump_qmi
 from aegiss.utils.orbital_indices import get_orbital_spaces, get_subspaces_from_cas
 from aegiss.utils.plotting import (
-    SOE_heatmap,
-    TH_plots,
+    soe_heatmap,
+    th_plots,
     plot_ao_contribution,
     plot_pie_contribution,
 )
 
 __all__ = [
-    "SOE_heatmap",
-    "TH_plots",
+    "soe_heatmap",
+    "th_plots",
     "compute_qmi",
     "dump_qmi",
     "get_orbital_spaces",
