@@ -87,7 +87,9 @@ def select_aegiss(
     saving_folder : str, default './aegiss/examples/orbs/'
         Directory where cube files are written when *save_orb* is ``True``.
     saving_prefix : str, default 'benzene'
-        Prefix used for output cube file names.
+        Prefix used for output cube file names. If `save_orb` is ``True``, the following files will be created:
+        - ``{saving_prefix}_entropy_{idx}.cube`` for entropy-screened orbitals
+        - ``{saving_prefix}_AEGISS_{idx}.cube`` for final selected active orbitals
     verbosity : int, default 0
         block2 output verbosity level.
     save_orb : bool, default True
