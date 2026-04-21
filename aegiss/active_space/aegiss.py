@@ -10,7 +10,7 @@ from aegiss.active_space.ao_projection import select_by_ao_projection
 from aegiss.active_space.entropy_screening import select_by_entropy
 from aegiss.utils.dump_info import save_orbitals, save_orbitals_from_entropies
 from aegiss.utils.orbital_indices import get_subspaces_from_cas
-from aegiss.utils.plotting import SOE_heatmap, TH_plots
+from aegiss.utils.plotting import plot_pie_contribution, soe_heatmap, th_plots
 from aegiss.wavefunction.dmrg import run_dmrg
 
 
@@ -25,13 +25,13 @@ def _make_soe_plots(
     tagged += [
         (orb_id, soe1[len(active_orbs) + idx]) for idx, orb_id in enumerate(virt_orbs)
     ]
-    SOE_heatmap(
+    soe_heatmap(
         so1_entropies=tagged,
         n_occ=len(active_orbs),
         folder=saving_folder,
         filename=saving_prefix + "_SOE_heatmap",
     )
-    TH_plots(
+    th_plots(
         so1_entropies=tagged,
         occ_index=max(active_orbs) + 1,
         folder=saving_folder,
@@ -216,6 +216,16 @@ def select_aegiss(
             mf.mo_coeff,
             active_indices,
             filename_prefix=saving_prefix + "_AEGISS",
+            folder=saving_folder,
+        )
+
+    if save_plots:
+        plot_pie_contribution(
+            mol,
+            mf,
+            ao_labels=projection_ao_labels,
+            labels_names=projection_ao_labels,
+            orbs=active_indices,
             folder=saving_folder,
         )
 

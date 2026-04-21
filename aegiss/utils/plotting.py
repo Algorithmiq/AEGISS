@@ -3,19 +3,166 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from matplotlib import patches
 
+if TYPE_CHECKING:
+    import pyscf
+
+
+def _draw_pie_subplot(
+    ax: plt.Axes,
+    data: np.ndarray,
+    labels_names: list[str],
+    orb_id: int,
+    min_pct: float,
+) -> None:
+    n_labels = len(data)
+    explode = np.zeros(n_labels)
+    explode[np.argmax(data)] = 0.1
+
+    _, texts, autotexts = ax.pie(
+        data,
+        labels=labels_names,
+        explode=explode,
+        autopct="%.00f%%",
+        colors=sns.color_palette("crest", n_labels),
+        startangle=0,
+    )
+
+    for k, (text, autotext) in enumerate(zip(texts, autotexts, strict=False)):
+        text.set_fontsize(14)
+        autotext.set_fontsize(16)
+        if data[k] < min_pct:
+            text.set_text("")
+            autotext.set_text("")
+
+    ax.set_title(f"Orbital: {orb_id}", fontsize=16)
+
+
+def _save_contributions(
+    shape: tuple[int, int],
+    mol: pyscf.gto.Mole,
+    orbs: np.ndarray | list[int],
+    ao_labels: list[str],
+    labels_names: list[str],
+    mo: np.ndarray,
+    folder: str = "./",
+    filename: str = "major_composition",
+    min_pct: float = 0.01,
+) -> None:
+    n_orbs, n_labels = len(orbs), len(ao_labels)
+    total_ao_idx = mol.search_ao_label(ao_labels)
+    mo_orbs = mo[:, list(orbs)]
+    total_norm = np.sum(mo_orbs[total_ao_idx, :] ** 2, axis=0)
+
+    data_list = np.zeros((n_orbs, n_labels))
+    for i, label in enumerate(ao_labels):
+        idx = mol.search_ao_label(label)
+        data_list[:, i] = np.sum(mo_orbs[idx, :] ** 2, axis=0) / total_norm
+
+    x, y = shape
+    fig, axes = plt.subplots(x, y, figsize=(5 * y, 5 * x))
+
+    for i in range(x):
+        for j in range(y):
+            ax = axes[j] if x == 1 else axes[i, j]
+
+            if i * y + j >= n_orbs:
+                ax.axis("off")
+                continue
+
+            _draw_pie_subplot(
+                ax,
+                data=data_list[i * y + j],
+                labels_names=labels_names,
+                orb_id=orbs[i * y + j],
+                min_pct=min_pct,
+            )
+
+    print(f"Saving {filename}.pdf")
+    fig.tight_layout()
+    fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf", bbox_inches="tight")
+    plt.close(fig)
+
 
 def plot_pie_contribution(
-    ao_contributions: list[tuple[int, float]],
+    mol: pyscf.gto.Mole,
+    mf: Any,
     ao_labels: list[str] | str,
-    save_path: str,
+    labels_names: list[str],
+    orbs: list[int] | np.ndarray,
+    filename: str = "composition",
+    folder: str = "./",
+    orb_for_row: int = 4,
+    min_pct: float = 0.01,
 ) -> None:
-    """Plot AO contributions as a pie chart (not yet implemented)."""
+    """Plot per-orbital AO composition as a grid of pie charts.
+
+    For each orbital in *orbs*, draws a pie chart showing the fractional
+    contribution of each AO group defined in *ao_labels*. Slices whose
+    contribution is below *min_pct* are rendered without label or percentage.
+    Saves one PDF per spin channel (``_alpha`` / ``_beta`` for unrestricted,
+    ``_alpha`` only for restricted).
+
+    Parameters
+    ----------
+    mol:
+        PySCF Mole object, used to resolve AO labels.
+    mf:
+        Converged mean-field object. ``mf.mo_coeff`` may be ``(n_ao, n_mo)``
+        (restricted) or ``(2, n_ao, n_mo)`` (unrestricted).
+    ao_labels:
+        AO label strings recognised by ``mol.search_ao_label``,
+        e.g. ``["C 2pz", "Fe 3d"]``. A bare string is wrapped into a list.
+    labels_names:
+        Human-readable names for each entry in *ao_labels*, used as pie
+        slice labels. Must have the same length as *ao_labels*.
+    orbs:
+        Indices of the molecular orbitals to plot.
+    filename:
+        Base name for the output PDF (spin suffix appended automatically).
+    folder:
+        Directory where the PDF is saved.
+    orb_for_row:
+        Number of orbitals per row in the subplot grid.
+    min_pct:
+        Minimum fractional contribution (0-1) below which the slice label
+        and percentage are hidden. Default is 0.01 (1 %).
+    """
+    if isinstance(ao_labels, str):
+        ao_labels = [ao_labels]
+    if len(ao_labels) != len(labels_names):
+        raise ValueError(
+            f"ao_labels and labels_names must have the same length, "
+            f"got {len(ao_labels)} and {len(labels_names)}."
+        )
+    if len(orbs) == 0:
+        raise ValueError("orbs must not be empty.")
+    if orb_for_row <= 0:
+        raise ValueError(f"orb_for_row must be a positive integer, got {orb_for_row}.")
+
+    shape = (int(np.ceil(len(orbs) / orb_for_row)), orb_for_row)
+    common = {
+        "shape": shape,
+        "mol": mol,
+        "orbs": orbs,
+        "ao_labels": ao_labels,
+        "labels_names": labels_names,
+        "folder": folder,
+        "min_pct": min_pct,
+    }
+
+    if np.ndim(mf.mo_coeff) == 3:
+        moa, mob = mf.mo_coeff
+        _save_contributions(**common, mo=moa, filename=filename + "_alpha")
+        _save_contributions(**common, mo=mob, filename=filename + "_beta")
+    else:
+        _save_contributions(**common, mo=mf.mo_coeff, filename=filename + "_alpha")
 
 
 def plot_ao_contribution(
@@ -26,7 +173,7 @@ def plot_ao_contribution(
     """Plot AO contributions as a bar chart (not yet implemented)."""
 
 
-def soe_heatmap(  # noqa: N802
+def soe_heatmap(
     so1_entropies: list[tuple[int, float]],
     n_occ: int = 0,
     folder: str = "./",
@@ -138,7 +285,7 @@ def _define_cas_size(selected_ones: np.ndarray, occ_index: int) -> tuple[int, in
     return (len(selected_ones), 2 * int(np.sum(selected_ones < occ_index)))
 
 
-def th_plots(  # noqa: N802
+def th_plots(
     so1_entropies: list[tuple[int, float]],
     folder: str = "./",
     occ_index: int = 0,
