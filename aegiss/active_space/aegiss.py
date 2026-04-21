@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from typing import Any, Literal
 
 import numpy as np
@@ -10,7 +11,33 @@ from aegiss.active_space.ao_projection import select_by_ao_projection
 from aegiss.active_space.entropy_screening import select_by_entropy
 from aegiss.utils.dump_info import save_orbitals, save_orbitals_from_entropies
 from aegiss.utils.orbital_indices import get_subspaces_from_cas
+from aegiss.utils.plotting import SOE_heatmap, TH_plots
 from aegiss.wavefunction.dmrg import run_dmrg
+
+
+def _make_soe_plots(
+    active_orbs: np.ndarray,
+    virt_orbs: np.ndarray,
+    soe1: np.ndarray,
+    saving_folder: str,
+    saving_prefix: str,
+) -> None:
+    tagged = [(orb_id, soe1[idx]) for idx, orb_id in enumerate(active_orbs)]
+    tagged += [
+        (orb_id, soe1[len(active_orbs) + idx]) for idx, orb_id in enumerate(virt_orbs)
+    ]
+    SOE_heatmap(
+        so1_entropies=tagged,
+        n_occ=len(active_orbs),
+        folder=saving_folder,
+        filename=saving_prefix + "_SOE_heatmap",
+    )
+    TH_plots(
+        so1_entropies=tagged,
+        occ_index=max(active_orbs) + 1,
+        folder=saving_folder,
+        filename=saving_prefix + "_TH_plot",
+    )
 
 
 def select_aegiss(
@@ -33,6 +60,7 @@ def select_aegiss(
     saving_prefix: str = "benzene",
     verbosity: int = 0,
     *,
+    save_plots: bool = False,
     save_orb: bool = True,
 ) -> np.ndarray:
     """Run the full AEGISS active space selection pipeline.
@@ -89,6 +117,8 @@ def select_aegiss(
         Prefix used for output cube file names.
     verbosity : int, default 0
         block2 output verbosity level.
+    save_plots : bool, default False
+        Whether to generate and save diagnostic plots (SOE heatmap and TH plot).
     save_orb : bool, default True
         Write cube files for the entropy-screened and final active orbitals.
 
@@ -121,6 +151,9 @@ def select_aegiss(
         verbosity=verbosity,
         get_qmi=True,
     )
+
+    if save_plots and soe1 is not None:
+        _make_soe_plots(active_orbs, virt_orbs, soe1, saving_folder, saving_prefix)
 
     screened_occ, screened_virt = select_by_entropy(
         occ_orbs=active_orbs,

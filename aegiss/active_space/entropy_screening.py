@@ -189,9 +189,6 @@ def select_by_entropy(
     selected_virt : list of tuple[int, float]
         Selected virtual orbitals with entropy values.
     """
-    if ranking not in ("global", "subset"):
-        raise ValueError(f"Invalid ranking {ranking!r}. Must be 'global' or 'subset'.")
-
     print("\n----------------Entropy Screening for AEGISS----------------\n")
     if soe1 is None:
         print("No single-orbital entropies provided. Returning empty selection.")
@@ -204,7 +201,9 @@ def select_by_entropy(
             soe1, fraction_type, fraction, n_orbs, occ_orbs, virt_orbs
         )
     else:
-        print("Using subset ranking of orbitals by entropy values within the subspace.")
+        print(
+            "Using relative ranking of orbitals by entropy values within the subspace."
+        )
         soe1_occ = np.array([soe1[idx] for idx in range(len(occ_orbs))])
 
         off_set = len(occ_orbs)
