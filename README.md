@@ -12,8 +12,11 @@ It combines two complementary screening strategies:
   orbitals (e.g. the C 2p_z shell of a conjugated system). Orbitals with large
   projection weights are chemically relevant to the target fragment.
 
-The two criteria can be used independently or combined: an orbital passes if it
-satisfies *either* condition.
+The two criteria can be used independently or combined. In `select_aegiss` they are
+applied sequentially — entropy screening first narrows the candidate set, then AO
+projection refines it further — so an orbital must satisfy *both* criteria to appear
+in the final active space. Both functions can also be called individually for custom
+workflows.
 
 ---
 
@@ -208,7 +211,8 @@ active_indices = select_aegiss(
 
 High-level entry point that runs the full pipeline in a single call: DMRG on the
 specified CAS → entropy screening → AO projection. An orbital is kept when it passes
-*either* the entropy or projection criterion.
+*both* criteria — AO projection is restricted to the entropy-screened candidate set.
+If entropy screening returns no orbitals, the function returns an empty array early.
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|

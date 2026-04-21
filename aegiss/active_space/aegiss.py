@@ -132,6 +132,13 @@ def select_aegiss(
         fraction_type=entropy_fraction_type,
     )
 
+    if len(screened_occ) == 0 and len(screened_virt) == 0:
+        print(
+            "\nNo orbitals passed the entropy screening step. Consider adjusting the "
+            "entropy_fraction or using 'global' ranking for a more inclusive selection."
+        )
+        return np.array([], dtype=int)
+
     if save_orb:
         save_orbitals_from_entropies(
             mol,

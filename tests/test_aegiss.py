@@ -247,3 +247,113 @@ class TestOrbitalSaving:
             .call_args.kwargs["filename_prefix"]
             .startswith("mytest")
         )
+
+
+class TestEntropyScreeningEarlyReturn:
+    def test_both_empty_returns_empty_array(
+        self, mol_mock: MagicMock, mf_mock: MagicMock
+    ) -> None:
+        with (
+            patch(
+                f"{_MODULE}.get_subspaces_from_cas",
+                return_value=(np.array([2, 3]), np.array([5])),
+            ),
+            patch(f"{_MODULE}.run_dmrg", return_value=(-75.0, np.ones(3), None, None)),
+            patch(f"{_MODULE}.select_by_entropy", return_value=([], [])),
+            patch(f"{_MODULE}.select_by_ao_projection") as mock_proj,
+            patch(f"{_MODULE}.save_orbitals"),
+            patch(f"{_MODULE}.save_orbitals_from_entropies"),
+        ):
+            result = select_aegiss(
+                mol_mock, mf_mock, dmrg_ncas=4, dmrg_nelecas=4, save_orb=False
+            )
+
+        assert isinstance(result, np.ndarray)
+        assert len(result) == 0
+        mock_proj.assert_not_called()
+
+    def test_only_occ_empty_continues_to_projection(
+        self, mol_mock: MagicMock, mf_mock: MagicMock
+    ) -> None:
+        with (
+            patch(
+                f"{_MODULE}.get_subspaces_from_cas",
+                return_value=(np.array([2, 3]), np.array([5])),
+            ),
+            patch(f"{_MODULE}.run_dmrg", return_value=(-75.0, np.ones(3), None, None)),
+            patch(f"{_MODULE}.select_by_entropy", return_value=([], [(5, 0.4)])),
+            patch(
+                f"{_MODULE}.select_by_ao_projection",
+                side_effect=[np.array([]), np.array([5])],
+            ) as mock_proj,
+            patch(f"{_MODULE}.save_orbitals"),
+            patch(f"{_MODULE}.save_orbitals_from_entropies"),
+        ):
+            result = select_aegiss(
+                mol_mock,
+                mf_mock,
+                dmrg_ncas=4,
+                dmrg_nelecas=4,
+                projection_ranking="subset",
+                save_orb=False,
+            )
+
+        assert mock_proj.called
+        assert list(result) == [5]
+
+    def test_only_virt_empty_continues_to_projection(
+        self, mol_mock: MagicMock, mf_mock: MagicMock
+    ) -> None:
+        with (
+            patch(
+                f"{_MODULE}.get_subspaces_from_cas",
+                return_value=(np.array([2, 3]), np.array([5])),
+            ),
+            patch(f"{_MODULE}.run_dmrg", return_value=(-75.0, np.ones(3), None, None)),
+            patch(f"{_MODULE}.select_by_entropy", return_value=([(2, 0.8)], [])),
+            patch(
+                f"{_MODULE}.select_by_ao_projection",
+                side_effect=[np.array([2]), np.array([])],
+            ) as mock_proj,
+            patch(f"{_MODULE}.save_orbitals"),
+            patch(f"{_MODULE}.save_orbitals_from_entropies"),
+        ):
+            result = select_aegiss(
+                mol_mock,
+                mf_mock,
+                dmrg_ncas=4,
+                dmrg_nelecas=4,
+                projection_ranking="subset",
+                save_orb=False,
+            )
+
+        assert mock_proj.called
+        assert list(result) == [2]
+
+
+class TestParameterValidation:
+    def test_invalid_entropy_ranking_raises(
+        self, mol_mock: MagicMock, mf_mock: MagicMock
+    ) -> None:
+        with pytest.raises(ValueError, match="entropy_ranking"):
+            select_aegiss(
+                mol_mock,
+                mf_mock,
+                dmrg_ncas=4,
+                dmrg_nelecas=4,
+                entropy_ranking="invalid",
+                save_orb=False,
+            )
+
+    def test_invalid_projection_ranking_raises(
+        self, mol_mock: MagicMock, mf_mock: MagicMock
+    ) -> None:
+        with pytest.raises(ValueError, match="projection_ranking"):
+            select_aegiss(
+                mol_mock,
+                mf_mock,
+                dmrg_ncas=4,
+                dmrg_nelecas=4,
+                projection_ranking="bad",
+                save_orb=False,
+            )
