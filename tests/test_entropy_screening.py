@@ -132,10 +132,10 @@ class TestSelectByEntropy:
             assert isinstance(item, tuple)
             assert len(item) == 2
 
-    def test_relative_ranking_returns_tuples(self, simple_orbs) -> None:
+    def test_subset_ranking_returns_tuples(self, simple_orbs) -> None:
         occ, virt, soe1 = simple_orbs
         sel_occ, sel_virt = select_by_entropy(
-            occ, virt, soe1, fraction=0.5, fraction_type="r", ranking="relative"
+            occ, virt, soe1, fraction=0.5, fraction_type="r", ranking="subset"
         )
         for item in sel_occ + sel_virt:
             assert isinstance(item, tuple)
@@ -159,7 +159,7 @@ class TestSelectByEntropy:
     def test_high_threshold_selects_few(self, simple_orbs) -> None:
         occ, virt, soe1 = simple_orbs
         sel_occ, sel_virt = select_by_entropy(
-            occ, virt, soe1, fraction=0.99, fraction_type="r", ranking="relative"
+            occ, virt, soe1, fraction=0.99, fraction_type="r", ranking="subset"
         )
         # Only the maximum per subspace passes 0.99 threshold
         assert len(sel_occ) == 1
@@ -176,10 +176,10 @@ class TestSelectByEntropy:
         occ, virt, soe1 = simple_orbs
         # default fraction_type="r" — result should differ from absolute
         sel_occ_r, _ = select_by_entropy(
-            occ, virt, soe1, fraction=0.5, fraction_type="r", ranking="relative"
+            occ, virt, soe1, fraction=0.5, fraction_type="r", ranking="subset"
         )
         sel_occ_a, _ = select_by_entropy(
-            occ, virt, soe1, fraction=0.5, fraction_type="a", ranking="relative"
+            occ, virt, soe1, fraction=0.5, fraction_type="a", ranking="subset"
         )
         # The results may differ; at minimum both calls should succeed
         assert isinstance(sel_occ_r, list)

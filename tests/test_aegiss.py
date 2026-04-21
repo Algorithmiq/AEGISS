@@ -50,7 +50,7 @@ def pipeline_patches():
 
 
 @pytest.mark.usefixtures("pipeline_patches")
-class TestRelativeProjectionRanking:
+class TestSubsetProjectionRanking:
     def test_ao_projection_called_per_subspace(
         self, mol_mock: MagicMock, mf_mock: MagicMock
     ) -> None:
@@ -63,7 +63,7 @@ class TestRelativeProjectionRanking:
                 mf_mock,
                 dmrg_ncas=4,
                 dmrg_nelecas=4,
-                projection_ranking="relative",
+                projection_ranking="subset",
                 save_orb=False,
             )
 
@@ -81,7 +81,7 @@ class TestRelativeProjectionRanking:
                 mf_mock,
                 dmrg_ncas=4,
                 dmrg_nelecas=4,
-                projection_ranking="relative",
+                projection_ranking="subset",
                 save_orb=False,
             )
 
@@ -100,7 +100,7 @@ class TestRelativeProjectionRanking:
                 mf_mock,
                 dmrg_ncas=4,
                 dmrg_nelecas=4,
-                projection_ranking="relative",
+                projection_ranking="subset",
                 save_orb=False,
             )
 
@@ -119,7 +119,7 @@ class TestRelativeProjectionRanking:
                 mf_mock,
                 dmrg_ncas=4,
                 dmrg_nelecas=4,
-                projection_ranking="relative",
+                projection_ranking="subset",
                 save_orb=False,
             )
 

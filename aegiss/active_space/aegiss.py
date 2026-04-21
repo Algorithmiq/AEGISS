@@ -20,7 +20,7 @@ def select_aegiss(
     dmrg_nelecas: int,
     init_bond_dim: int = 10,
     symm_type: Literal["SZ", "SU2"] = "SZ",
-    entropy_ranking: Literal["relative", "global"] = "relative",
+    entropy_ranking: Literal["subset", "global"] = "subset",
     entropy_fraction: float = 0.1,
     entropy_fraction_type: Literal["r", "a"] = "r",
     projection_basis: str | None = "minao",
@@ -28,7 +28,7 @@ def select_aegiss(
     projection_contribution: float = 0.5,
     projection_contribution_type: Literal["a", "r"] = "a",
     projection_top_n: int | None = None,
-    projection_ranking: Literal["relative", "global"] = "relative",
+    projection_ranking: Literal["subset", "global"] = "subset",
     saving_folder: str = "./aegiss/examples/orbs/",
     saving_prefix: str = "benzene",
     verbosity: int = 0,
@@ -39,7 +39,8 @@ def select_aegiss(
 
     Runs DMRG on the specified CAS, then filters the resulting orbitals
     through entropy screening and AO projection.  An orbital is included
-    in the final active space when it passes *either* criterion.
+    in the final active space when it has been selected by *both* the criterion.
+    Therefore, only highly entangled orbitals with significant contribution on the specified AOs are kept.
 
     Parameters
     ----------
@@ -56,8 +57,8 @@ def select_aegiss(
     symm_type : {'SZ', 'SU2'}, default 'SZ'
         Spin symmetry used by block2.  ``'SZ'`` is required for entropy
         calculations; ``'SU2'`` is faster but needs MPS conversion for entropies.
-    entropy_ranking : {'relative', 'global'}, default 'relative'
-        How to rank orbitals for entropy screening.  ``'relative'`` applies the
+    entropy_ranking : {'subset', 'global'}, default 'subset'
+        How to rank orbitals for entropy screening.  ``'subset'`` applies the
         threshold independently to occupied and virtual subspaces; ``'global'``
         ranks all active orbitals together.
     entropy_fraction : float, default 0.1
@@ -78,8 +79,8 @@ def select_aegiss(
     projection_top_n : int or None, default None
         If set, keep the top-N orbitals per AO label instead of using a
         contribution threshold.
-    projection_ranking : {'relative', 'global'}, default 'relative'
-        ``'relative'``: run AO projection independently on the occupied and
+    projection_ranking : {'subset', 'global'}, default 'subset'
+        ``'subset'``: run AO projection independently on the occupied and
         virtual entropy-screened subspaces; ``'global'``: run it on the
         combined set.
     saving_folder : str, default './aegiss/examples/orbs/'
@@ -96,6 +97,15 @@ def select_aegiss(
     active_indices : np.ndarray of int
         Sorted array of orbital indices forming the selected active space.
     """
+    if entropy_ranking not in ("subset", "global"):
+        raise ValueError(
+            f"Invalid entropy_ranking {entropy_ranking!r}. Must be 'subset' or 'global'."
+        )
+    if projection_ranking not in ("subset", "global"):
+        raise ValueError(
+            f"Invalid projection_ranking {projection_ranking!r}. Must be 'subset' or 'global'."
+        )
+
     if projection_ao_labels is None:
         projection_ao_labels = ["C 2pz"]
 
@@ -138,8 +148,8 @@ def select_aegiss(
         )
 
     final_space: list[int] = []
-    if projection_ranking == "relative":
-        print("\nRanking orbitals for AO projection based on relative contribution.")
+    if projection_ranking == "subset":
+        print("\nRanking orbitals for AO projection based on subset contribution.")
         for sub in (screened_occ, screened_virt):
             final_space.extend(
                 select_by_ao_projection(

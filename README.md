@@ -129,7 +129,7 @@ screened_occ, screened_virt = select_by_entropy(
     occ_orbs=active_orbs,
     virt_orbs=virt_orbs,
     soe1=soe1,
-    ranking="relative",   # rank occ and virt separately
+    ranking="subset",     # rank occ and virt separately
     fraction=0.1,         # keep orbitals with S(1) ≥ 10 % of the maximum
     fraction_type="r",    # 'r' = relative threshold
 )
@@ -190,7 +190,7 @@ active_indices = select_aegiss(
     dmrg_ncas, dmrg_nelecas,
     init_bond_dim=10,
     symm_type="SZ",
-    entropy_ranking="relative",
+    entropy_ranking="subset",
     entropy_fraction=0.1,
     entropy_fraction_type="r",
     projection_basis="minao",
@@ -198,7 +198,7 @@ active_indices = select_aegiss(
     projection_contribution=0.5,
     projection_contribution_type="a",
     projection_top_n=None,
-    projection_ranking="relative",
+    projection_ranking="subset",
     saving_folder="./orbs/",
     saving_prefix="molecule",
     verbosity=0,
@@ -218,7 +218,7 @@ specified CAS → entropy screening → AO projection. An orbital is kept when i
 | `dmrg_nelecas` | `int` | — | Number of active electrons for the DMRG calculation |
 | `init_bond_dim` | `int` | `10` | Initial DMRG bond dimension; grows automatically |
 | `symm_type` | `str` | `"SZ"` | Spin symmetry: `"SZ"` (required for entropies) or `"SU2"` (faster) |
-| `entropy_ranking` | `str` | `"relative"` | `"relative"`: threshold per subspace; `"global"`: all orbitals ranked together |
+| `entropy_ranking` | `str` | `"subset"` | `"subset"`: threshold per subspace; `"global"`: all orbitals ranked together |
 | `entropy_fraction` | `float` | `0.1` | Entropy threshold value (see `entropy_fraction_type`) |
 | `entropy_fraction_type` | `str` | `"r"` | `"r"`: keep S(1) ≥ fraction × max S(1); `"a"`: absolute threshold |
 | `projection_basis` | `str` or `None` | `"minao"` | Basis for AO projection; `None` uses the original molecular basis |
@@ -226,7 +226,7 @@ specified CAS → entropy screening → AO projection. An orbital is kept when i
 | `projection_contribution` | `float` | `0.5` | Projection weight threshold |
 | `projection_contribution_type` | `str` | `"a"` | `"a"`: absolute; `"r"`: relative to maximum weight |
 | `projection_top_n` | `int` or `None` | `None` | Keep top-N orbitals per label instead of thresholding |
-| `projection_ranking` | `str` | `"relative"` | `"relative"`: project occ and virt subspaces separately; `"global"`: project combined set |
+| `projection_ranking` | `str` | `"subset"` | `"subset"`: project occ and virt subspaces separately; `"global"`: project combined set |
 | `saving_folder` | `str` | `"./aegiss/examples/orbs/"` | Directory for output cube files |
 | `saving_prefix` | `str` | `"benzene"` | Prefix for cube file names |
 | `verbosity` | `int` | `0` | block2 output verbosity |
@@ -323,7 +323,7 @@ selected_occ, selected_virt = select_by_entropy(
 | `soe1` | `np.ndarray` or `None` | — | Single-orbital entropies (length = `len(occ_orbs) + len(virt_orbs)`). Pass `None` to skip and return empty lists. |
 | `fraction` | `float` | `0.1` | Threshold value (see `fraction_type`) |
 | `fraction_type` | `"r"` or `"a"` | `"r"` | `"r"`: keep orbitals whose entropy is ≥ `fraction × max(S(1))`; `"a"`: keep orbitals whose entropy is ≥ `fraction` |
-| `ranking` | `"global"` or `"relative"` | `"global"` | `"global"`: rank all orbitals together before thresholding; `"relative"`: apply the threshold independently to the occupied and virtual subspaces |
+| `ranking` | `"global"` or `"subset"` | `"global"` | `"global"`: rank all orbitals together before thresholding; `"subset"`: apply the threshold independently to the occupied and virtual subspaces |
 
 Returns `(selected_occ, selected_virt)` — each a `list[tuple[int, float]]` of
 (orbital index, entropy value).

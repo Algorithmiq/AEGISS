@@ -27,7 +27,7 @@ if __name__ == "__main__":
         verbosity=0,
         entropy_fraction=0.1,
         entropy_fraction_type="r",
-        entropy_ranking="relative",
+        entropy_ranking="subset",
         projection_ao_labels=["C 2pz"],
         projection_contribution=0.5,
         projection_contribution_type="a",
