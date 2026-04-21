@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-import matplotlib
+import matplotlib as mpl
 import numpy as np
 import pytest
 
-matplotlib.use("Agg")
+mpl.use("Agg")
 
 from aegiss.utils.plotting import (
     _define_cas_size,
@@ -89,7 +89,7 @@ class TestDetectPlateaus:
     def test_short_flat_region_below_threshold_not_detected(self) -> None:
         y = np.concatenate([np.full(5, 8.0), np.full(96, 2.0)])
         _, _, starts, _ = _detect_plateaus(y, self._indices_above(y), plateau_size=10)
-        plateau_at_8 = [s for s in starts if y[s] == 8.0]
+        plateau_at_8 = [s for s in starts if np.isclose(y[s], 8.0)]
         assert len(plateau_at_8) == 0
 
     def test_plateau_vector_matches_starts(self) -> None:
@@ -102,25 +102,42 @@ class TestDetectPlateaus:
 
 
 class TestSoeHeatmap:
-    def test_creates_pdf(self, tmp_path: pytest.FixturePath, simple_entropies: list) -> None:
-        soe_heatmap(so1_entropies=simple_entropies, folder=str(tmp_path), filename="soe")
+    def test_creates_pdf(
+        self, tmp_path: pytest.FixturePath, simple_entropies: list
+    ) -> None:
+        soe_heatmap(
+            so1_entropies=simple_entropies, folder=str(tmp_path), filename="soe"
+        )
         assert (tmp_path / "soe.pdf").exists()
 
-    def test_with_n_occ_draws_boundary(self, tmp_path: pytest.FixturePath, simple_entropies: list) -> None:
-        soe_heatmap(so1_entropies=simple_entropies, n_occ=4, folder=str(tmp_path), filename="soe_occ")
+    def test_with_n_occ_draws_boundary(
+        self, tmp_path: pytest.FixturePath, simple_entropies: list
+    ) -> None:
+        soe_heatmap(
+            so1_entropies=simple_entropies,
+            n_occ=4,
+            folder=str(tmp_path),
+            filename="soe_occ",
+        )
         assert (tmp_path / "soe_occ.pdf").exists()
 
     def test_single_orbital(self, tmp_path: pytest.FixturePath) -> None:
-        soe_heatmap(so1_entropies=[(0, 0.5)], folder=str(tmp_path), filename="soe_single")
+        soe_heatmap(
+            so1_entropies=[(0, 0.5)], folder=str(tmp_path), filename="soe_single"
+        )
         assert (tmp_path / "soe_single.pdf").exists()
 
-    def test_default_filename(self, tmp_path: pytest.FixturePath, simple_entropies: list) -> None:
+    def test_default_filename(
+        self, tmp_path: pytest.FixturePath, simple_entropies: list
+    ) -> None:
         soe_heatmap(so1_entropies=simple_entropies, folder=str(tmp_path))
         assert (tmp_path / "SOE_plot.pdf").exists()
 
 
 class TestThPlots:
-    def test_creates_pdf(self, tmp_path: pytest.FixturePath, simple_entropies: list) -> None:
+    def test_creates_pdf(
+        self, tmp_path: pytest.FixturePath, simple_entropies: list
+    ) -> None:
         th_plots(so1_entropies=simple_entropies, folder=str(tmp_path), filename="th")
         assert (tmp_path / "th.pdf").exists()
 
@@ -132,41 +149,114 @@ class TestThPlots:
     def test_with_plateau(self, tmp_path: pytest.FixturePath) -> None:
         # Step function → long plateau at both levels → plateau detection runs
         entropies = [(i, 1.0 if i < 5 else 0.1) for i in range(10)]
-        th_plots(so1_entropies=entropies, plateau_size=5, folder=str(tmp_path), filename="th_plateau")
+        th_plots(
+            so1_entropies=entropies,
+            plateau_size=5,
+            folder=str(tmp_path),
+            filename="th_plateau",
+        )
         assert (tmp_path / "th_plateau.pdf").exists()
 
-    def test_default_filename(self, tmp_path: pytest.FixturePath, simple_entropies: list) -> None:
+    def test_default_filename(
+        self, tmp_path: pytest.FixturePath, simple_entropies: list
+    ) -> None:
         th_plots(so1_entropies=simple_entropies, folder=str(tmp_path))
         assert (tmp_path / "TH_plot.pdf").exists()
 
 
 class TestPlotPieContribution:
-    def test_raises_on_mismatched_label_lengths(self, mock_mol: MagicMock, mock_mf_restricted: MagicMock) -> None:
+    def test_raises_on_mismatched_label_lengths(
+        self, mock_mol: MagicMock, mock_mf_restricted: MagicMock
+    ) -> None:
         with pytest.raises(ValueError, match="same length"):
-            plot_pie_contribution(mock_mol, mock_mf_restricted, ["C 2pz", "Fe 3d"], ["Carbon"], orbs=[0])
+            plot_pie_contribution(
+                mock_mol, mock_mf_restricted, ["C 2pz", "Fe 3d"], ["Carbon"], orbs=[0]
+            )
 
-    def test_raises_on_empty_orbs(self, mock_mol: MagicMock, mock_mf_restricted: MagicMock) -> None:
+    def test_raises_on_empty_orbs(
+        self, mock_mol: MagicMock, mock_mf_restricted: MagicMock
+    ) -> None:
         with pytest.raises(ValueError, match="empty"):
-            plot_pie_contribution(mock_mol, mock_mf_restricted, ["C 2pz"], ["Carbon"], orbs=[])
+            plot_pie_contribution(
+                mock_mol, mock_mf_restricted, ["C 2pz"], ["Carbon"], orbs=[]
+            )
 
-    def test_raises_on_non_positive_orb_for_row(self, mock_mol: MagicMock, mock_mf_restricted: MagicMock) -> None:
+    def test_raises_on_non_positive_orb_for_row(
+        self, mock_mol: MagicMock, mock_mf_restricted: MagicMock
+    ) -> None:
         with pytest.raises(ValueError, match="positive"):
-            plot_pie_contribution(mock_mol, mock_mf_restricted, ["C 2pz"], ["Carbon"], orbs=[0], orb_for_row=0)
+            plot_pie_contribution(
+                mock_mol,
+                mock_mf_restricted,
+                ["C 2pz"],
+                ["Carbon"],
+                orbs=[0],
+                orb_for_row=0,
+            )
 
-    def test_string_ao_label_accepted(self, tmp_path: pytest.FixturePath, mock_mol: MagicMock, mock_mf_restricted: MagicMock) -> None:
-        plot_pie_contribution(mock_mol, mock_mf_restricted, "C 2pz", ["Carbon"], orbs=[0, 1], folder=str(tmp_path))
+    def test_string_ao_label_accepted(
+        self,
+        tmp_path: pytest.FixturePath,
+        mock_mol: MagicMock,
+        mock_mf_restricted: MagicMock,
+    ) -> None:
+        plot_pie_contribution(
+            mock_mol,
+            mock_mf_restricted,
+            "C 2pz",
+            ["Carbon"],
+            orbs=[0, 1],
+            folder=str(tmp_path),
+        )
         assert (tmp_path / "composition_alpha.pdf").exists()
 
-    def test_restricted_produces_alpha_only(self, tmp_path: pytest.FixturePath, mock_mol: MagicMock, mock_mf_restricted: MagicMock) -> None:
-        plot_pie_contribution(mock_mol, mock_mf_restricted, ["C 2pz"], ["Carbon"], orbs=[0, 1, 2], folder=str(tmp_path))
+    def test_restricted_produces_alpha_only(
+        self,
+        tmp_path: pytest.FixturePath,
+        mock_mol: MagicMock,
+        mock_mf_restricted: MagicMock,
+    ) -> None:
+        plot_pie_contribution(
+            mock_mol,
+            mock_mf_restricted,
+            ["C 2pz"],
+            ["Carbon"],
+            orbs=[0, 1, 2],
+            folder=str(tmp_path),
+        )
         assert (tmp_path / "composition_alpha.pdf").exists()
         assert not (tmp_path / "composition_beta.pdf").exists()
 
-    def test_unrestricted_produces_alpha_and_beta(self, tmp_path: pytest.FixturePath, mock_mol: MagicMock, mock_mf_unrestricted: MagicMock) -> None:
-        plot_pie_contribution(mock_mol, mock_mf_unrestricted, ["C 2pz"], ["Carbon"], orbs=[0, 1], folder=str(tmp_path))
+    def test_unrestricted_produces_alpha_and_beta(
+        self,
+        tmp_path: pytest.FixturePath,
+        mock_mol: MagicMock,
+        mock_mf_unrestricted: MagicMock,
+    ) -> None:
+        plot_pie_contribution(
+            mock_mol,
+            mock_mf_unrestricted,
+            ["C 2pz"],
+            ["Carbon"],
+            orbs=[0, 1],
+            folder=str(tmp_path),
+        )
         assert (tmp_path / "composition_alpha.pdf").exists()
         assert (tmp_path / "composition_beta.pdf").exists()
 
-    def test_min_pct_zero_shows_all_labels(self, tmp_path: pytest.FixturePath, mock_mol: MagicMock, mock_mf_restricted: MagicMock) -> None:
-        plot_pie_contribution(mock_mol, mock_mf_restricted, ["C 2pz"], ["Carbon"], orbs=[0], min_pct=0.0, folder=str(tmp_path))
+    def test_min_pct_zero_shows_all_labels(
+        self,
+        tmp_path: pytest.FixturePath,
+        mock_mol: MagicMock,
+        mock_mf_restricted: MagicMock,
+    ) -> None:
+        plot_pie_contribution(
+            mock_mol,
+            mock_mf_restricted,
+            ["C 2pz"],
+            ["Carbon"],
+            orbs=[0],
+            min_pct=0.0,
+            folder=str(tmp_path),
+        )
         assert (tmp_path / "composition_alpha.pdf").exists()
