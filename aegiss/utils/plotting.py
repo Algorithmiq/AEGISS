@@ -1,30 +1,33 @@
+"""Plotting utilities for AEGISS active space diagnostics."""
 
 from __future__ import annotations
 
-import os
-from typing import Any, Union
+from pathlib import Path
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
-import matplotlib.patches as patches
-import matplotlib.lines as mlines
-from collections import Counter
+from matplotlib import patches
 
 
-def plot_pie_contribution(ao_contributions: list[tuple[int, float]],
-                          ao_labels: Union[list[str], str],
-                          save_path: str) -> None:
-    pass
-
-def plot_ao_contribution(ao_contributions: list[tuple[int, float]],
-                         ao_labels: Union[list[str], str],
-                         save_path: str) -> None:
-    pass
+def plot_pie_contribution(
+    ao_contributions: list[tuple[int, float]],
+    ao_labels: list[str] | str,
+    save_path: str,
+) -> None:
+    """Plot AO contributions as a pie chart (not yet implemented)."""
 
 
+def plot_ao_contribution(
+    ao_contributions: list[tuple[int, float]],
+    ao_labels: list[str] | str,
+    save_path: str,
+) -> None:
+    """Plot AO contributions as a bar chart (not yet implemented)."""
 
-def SOE_heatmap(
+
+
+def SOE_heatmap(  # noqa: N802
     so1_entropies: list[tuple[int, float]],
     n_occ: int = 0,
     folder: str = './',
@@ -80,7 +83,7 @@ def SOE_heatmap(
 
     ax.set_title(f"Max SOE: {max_so1:.5f}", fontsize=16)
     fig.tight_layout()
-    fig.savefig(os.path.join(folder, filename + ".pdf"), format='pdf', bbox_inches='tight')
+    fig.savefig(Path(folder) / (filename + ".pdf"), format='pdf', bbox_inches='tight')
     plt.close(fig)
 
 def _detect_plateaus(
@@ -124,7 +127,7 @@ def _detect_plateaus(
 def _define_cas_size(selected_ones: np.ndarray, occ_index: int) -> tuple[int, int]:
     return (len(selected_ones), 2 * int(np.sum(selected_ones < occ_index)))
 
-def TH_plots(
+def TH_plots(  # noqa: N802
     so1_entropies: list[tuple[int, float]],
     folder: str = './',
     occ_index: int = 0,
@@ -152,8 +155,6 @@ def TH_plots(
     filename:
         Base name of the output file (without extension).
     """
-
-
     so1_abs = np.array([x[1] for x in so1_entropies])
     max_so1 = max(so1_abs)
     so1_rel = so1_abs / max_so1
@@ -183,7 +184,7 @@ def TH_plots(
     ax.plot(plateau_index, plateau_vector, ls="", marker="x", color='teal', markersize=5)
     ax.set_ylabel("# Selected MOs", fontsize=20)
     ax.set_xlabel(r"Threshold as % of largest $S(1)_\mathrm{max}$", fontsize=18)
-    ax.grid(True, alpha=0.3)
+    ax.grid(visible=True, alpha=0.3)
 
     if large_cas > 50:
         ax.set_yticks(np.arange(0, large_cas + 1, 5))
@@ -221,5 +222,5 @@ def TH_plots(
         print(f"\nPlateau #{i+1}:\nN_MOs: {len(indices_above[idx])}\nList of MOs: {indices_above[idx]}\n")
 
     fig.tight_layout()
-    fig.savefig(os.path.join(folder, filename + ".pdf"), format='pdf')
+    fig.savefig(Path(folder) / (filename + ".pdf"), format='pdf')
     plt.close(fig)
