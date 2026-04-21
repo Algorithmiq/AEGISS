@@ -161,6 +161,8 @@ def select_aegiss(
     if projection_ranking == "subset":
         print("\nRanking orbitals for AO projection based on subset contribution.")
         for sub in (screened_occ, screened_virt):
+            if not sub:
+                continue
             final_space.extend(
                 select_by_ao_projection(
                     mf,

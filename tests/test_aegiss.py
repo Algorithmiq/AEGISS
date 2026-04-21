@@ -284,7 +284,7 @@ class TestEntropyScreeningEarlyReturn:
             patch(f"{_MODULE}.select_by_entropy", return_value=([], [(5, 0.4)])),
             patch(
                 f"{_MODULE}.select_by_ao_projection",
-                side_effect=[np.array([]), np.array([5])],
+                return_value=np.array([5]),
             ) as mock_proj,
             patch(f"{_MODULE}.save_orbitals"),
             patch(f"{_MODULE}.save_orbitals_from_entropies"),
@@ -298,7 +298,8 @@ class TestEntropyScreeningEarlyReturn:
                 save_orb=False,
             )
 
-        assert mock_proj.called
+        mock_proj.assert_called_once()
+        assert mock_proj.call_args.kwargs["restricted_space"] == [(5, 0.4)]
         assert list(result) == [5]
 
     def test_only_virt_empty_continues_to_projection(
@@ -313,7 +314,7 @@ class TestEntropyScreeningEarlyReturn:
             patch(f"{_MODULE}.select_by_entropy", return_value=([(2, 0.8)], [])),
             patch(
                 f"{_MODULE}.select_by_ao_projection",
-                side_effect=[np.array([2]), np.array([])],
+                return_value=np.array([2]),
             ) as mock_proj,
             patch(f"{_MODULE}.save_orbitals"),
             patch(f"{_MODULE}.save_orbitals_from_entropies"),
@@ -327,7 +328,8 @@ class TestEntropyScreeningEarlyReturn:
                 save_orb=False,
             )
 
-        assert mock_proj.called
+        mock_proj.assert_called_once()
+        assert mock_proj.call_args.kwargs["restricted_space"] == [(2, 0.8)]
         assert list(result) == [2]
 
 

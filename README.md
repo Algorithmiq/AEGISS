@@ -232,9 +232,9 @@ If entropy screening returns no orbitals, the function returns an empty array ea
 | `projection_top_n` | `int` or `None` | `None` | Keep top-N orbitals per label instead of thresholding |
 | `projection_ranking` | `str` | `"subset"` | `"subset"`: project occ and virt subspaces separately; `"global"`: project combined set |
 | `saving_folder` | `str` | `"./aegiss/examples/orbs/"` | Directory for output cube files |
-| `saving_prefix` | `str` | `"benzene"` | Prefix for cube file names |
+| `saving_prefix` | `str` | `"benzene"` | Base prefix for cube file names; AEGISS appends selection-specific suffixes such as `_entropy` and `_AEGISS` before the orbital-specific filename part |
 | `verbosity` | `int` | `0` | block2 output verbosity |
-| `save_orb` | `bool` | `True` | Write cube files for screened and final orbitals |
+| `save_orb` | `bool` | `True` | Write cube files for screened and final orbitals, grouped by the suffixed prefixes derived from `saving_prefix` |
 
 Returns `np.ndarray` of sorted orbital indices.
 
