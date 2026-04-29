@@ -171,6 +171,7 @@ def plot_ao_contribution(
     save_path: str,
 ) -> None:
     """Plot AO contributions as a bar chart (not yet implemented)."""
+    raise NotImplementedError("plot_ao_contribution is not yet implemented.")
 
 
 def soe_heatmap(
