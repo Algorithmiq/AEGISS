@@ -113,6 +113,13 @@ def select_aegiss(
         fraction_type=entropy_config.fraction_type,
     )
 
+    if len(screened_occ) == 0 and len(screened_virt) == 0:
+        print(
+            "\nNo orbitals passed the entropy screening step. Consider adjusting the "
+            "entropy_fraction or using 'global' ranking for a more inclusive selection."
+        )
+        return np.array([], dtype=int)
+
     if output_config.save_orb:
         save_orbitals_from_entropies(
             mol,
@@ -133,6 +140,8 @@ def select_aegiss(
     if projection_config.ranking == "subset":
         print("\nRanking orbitals for AO projection based on subset contribution.")
         for sub in (screened_occ, screened_virt):
+            if not sub:
+                continue
             final_space.extend(
                 select_by_ao_projection(
                     mf,
