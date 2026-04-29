@@ -137,6 +137,12 @@ def select_aegiss(
             folder=output_config.saving_folder,
         )
 
+    save_path = (
+        output_config.saving_folder + output_config.saving_prefix
+        if output_config.saving_folder and output_config.saving_prefix
+        else None
+    )
+
     final_space: list[int] = []
     if projection_config.ranking == "subset":
         print("\nRanking orbitals for AO projection based on subset contribution.")
@@ -152,6 +158,7 @@ def select_aegiss(
                     contribution_type=projection_config.contribution_type,
                     top_n=projection_config.top_n,
                     restricted_space=sub,
+                    save_path=save_path,
                 )
             )
     else:
@@ -165,6 +172,7 @@ def select_aegiss(
                 contribution_type=projection_config.contribution_type,
                 top_n=projection_config.top_n,
                 restricted_space=(screened_occ, screened_virt),
+                save_path=save_path,
             )
         )
 
