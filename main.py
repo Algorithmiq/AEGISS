@@ -51,7 +51,7 @@ if __name__ == "__main__":
         saving_folder="./aegiss/examples/orbs/",
         saving_prefix="benzene_aegiss",
         save_orb=False,
-        save_plots=True,
+        save_plots=False,
     )
     active_indices = select_aegiss(
         mol,

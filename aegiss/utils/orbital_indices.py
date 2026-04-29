@@ -7,6 +7,25 @@ from typing import Any
 import numpy as np
 
 
+def _resolve_nelecas(nelecas: int | tuple[int, int]) -> tuple[int, int]:
+    """Normalise *nelecas* to an (nalpha, nbeta) pair.
+
+    Parameters
+    ----------
+    nelecas : int or tuple[int, int]
+        Either a total electron count (PySCF closed-shell convention) or an
+        explicit ``(nalpha, nbeta)`` pair.  Odd integers are treated as
+        high-spin doublets (nalpha = ceil, nbeta = floor).
+
+    Returns:
+    -------
+    nalpha, nbeta : tuple[int, int]
+    """
+    if isinstance(nelecas, tuple):
+        return nelecas
+    return (nelecas + 1) // 2, nelecas // 2
+
+
 def combine_candidate_entropies(
     occ_orbs: list[tuple[int, float]], virt_orbs: list[tuple[int, float]]
 ) -> list[tuple[int, float]]:
@@ -91,7 +110,7 @@ def get_orbital_spaces(
 def get_subspaces_from_cas(
     mf: Any,
     ncas: int,
-    nelecas: int,
+    nelecas: int | tuple[int, int],
 ) -> tuple[np.ndarray, np.ndarray]:
     """Partition MO indices into active and virtual spaces from a CAS definition.
 
@@ -101,8 +120,9 @@ def get_subspaces_from_cas(
         Converged mean-field object exposing ``mo_occ``.
     ncas : int
         Number of active orbitals in the CAS.
-    nelecas : int
-        Number of active electrons in the CAS.
+    nelecas : int or tuple[int, int]
+        Number of active electrons, either as a total count or an explicit
+        ``(nalpha, nbeta)`` pair (same convention as PySCF's CASCI).
 
     Returns:
     -------
@@ -115,23 +135,25 @@ def get_subspaces_from_cas(
         f"\n----------DMRG CAS Subspace Selection"
         f" (ncas={ncas}, nelecas={nelecas})----------"
     )
-    nmos = mf.mo_coeff.shape[1]
+    nalpha, nbeta = _resolve_nelecas(nelecas)
     neletot = int(np.sum(mf.mo_occ))
+    nmos = mf.mo_coeff.shape[1]
+
     if ncas > nmos:
         msg = "Number of active orbitals cannot exceed total number of MOs."
         raise ValueError(msg)
-    if nelecas < 0:
-        msg = "Number of active electrons cannot be negative."
+    if nbeta < 0 or nalpha < nbeta:
+        msg = "nelecas must satisfy nalpha >= nbeta >= 0."
         raise ValueError(msg)
-    if nelecas > neletot:
+    if nalpha + nbeta > neletot:
         msg = "Number of active electrons cannot exceed total number of electrons."
         raise ValueError(msg)
 
     nocc = np.count_nonzero(mf.mo_occ > 0)
     print(f"\n\nTotal MOs: {nmos}, Occupied MOs: {nocc}, Virtual MOs: {nmos - nocc}")
 
-    n_active_occ = nelecas // 2  # Number of active occupied orbitals
-    n_active_virt = ncas - n_active_occ  # Number of active virtual orbitals
+    n_active_occ = nalpha
+    n_active_virt = ncas - n_active_occ
     if nmos - nocc - n_active_virt < 0:
         msg = "Not enough virtual orbitals to accommodate the active space."
         raise ValueError(msg)

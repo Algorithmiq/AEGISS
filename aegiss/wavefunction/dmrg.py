@@ -10,6 +10,7 @@ from pyblock2.driver.core import DMRGDriver, SymmetryTypes
 from pyscf import ao2mo, mcscf
 
 from aegiss.utils.dmrg_utils import _default_dmrg_schedule, compute_qmi
+from aegiss.utils.orbital_indices import _resolve_nelecas
 
 if TYPE_CHECKING:
     import numpy as np
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
 def run_dmrg(
     mf: Any,
     ncas: int,
-    nelecas: int,
+    nelecas: int | tuple[int, int],
     init_bond_dim: int = 10,
     symm_type: str = "SU2",
     verbosity: int = 0,
@@ -33,8 +34,9 @@ def run_dmrg(
         Converged mean-field object.
     ncas : int
         Number of active orbitals.
-    nelecas : int
-        Number of active electrons.
+    nelecas : int or tuple[int, int]
+        Number of active electrons, either as a total count or an explicit
+        ``(nalpha, nbeta)`` pair (same convention as PySCF's CASCI).
     init_bond_dim : int
         Initial bond dimension for the DMRG schedule.
     symm_type : {'SU2', 'SZ'}
@@ -77,11 +79,13 @@ def run_dmrg(
     h1e, ecore = mycas.get_h1eff()
     g2e = ao2mo.restore(1, mycas.get_h2eff(), ncas)
 
-    driver.initialize_system(n_sites=ncas, n_elec=nelecas, spin=0)
+    nalpha, nbeta = _resolve_nelecas(nelecas)
+    spin = nalpha - nbeta
+    driver.initialize_system(n_sites=ncas, n_elec=nalpha + nbeta, spin=spin)
 
     print(
         f"System parameters: n_sites={driver.n_sites}, n_elec={driver.n_elec},"
-        f" spin=0, symm_type={symm_type}"
+        f" spin={spin}, symm_type={symm_type}"
     )
     print(f"Scratch directory: {scratch_dir}")
     print(f"Number of threads: {n_threads}")
@@ -128,7 +132,7 @@ def run_dmrg(
         zket = driver.mps_change_to_sz(ket, "ZKET")
 
         driver.symm_type = SymmetryTypes.SZ
-        driver.initialize_system(n_sites=ncas, n_elec=nelecas, spin=0)
+        driver.initialize_system(n_sites=ncas, n_elec=nalpha + nbeta, spin=spin)
         mpo = driver.get_qc_mpo(h1e=h1e, g2e=g2e, ecore=ecore, iprint=0)
         impo = driver.get_identity_mpo()
         norm = driver.expectation(zket, impo, zket)

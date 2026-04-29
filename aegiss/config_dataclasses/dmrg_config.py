@@ -14,8 +14,9 @@ class DMRGConfig:
     ----------
     ncas : int
         Number of active orbitals for the DMRG calculation.
-    nelecas : int
-        Number of active electrons for the DMRG calculation.
+    nelecas : int or tuple[int, int]
+        Number of active electrons, either as a total count or an explicit
+        ``(nalpha, nbeta)`` pair (same convention as PySCF's CASCI).
     init_bond_dim : int, default 10
         Initial DMRG bond dimension; grows automatically during the sweep schedule.
     symm_type : {'SZ', 'SU2'}, default 'SZ'
@@ -26,7 +27,7 @@ class DMRGConfig:
     """
 
     ncas: int
-    nelecas: int
+    nelecas: int | tuple[int, int]
     init_bond_dim: int = 10
     symm_type: Literal["SZ", "SU2"] = "SZ"
     verbosity: int = 0
@@ -43,7 +44,17 @@ class DMRGConfig:
             raise ValueError(
                 f"DMRGConfig: Number of active orbitals (`ncas`) must be positive, got {self.ncas}."
             )
-        if self.nelecas <= 0:
+        if isinstance(self.nelecas, tuple):
+            if len(self.nelecas) != 2:
+                raise ValueError(
+                    "DMRGConfig: `nelecas` tuple must have exactly two elements (nalpha, nbeta)."
+                )
+            nalpha, nbeta = self.nelecas
+            if nalpha < nbeta or nbeta < 0:
+                raise ValueError(
+                    f"DMRGConfig: `nelecas` tuple must satisfy nalpha >= nbeta >= 0, got {self.nelecas}."
+                )
+        elif self.nelecas <= 0:
             raise ValueError(
                 f"DMRGConfig: Number of active electrons (`nelecas`) must be positive, got {self.nelecas}."
             )
