@@ -15,8 +15,6 @@ from aegiss.config_dataclasses import (
 from aegiss.initial_guess import build_mol, run_scf
 from aegiss.utils.banner import print_banner
 
-
-
 if __name__ == "__main__":
     os.environ["OMP_NUM_THREADS"] = "4"
     os.environ["SCRATCH_DIR"] = str(Path(__file__).parent / "aegiss/examples/tmp")

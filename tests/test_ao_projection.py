@@ -20,7 +20,7 @@ class TestComputeContribution:
         selected, all_weights = _compute_contribution(
             mf=h2_rhf,
             label="H 1s",
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             reduced_space_indices=space,
             contribution=0.0,
             contribution_type="r",
@@ -37,7 +37,7 @@ class TestComputeContribution:
         selected, all_weights = _compute_contribution(
             mf=h2_rhf,
             label="Xe 1s",  # no Xe in H2
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             reduced_space_indices=space,
             contribution=0.0,
             contribution_type="a",
@@ -54,7 +54,7 @@ class TestComputeContribution:
         selected, all_weights = _compute_contribution(
             mf=h2_rhf,
             label="H 1s",
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             reduced_space_indices=space,
             contribution=2.0,
             contribution_type="r",
@@ -69,7 +69,7 @@ class TestComputeContribution:
         selected, _ = _compute_contribution(
             mf=h2_rhf,
             label="H 1s",
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             reduced_space_indices=space,
             contribution=0.0,
             contribution_type="a",
@@ -83,7 +83,7 @@ class TestComputeContribution:
         _, all_weights = _compute_contribution(
             mf=h2_rhf,
             label="H 1s",
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             reduced_space_indices=space,
             contribution=0.9,
             contribution_type="r",
@@ -96,7 +96,7 @@ class TestComputeContribution:
         selected, all_weights = _compute_contribution(
             mf=h2_rhf,
             label="H 1s",
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             reduced_space_indices=space,
             contribution=0.0,
             contribution_type="a",
@@ -113,7 +113,7 @@ class TestComputeContribution:
             _compute_contribution(
                 mf=h2_rhf,
                 label="H 1s",
-                active_mo_coeff=bad_coeff,
+                full_mo_coeff=bad_coeff,
                 reduced_space_indices=space,
                 contribution=0.0,
                 contribution_type="a",
@@ -125,7 +125,7 @@ class TestComputeContribution:
         selected, all_weights = _compute_contribution(
             mf=h2_rhf,
             label="H 1s",
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             reduced_space_indices=space,
             contribution=0.0,
             contribution_type="a",
@@ -145,7 +145,7 @@ class TestSelectByLabel:
         selected, all_weights = select_by_label(
             label="H 1s",
             mf=h2_rhf,
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             space=space,
             contribution=0.0,
             projected_basis="minao",
@@ -159,7 +159,7 @@ class TestSelectByLabel:
         direct = _compute_contribution(
             mf=h2_rhf,
             label="H 1s",
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             reduced_space_indices=space,
             contribution=0.5,
             contribution_type="r",
@@ -168,7 +168,7 @@ class TestSelectByLabel:
         via_label = select_by_label(
             label="H 1s",
             mf=h2_rhf,
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             space=space,
             contribution=0.5,
             projected_basis="minao",
