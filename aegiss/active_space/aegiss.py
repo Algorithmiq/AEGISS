@@ -54,7 +54,6 @@ def select_aegiss(
     entropy_config: EntropyConfig,
     projection_config: ProjectionConfig,
     output_config: OutputConfig,
-    verbosity: int = 0,
 ) -> np.ndarray:
     """Run the full AEGISS active space selection pipeline.
 
@@ -77,8 +76,6 @@ def select_aegiss(
         Configuration for the AO projection-based screening step.
     output_config : OutputConfig
         Configuration for output options (file saving, plots).
-    verbosity : int, default 0
-        block2 output verbosity level.
 
     Returns:
     -------
@@ -94,7 +91,7 @@ def select_aegiss(
         nelecas=dmrg_config.nelecas,
         symm_type=dmrg_config.symm_type,
         init_bond_dim=dmrg_config.init_bond_dim,
-        verbosity=verbosity,
+        verbosity=dmrg_config.verbosity,
         get_qmi=True,
     )
 

@@ -21,12 +21,15 @@ class DMRGConfig:
     symm_type : {'SZ', 'SU2'}, default 'SZ'
         Spin symmetry used by block2.  ``'SZ'`` is required for entropy
         calculations; ``'SU2'`` is faster but needs MPS conversion for entropies.
+    verbosity : int, default 0
+        Verbosity level for block2 output.  Higher values produce more detailed logs.
     """
 
     ncas: int
     nelecas: int
     init_bond_dim: int = 10
     symm_type: Literal["SZ", "SU2"] = "SZ"
+    verbosity: int = 0
 
     def __post_init__(self) -> None:
         """Validate the configuration parameters.
