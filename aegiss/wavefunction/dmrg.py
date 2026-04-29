@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import time
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from pyblock2.driver.core import DMRGDriver, SymmetryTypes
 from pyscf import ao2mo, mcscf
@@ -21,7 +21,7 @@ def run_dmrg(
     ncas: int,
     nelecas: int | tuple[int, int],
     init_bond_dim: int = 10,
-    symm_type: str = "SU2",
+    symm_type: Literal['SZ', 'SU2'] = 'SU2',
     verbosity: int = 0,
     *,
     get_qmi: bool = False,
