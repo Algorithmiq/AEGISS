@@ -12,12 +12,12 @@ class ProjectionConfig:
 
     Parameters:
     -----------
+    projection_ao_labels : list of str
+        AO labels to project onto.  Format: ``"Element AtomicOrbital"``,
+        e.g. ``"C 2pz"``, ``"Fe 3d"``.
     projection_basis : str or None, default 'minao'
         Basis set used for AO projection.  ``None`` uses the original
         molecular basis.
-    projection_ao_labels : list of str, default ['C 2pz']
-        AO labels to project onto.  Format: ``"Element AtomicOrbital"``,
-        e.g. ``"C 2pz"``, ``"Fe 3d"``.
     projection_contribution : float, default 0.5
         Projection weight threshold (see *projection_contribution_type*).
     projection_contribution_type : {'a', 'r'}, default 'a'
@@ -31,8 +31,8 @@ class ProjectionConfig:
         combined set.
     """
 
+    projection_ao_labels: list[str]
     projection_basis: str | None = "minao"
-    projection_ao_labels: list[str] | None = None
     projection_contribution: float = 0.5
     projection_contribution_type: Literal["a", "r"] = "a"
     projection_top_n: int | None = None
@@ -46,6 +46,10 @@ class ProjectionConfig:
         ValueError
             If any of the parameters are out of their expected ranges or have invalid values.
         """
+        if not self.projection_ao_labels or not all(isinstance(label, str) for label in self.projection_ao_labels):
+            raise ValueError(
+                "projection_ao_labels must be a non-empty list of strings."
+            )
         if self.projection_contribution_type not in ("a", "r"):
             raise ValueError(
                 f"Invalid projection_contribution_type \
