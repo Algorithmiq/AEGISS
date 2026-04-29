@@ -1,6 +1,11 @@
 """AEGISS: Atomic Orbital and Entropy based Guided Inference for Space Selection."""
 
-from aegiss.config_dataclasses import DMRGConfig, EntropyConfig, OutputConfig, ProjectionConfig
+from aegiss.config_dataclasses import (
+    DMRGConfig,
+    EntropyConfig,
+    OutputConfig,
+    ProjectionConfig,
+)
 
 __all__ = [
     "DMRGConfig",
