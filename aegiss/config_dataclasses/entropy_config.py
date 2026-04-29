@@ -31,13 +31,17 @@ class EntropyConfig:
         """Validate the configuration parameters.
 
         Raises:
-        ------
+        ----------
         ValueError
             If any of the parameters are out of their expected ranges or have invalid values.
         """
-        if not (0 <= self.fraction <= 1):
+        if not (0 <= self.fraction <= 1) and self.fraction_type == "r":
             raise ValueError(
                 f"EntropyConfig: `fraction` must be in the range [0, 1], got {self.fraction}."
+            )
+        if self.fraction < 0 and self.fraction_type == "a":
+            raise ValueError(
+                f"EntropyConfig: `fraction` must be non-negative when `fraction_type` is 'a', got {self.fraction}."
             )
         if self.fraction_type not in ("r", "a"):
             raise ValueError(

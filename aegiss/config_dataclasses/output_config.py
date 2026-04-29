@@ -10,7 +10,7 @@ class OutputConfig:
     """Configuration dataclass for AEGISS output options.
 
     Parameters:
-    -----------
+    ----------
     saving_folder : str, default './aegiss/examples/orbs/'
         Directory where cube files are written when *save_orb* is ``True``.
     saving_prefix : str, default 'benzene'
