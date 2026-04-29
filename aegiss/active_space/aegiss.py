@@ -59,8 +59,9 @@ def select_aegiss(
 
     Runs DMRG on the specified CAS, then filters the resulting orbitals
     through entropy screening and AO projection.  An orbital is included
-    in the final active space when it has been selected by *both* the criterion.
-    Therefore, only highly entangled orbitals with significant contribution on the specified AOs are kept.
+    in the final active space when it has been selected by *both* criteria.
+    Therefore, only highly entangled orbitals are kept. These orbitals
+    must also have significant contribution on the specified AOs.
 
     Parameters
     ----------
