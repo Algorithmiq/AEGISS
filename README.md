@@ -106,16 +106,16 @@ mf = run_scf(mol, method="RHF")
 from aegiss.active_space.aegiss import select_aegiss
 from aegiss.config_dataclasses import DMRGConfig, EntropyConfig, ProjectionConfig, OutputConfig
 
-dmrg_config = DMRGConfig(ncas=20, nelecas=20)
+dmrg_config = DMRGConfig(ncas=20, nelecas=20, init_bond_dim=10, symm_type="SZ")
 
 entropy_config = EntropyConfig(
     fraction=0.1,
     fraction_type="r",
-    ranking="subset",
+    ranking="global",
 )
 
 projection_config = ProjectionConfig(
-    ao_labels=["C 2pz", "C 2px", "C 2py"],
+    ao_labels=["C 2pz"],
     contribution=0.5,
     contribution_type="a",
 )
@@ -138,6 +138,11 @@ active_indices = select_aegiss(
 
 `select_aegiss` runs the full pipeline — DMRG → entropy screening → AO projection
 — and optionally writes orbital cube files and diagnostic plots.
+
+Here `ranking="global"` means occupied and virtual orbitals are ranked together by
+entropy before the 10 % threshold is applied, so only the most entangled orbitals
+across the full CAS survive. Narrowing `ao_labels` to `["C 2pz"]` targets the
+benzene π manifold exclusively.
 
 For custom workflows that call individual steps directly, see `run_dmrg`,
 `select_by_entropy`, and `select_by_ao_projection` in the API reference below.
@@ -197,10 +202,12 @@ DMRGConfig(ncas, nelecas, init_bond_dim=10, symm_type="SZ", verbosity=0)
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `ncas` | `int` | — | Number of active orbitals |
-| `nelecas` | `int` | — | Number of active electrons |
+| `nelecas` | `int` or `tuple[int, int]` | — | Number of active electrons. An integer total count or an explicit `(nalpha, nbeta)` pair — same convention as PySCF's CASCI. Odd integers are treated as high-spin doublets. |
 | `init_bond_dim` | `int` | `10` | Initial DMRG bond dimension; grows automatically during the sweep schedule |
 | `symm_type` | `"SZ"` or `"SU2"` | `"SZ"` | Spin symmetry: `"SZ"` is required for entropy calculations; `"SU2"` is faster |
 | `verbosity` | `int` | `0` | block2 output verbosity |
+
+Open-shell example: `DMRGConfig(ncas=10, nelecas=(5, 4))` sets up a doublet CAS with 5α and 4β electrons.
 
 #### `EntropyConfig`
 
@@ -302,7 +309,7 @@ energy, soe1, soe2, minfo = run_dmrg(
 |---|---|---|---|
 | `mf` | SCF object | — | Converged mean-field |
 | `ncas` | `int` | — | Number of active orbitals |
-| `nelecas` | `int` | — | Number of active electrons |
+| `nelecas` | `int` or `tuple[int, int]` | — | Number of active electrons. An integer total count or an explicit `(nalpha, nbeta)` pair. Odd integers are treated as high-spin doublets. |
 | `init_bond_dim` | `int` | `10` | Initial DMRG bond dimension; the schedule grows to a larger final dimension automatically |
 | `symm_type` | `str` | `"SU2"` | Spin symmetry: `"SU2"` (faster) or `"SZ"` (required for entropy calculation without MPS conversion) |
 | `verbosity` | `int` | `0` | block2 output verbosity |
