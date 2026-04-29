@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-from aegiss.config_dataclasses import DMRGConfig, EntropyConfig, OutputConfig, ProjectionConfig
+from aegiss.config_dataclasses import (
+    DMRGConfig,
+    EntropyConfig,
+    OutputConfig,
+    ProjectionConfig,
+)
 
 
 class TestDMRGConfig:
@@ -117,19 +122,27 @@ class TestProjectionConfig:
 
     def test_relative_contribution_above_one_raises(self) -> None:
         with pytest.raises(ValueError, match="contribution"):
-            ProjectionConfig(ao_labels=["C 2pz"], contribution=1.5, contribution_type="r")
+            ProjectionConfig(
+                ao_labels=["C 2pz"], contribution=1.5, contribution_type="r"
+            )
 
     def test_relative_contribution_negative_raises(self) -> None:
         with pytest.raises(ValueError, match="contribution"):
-            ProjectionConfig(ao_labels=["C 2pz"], contribution=-0.1, contribution_type="r")
+            ProjectionConfig(
+                ao_labels=["C 2pz"], contribution=-0.1, contribution_type="r"
+            )
 
     def test_absolute_contribution_above_one_valid(self) -> None:
-        cfg = ProjectionConfig(ao_labels=["C 2pz"], contribution=1.5, contribution_type="a")
+        cfg = ProjectionConfig(
+            ao_labels=["C 2pz"], contribution=1.5, contribution_type="a"
+        )
         assert cfg.contribution == 1.5
 
     def test_absolute_contribution_negative_raises(self) -> None:
         with pytest.raises(ValueError, match="contribution"):
-            ProjectionConfig(ao_labels=["C 2pz"], contribution=-0.1, contribution_type="a")
+            ProjectionConfig(
+                ao_labels=["C 2pz"], contribution=-0.1, contribution_type="a"
+            )
 
     def test_zero_top_n_raises(self) -> None:
         with pytest.raises(ValueError, match="top_n"):
