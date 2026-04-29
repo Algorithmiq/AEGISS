@@ -21,7 +21,7 @@ def run_dmrg(
     ncas: int,
     nelecas: int | tuple[int, int],
     init_bond_dim: int = 10,
-    symm_type: Literal['SZ', 'SU2'] = 'SU2',
+    symm_type: Literal["SZ", "SU2"] = "SU2",
     verbosity: int = 0,
     *,
     get_qmi: bool = False,
