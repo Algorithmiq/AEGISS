@@ -42,8 +42,7 @@ def _make_soe_plots(
 def select_aegiss(
     mol: Any,
     mf: Any,
-    dmrg_ncas: int,
-    dmrg_nelecas: int,
+    dmrg_cas: tuple[int, int],
     init_bond_dim: int = 10,
     symm_type: Literal["SZ", "SU2"] = "SZ",
     entropy_ranking: Literal["subset", "global"] = "subset",
@@ -75,10 +74,8 @@ def select_aegiss(
         Molecular geometry and basis set.
     mf : pyscf.scf.hf.SCF
         Converged mean-field object.
-    dmrg_ncas : int
-        Number of active orbitals for the DMRG calculation.
-    dmrg_nelecas : int
-        Number of active electrons for the DMRG calculation.
+    dmrg_cas : tuple [int, int]
+        Number of active orbitals and active electrons for the DMRG calculation.
     init_bond_dim : int, default 10
         Initial DMRG bond dimension; grows automatically during the sweep schedule.
     symm_type : {'SZ', 'SU2'}, default 'SZ'
@@ -126,6 +123,8 @@ def select_aegiss(
     active_indices : np.ndarray of int
         Sorted array of orbital indices forming the selected active space.
     """
+    dmrg_ncas, dmrg_nelecas = dmrg_cas
+
     if entropy_ranking not in ("subset", "global"):
         raise ValueError(
             f"Invalid entropy_ranking {entropy_ranking!r}. Must be 'subset' or 'global'."
