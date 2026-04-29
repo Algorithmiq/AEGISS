@@ -332,7 +332,12 @@ class TestOrbitalSaving:
 
 class TestEntropyScreeningEarlyReturn:
     def test_both_empty_returns_empty_array(
-        self, mol_mock: MagicMock, mf_mock: MagicMock
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        dmrg_config: DMRGConfig,
+        entropy_config: EntropyConfig,
+        projection_config_subset: ProjectionConfig,
     ) -> None:
         with (
             patch(
@@ -346,7 +351,12 @@ class TestEntropyScreeningEarlyReturn:
             patch(f"{_MODULE}.save_orbitals_from_entropies"),
         ):
             result = select_aegiss(
-                mol_mock, mf_mock, dmrg_ncas=4, dmrg_nelecas=4, save_orb=False
+                mol_mock,
+                mf_mock,
+                dmrg_config=dmrg_config,
+                entropy_config=entropy_config,
+                projection_config=projection_config_subset,
+                output_config=OutputConfig(save_orb=False),
             )
 
         assert isinstance(result, np.ndarray)
@@ -354,7 +364,12 @@ class TestEntropyScreeningEarlyReturn:
         mock_proj.assert_not_called()
 
     def test_only_occ_empty_continues_to_projection(
-        self, mol_mock: MagicMock, mf_mock: MagicMock
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        dmrg_config: DMRGConfig,
+        entropy_config: EntropyConfig,
+        projection_config_subset: ProjectionConfig,
     ) -> None:
         with (
             patch(
@@ -373,10 +388,10 @@ class TestEntropyScreeningEarlyReturn:
             result = select_aegiss(
                 mol_mock,
                 mf_mock,
-                dmrg_ncas=4,
-                dmrg_nelecas=4,
-                projection_ranking="subset",
-                save_orb=False,
+                dmrg_config=dmrg_config,
+                entropy_config=entropy_config,
+                projection_config=projection_config_subset,
+                output_config=OutputConfig(save_orb=False),
             )
 
         mock_proj.assert_called_once()
@@ -384,7 +399,12 @@ class TestEntropyScreeningEarlyReturn:
         assert list(result) == [5]
 
     def test_only_virt_empty_continues_to_projection(
-        self, mol_mock: MagicMock, mf_mock: MagicMock
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        dmrg_config: DMRGConfig,
+        entropy_config: EntropyConfig,
+        projection_config_subset: ProjectionConfig,
     ) -> None:
         with (
             patch(
@@ -403,10 +423,10 @@ class TestEntropyScreeningEarlyReturn:
             result = select_aegiss(
                 mol_mock,
                 mf_mock,
-                dmrg_ncas=4,
-                dmrg_nelecas=4,
-                projection_ranking="subset",
-                save_orb=False,
+                dmrg_config=dmrg_config,
+                entropy_config=entropy_config,
+                projection_config=projection_config_subset,
+                output_config=OutputConfig(save_orb=False),
             )
 
         mock_proj.assert_called_once()
@@ -415,28 +435,10 @@ class TestEntropyScreeningEarlyReturn:
 
 
 class TestParameterValidation:
-    def test_invalid_entropy_ranking_raises(
-        self, mol_mock: MagicMock, mf_mock: MagicMock
-    ) -> None:
-        with pytest.raises(ValueError, match="entropy_ranking"):
-            select_aegiss(
-                mol_mock,
-                mf_mock,
-                dmrg_ncas=4,
-                dmrg_nelecas=4,
-                entropy_ranking="invalid",
-                save_orb=False,
-            )
+    def test_invalid_entropy_ranking_raises(self) -> None:
+        with pytest.raises(ValueError, match="ranking"):
+            EntropyConfig(ranking="invalid")  # type: ignore[arg-type]
 
-    def test_invalid_projection_ranking_raises(
-        self, mol_mock: MagicMock, mf_mock: MagicMock
-    ) -> None:
-        with pytest.raises(ValueError, match="projection_ranking"):
-            select_aegiss(
-                mol_mock,
-                mf_mock,
-                dmrg_ncas=4,
-                dmrg_nelecas=4,
-                projection_ranking="bad",
-                save_orb=False,
-            )
+    def test_invalid_projection_ranking_raises(self) -> None:
+        with pytest.raises(ValueError, match="ranking"):
+            ProjectionConfig(ao_labels=["C 2pz"], ranking="bad")  # type: ignore[arg-type]
