@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
+from aegiss.utils.orbital_indices import resolve_nelecas
+
 
 @dataclass(frozen=True)
 class DMRGConfig:
@@ -44,19 +46,18 @@ class DMRGConfig:
             raise ValueError(
                 f"DMRGConfig: Number of active orbitals (`ncas`) must be positive, got {self.ncas}."
             )
-        if isinstance(self.nelecas, tuple):
-            if len(self.nelecas) != 2:
-                raise ValueError(
-                    "DMRGConfig: `nelecas` tuple must have exactly two elements (nalpha, nbeta)."
-                )
-            nalpha, nbeta = self.nelecas
-            if nalpha < nbeta or nbeta < 0:
-                raise ValueError(
-                    f"DMRGConfig: `nelecas` tuple must satisfy nalpha >= nbeta >= 0, got {self.nelecas}."
-                )
-        elif self.nelecas <= 0:
+        if isinstance(self.nelecas, tuple) and len(self.nelecas) != 2:
+            raise ValueError(
+                "DMRGConfig: `nelecas` tuple must have exactly two elements (nalpha, nbeta)."
+            )
+        if isinstance(self.nelecas, int) and self.nelecas <= 0:
             raise ValueError(
                 f"DMRGConfig: Number of active electrons (`nelecas`) must be positive, got {self.nelecas}."
+            )
+        nalpha, nbeta = resolve_nelecas(self.nelecas)
+        if nalpha < nbeta or nbeta < 0:
+            raise ValueError(
+                f"DMRGConfig: `nelecas` must satisfy nalpha >= nbeta >= 0, got {self.nelecas}."
             )
         if self.init_bond_dim <= 0:
             raise ValueError(

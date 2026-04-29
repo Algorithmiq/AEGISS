@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 
 
-def _resolve_nelecas(nelecas: int | tuple[int, int]) -> tuple[int, int]:
+def resolve_nelecas(nelecas: int | tuple[int, int]) -> tuple[int, int]:
     """Normalise *nelecas* to an (nalpha, nbeta) pair.
 
     Parameters
@@ -135,7 +135,7 @@ def get_subspaces_from_cas(
         f"\n----------DMRG CAS Subspace Selection"
         f" (ncas={ncas}, nelecas={nelecas})----------"
     )
-    nalpha, nbeta = _resolve_nelecas(nelecas)
+    nalpha, nbeta = resolve_nelecas(nelecas)
     neletot = int(np.sum(mf.mo_occ))
     nmos = mf.mo_coeff.shape[1]
 
@@ -152,7 +152,7 @@ def get_subspaces_from_cas(
     nocc = np.count_nonzero(mf.mo_occ > 0)
     print(f"\n\nTotal MOs: {nmos}, Occupied MOs: {nocc}, Virtual MOs: {nmos - nocc}")
 
-    n_active_occ = nalpha
+    n_active_occ = nalpha  # highest-energy nalpha occupied orbitals enter the CAS
     n_active_virt = ncas - n_active_occ
     if nmos - nocc - n_active_virt < 0:
         msg = "Not enough virtual orbitals to accommodate the active space."

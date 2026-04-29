@@ -10,7 +10,7 @@ from pyblock2.driver.core import DMRGDriver, SymmetryTypes
 from pyscf import ao2mo, mcscf
 
 from aegiss.utils.dmrg_utils import _default_dmrg_schedule, compute_qmi
-from aegiss.utils.orbital_indices import _resolve_nelecas
+from aegiss.utils.orbital_indices import resolve_nelecas
 
 if TYPE_CHECKING:
     import numpy as np
@@ -79,9 +79,10 @@ def run_dmrg(
     h1e, ecore = mycas.get_h1eff()
     g2e = ao2mo.restore(1, mycas.get_h2eff(), ncas)
 
-    nalpha, nbeta = _resolve_nelecas(nelecas)
+    nalpha, nbeta = resolve_nelecas(nelecas)
+    n_elec = nalpha + nbeta
     spin = nalpha - nbeta
-    driver.initialize_system(n_sites=ncas, n_elec=nalpha + nbeta, spin=spin)
+    driver.initialize_system(n_sites=ncas, n_elec=n_elec, spin=spin)
 
     print(
         f"System parameters: n_sites={driver.n_sites}, n_elec={driver.n_elec},"
@@ -114,7 +115,7 @@ def run_dmrg(
     energy = driver.dmrg(
         mpo,
         ket,
-        n_sweeps=len(bond_dims),
+        n_sweeps=n_sweeps,
         bond_dims=bond_dims,
         iprint=verbosity,
         noises=noises,
@@ -132,7 +133,7 @@ def run_dmrg(
         zket = driver.mps_change_to_sz(ket, "ZKET")
 
         driver.symm_type = SymmetryTypes.SZ
-        driver.initialize_system(n_sites=ncas, n_elec=nalpha + nbeta, spin=spin)
+        driver.initialize_system(n_sites=ncas, n_elec=n_elec, spin=spin)
         mpo = driver.get_qc_mpo(h1e=h1e, g2e=g2e, ecore=ecore, iprint=0)
         impo = driver.get_identity_mpo()
         norm = driver.expectation(zket, impo, zket)

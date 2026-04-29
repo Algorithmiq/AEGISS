@@ -66,9 +66,7 @@ def _compute_contribution(
         msg = "Mismatch in number of orbitals between s21 and active_mo_coeff"
         raise ValueError(msg)
 
-    reduced_mos = full_mo_coeff[
-        :, np.array([idx for idx, _ in reduced_space_indices])
-    ]
+    reduced_mos = full_mo_coeff[:, np.array([idx for idx, _ in reduced_space_indices])]
 
     s22 = np.dot(s21, reduced_mos[:, :])
     raw_weights: list[tuple[int, float]] = []
