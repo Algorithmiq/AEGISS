@@ -160,6 +160,22 @@ class TestProjectionConfig:
         cfg = ProjectionConfig(ao_labels=["C 2pz", "C 2px", "C 2py"])
         assert len(cfg.ao_labels) == 3
 
+    def test_grouped_ao_label_entry_valid(self) -> None:
+        cfg = ProjectionConfig(ao_labels=["C 2pz", ["C 2px", "C 2py"]])
+        assert len(cfg.ao_labels) == 2
+
+    def test_all_grouped_ao_labels_valid(self) -> None:
+        cfg = ProjectionConfig(ao_labels=[["C 2pz", "C 2px"], ["Fe 3d", "Fe 4d"]])
+        assert len(cfg.ao_labels) == 2
+
+    def test_empty_inner_list_raises(self) -> None:
+        with pytest.raises(ValueError, match="ao_labels"):
+            ProjectionConfig(ao_labels=[[]])  # type: ignore[list-item]
+
+    def test_non_string_inner_list_raises(self) -> None:
+        with pytest.raises(ValueError, match="ao_labels"):
+            ProjectionConfig(ao_labels=[["C 2pz", 123]])  # type: ignore[list-item]
+
 
 class TestOutputConfig:
     def test_valid_default_config(self) -> None:

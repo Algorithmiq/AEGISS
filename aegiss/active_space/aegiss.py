@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -137,10 +138,16 @@ def select_aegiss(
             folder=output_config.saving_folder,
         )
 
+    base_path = (
+        str(Path(output_config.saving_folder) / output_config.saving_prefix)
+        if output_config.save_plots
+        else None
+    )
+
     final_space: list[int] = []
     if projection_config.ranking == "subset":
         print("\nRanking orbitals for AO projection based on subset contribution.")
-        for sub in (screened_occ, screened_virt):
+        for suffix, sub in (("_occ", screened_occ), ("_virt", screened_virt)):
             if not sub:
                 continue
             final_space.extend(
@@ -152,6 +159,7 @@ def select_aegiss(
                     contribution_type=projection_config.contribution_type,
                     top_n=projection_config.top_n,
                     restricted_space=sub,
+                    save_path=base_path + suffix if base_path else None,
                 )
             )
     else:
@@ -165,6 +173,7 @@ def select_aegiss(
                 contribution_type=projection_config.contribution_type,
                 top_n=projection_config.top_n,
                 restricted_space=(screened_occ, screened_virt),
+                save_path=base_path,
             )
         )
 

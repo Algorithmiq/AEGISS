@@ -34,13 +34,13 @@ if __name__ == "__main__":
     )
 
     entropy_config = EntropyConfig(
-        fraction=0.1,
+        fraction=0,
         fraction_type="r",
         ranking="subset",
     )
     projection_config = ProjectionConfig(
-        ao_labels=["C 2pz", "C 2px", "C 2py"],
-        contribution=0.5,
+        ao_labels=["C 2pz", "C 2px", "C 2py", ["C 2px", "C 2py"]],
+        contribution=0,
         contribution_type="a",
         basis="minao",
         top_n=None,
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         saving_folder="./aegiss/examples/orbs/",
         saving_prefix="benzene_aegiss",
         save_orb=False,
-        save_plots=False,
+        save_plots=True,
     )
     active_indices = select_aegiss(
         mol,

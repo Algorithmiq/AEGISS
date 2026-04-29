@@ -13,6 +13,7 @@ mpl.use("Agg")
 from aegiss.utils.plotting import (
     _define_cas_size,
     _detect_plateaus,
+    plot_ao_contribution,
     plot_pie_contribution,
     soe_heatmap,
     th_plots,
@@ -260,3 +261,106 @@ class TestPlotPieContribution:
             folder=str(tmp_path),
         )
         assert (tmp_path / "composition_alpha.pdf").exists()
+
+    def test_grouped_ao_label_entry_accepted(
+        self,
+        tmp_path: pytest.FixturePath,
+        mock_mol: MagicMock,
+        mock_mf_restricted: MagicMock,
+    ) -> None:
+        """list[str] entry in ao_labels is searched as a group; list entry in labels_names is joined."""
+        plot_pie_contribution(
+            mock_mol,
+            mock_mf_restricted,
+            [["C 2px", "C 2py"]],
+            [["C px", "C py"]],
+            orbs=[0, 1],
+            folder=str(tmp_path),
+        )
+        assert (tmp_path / "composition_alpha.pdf").exists()
+
+
+class TestPlotAoContribution:
+    @pytest.fixture
+    def simple_contributions(self) -> dict[int, list[tuple[int, float]]]:
+        """3 AO groups, 5 MOs each."""
+        rng = np.random.default_rng(0)
+        return {i: [(j, float(rng.random())) for j in range(5)] for i in range(3)}
+
+    def test_creates_pdf(
+        self,
+        tmp_path: pytest.FixturePath,
+        simple_contributions: dict,
+    ) -> None:
+        plot_ao_contribution(simple_contributions, save_path=str(tmp_path / "ao"))
+        assert (tmp_path / "ao_heatmap.pdf").exists()
+
+    def test_empty_contributions_returns_silently(
+        self, tmp_path: pytest.FixturePath
+    ) -> None:
+        plot_ao_contribution({}, save_path=str(tmp_path / "ao"))
+        assert not (tmp_path / "ao_heatmap.pdf").exists()
+
+    def test_empty_group_is_skipped(self, tmp_path: pytest.FixturePath) -> None:
+        contributions = {0: [(0, 0.5), (1, 0.3)], 1: []}
+        plot_ao_contribution(contributions, save_path=str(tmp_path / "ao"))
+        assert (tmp_path / "ao_heatmap.pdf").exists()
+
+    def test_default_letter_labels(
+        self,
+        tmp_path: pytest.FixturePath,
+        simple_contributions: dict,
+    ) -> None:
+        """No ao_labels → should complete without error using A/B/C labels."""
+        plot_ao_contribution(
+            simple_contributions, save_path=str(tmp_path / "ao"), ao_labels=None
+        )
+        assert (tmp_path / "ao_heatmap.pdf").exists()
+
+    def test_string_ao_labels(
+        self,
+        tmp_path: pytest.FixturePath,
+        simple_contributions: dict,
+    ) -> None:
+        labels = {0: "Fe 3d", 1: "C 2pz", 2: "C 2px"}
+        plot_ao_contribution(
+            simple_contributions,
+            save_path=str(tmp_path / "ao"),
+            ao_labels=labels,
+        )
+        assert (tmp_path / "ao_heatmap.pdf").exists()
+
+    def test_list_str_ao_labels_joined(
+        self,
+        tmp_path: pytest.FixturePath,
+        simple_contributions: dict,
+    ) -> None:
+        labels = {0: ["Fe 3d", "Fe 4d"], 1: "C 2pz", 2: "C 2px"}
+        plot_ao_contribution(
+            simple_contributions,
+            save_path=str(tmp_path / "ao"),
+            ao_labels=labels,
+        )
+        assert (tmp_path / "ao_heatmap.pdf").exists()
+
+    def test_mo_labels_accepted(
+        self,
+        tmp_path: pytest.FixturePath,
+        simple_contributions: dict,
+    ) -> None:
+        plot_ao_contribution(
+            simple_contributions,
+            save_path=str(tmp_path / "ao"),
+            mo_labels=[10, 11, 12, 13, 14],
+        )
+        assert (tmp_path / "ao_heatmap.pdf").exists()
+
+    def test_multiple_panels_when_many_mos(self, tmp_path: pytest.FixturePath) -> None:
+        """mos_per_plot=3 on 5 MOs should produce 2 panels without error."""
+        contributions = {0: [(j, float(j) / 5) for j in range(5)]}
+        plot_ao_contribution(
+            contributions,
+            save_path=str(tmp_path / "ao"),
+            mos_per_plot=3,
+        )
+        assert (tmp_path / "ao_heatmap.pdf").exists()
