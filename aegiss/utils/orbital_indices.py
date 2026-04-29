@@ -24,8 +24,7 @@ def combine_candidate_entropies(
     combined_space : list of tuple[int, float]
         Merged list sorted by orbital index.
     """
-    combined_space = [(idx, s1) for idx, s1 in occ_orbs]
-    combined_space += [(idx, s1) for idx, s1 in virt_orbs]
+    combined_space = occ_orbs + virt_orbs
     combined_space.sort(key=lambda x: x[0])
     return combined_space
 
