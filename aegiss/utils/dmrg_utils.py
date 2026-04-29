@@ -41,6 +41,8 @@ def _default_dmrg_schedule(
         1e-6,
         1e-6,
         1e-6,
+        1e-7,
+        1e-7,
         0.0,
         0.0,
     ]
@@ -53,6 +55,8 @@ def _default_dmrg_schedule(
         1e-8,
         1e-9,
         1e-9,
+        1e-10,
+        1e-10,
         1e-10,
         1e-10,
         1e-10,
