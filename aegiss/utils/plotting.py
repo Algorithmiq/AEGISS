@@ -25,7 +25,7 @@ def _draw_pie_subplot(
     explode = np.zeros(n_labels)
     explode[np.argmax(data)] = 0.1
 
-    _, texts, autotexts = ax.pie(
+    _, texts, autotexts = ax.pie(  # type: ignore[misc]
         data,
         labels=labels_names,
         explode=explode,
