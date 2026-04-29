@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -12,6 +12,14 @@ from aegiss.utils.dump_info import save_orbitals, save_orbitals_from_entropies
 from aegiss.utils.orbital_indices import get_subspaces_from_cas
 from aegiss.utils.plotting import plot_pie_contribution, soe_heatmap, th_plots
 from aegiss.wavefunction.dmrg import run_dmrg
+
+if TYPE_CHECKING:
+    from aegiss.config_dataclasses import (
+        DMRGConfig,
+        EntropyConfig,
+        OutputConfig,
+        ProjectionConfig,
+    )
 
 
 def _make_soe_plots(
@@ -42,24 +50,11 @@ def _make_soe_plots(
 def select_aegiss(
     mol: Any,
     mf: Any,
-    dmrg_cas: tuple[int, int],
-    init_bond_dim: int = 10,
-    symm_type: Literal["SZ", "SU2"] = "SZ",
-    entropy_ranking: Literal["subset", "global"] = "subset",
-    entropy_fraction: float = 0.1,
-    entropy_fraction_type: Literal["r", "a"] = "r",
-    projection_basis: str | None = "minao",
-    projection_ao_labels: list[str] | None = None,
-    projection_contribution: float = 0.5,
-    projection_contribution_type: Literal["a", "r"] = "a",
-    projection_top_n: int | None = None,
-    projection_ranking: Literal["subset", "global"] = "subset",
-    saving_folder: str = "./aegiss/examples/orbs/",
-    saving_prefix: str = "benzene",
+    dmrg_config: DMRGConfig,
+    entropy_config: EntropyConfig,
+    projection_config: ProjectionConfig,
+    output_config: OutputConfig,
     verbosity: int = 0,
-    *,
-    save_plots: bool = False,
-    save_orb: bool = True,
 ) -> np.ndarray:
     """Run the full AEGISS active space selection pipeline.
 
@@ -74,122 +69,90 @@ def select_aegiss(
         Molecular geometry and basis set.
     mf : pyscf.scf.hf.SCF
         Converged mean-field object.
-    dmrg_cas : tuple [int, int]
-        Number of active orbitals and active electrons for the DMRG calculation.
-    init_bond_dim : int, default 10
-        Initial DMRG bond dimension; grows automatically during the sweep schedule.
-    symm_type : {'SZ', 'SU2'}, default 'SZ'
-        Spin symmetry used by block2.  ``'SZ'`` is required for entropy
-        calculations; ``'SU2'`` is faster but needs MPS conversion for entropies.
-    entropy_ranking : {'subset', 'global'}, default 'subset'
-        How to rank orbitals for entropy screening.  ``'subset'`` applies the
-        threshold independently to occupied and virtual subspaces; ``'global'``
-        ranks all active orbitals together.
-    entropy_fraction : float, default 0.1
-        Entropy threshold value (see *entropy_fraction_type*).
-    entropy_fraction_type : {'r', 'a'}, default 'r'
-        ``'r'``: keep orbitals whose S(1) >= ``entropy_fraction x max(S(1))``;
-        ``'a'``: keep orbitals whose S(1) ≥ ``entropy_fraction`` (absolute).
-    projection_basis : str or None, default 'minao'
-        Basis set used for AO projection.  ``None`` uses the original
-        molecular basis.
-    projection_ao_labels : list of str, default ['C 2pz']
-        AO labels to project onto.  Format: ``"Element AtomicOrbital"``,
-        e.g. ``"C 2pz"``, ``"Fe 3d"``.
-    projection_contribution : float, default 0.5
-        Projection weight threshold (see *projection_contribution_type*).
-    projection_contribution_type : {'a', 'r'}, default 'a'
-        ``'a'``: absolute threshold; ``'r'``: relative to the maximum weight.
-    projection_top_n : int or None, default None
-        If set, keep the top-N orbitals per AO label instead of using a
-        contribution threshold.
-    projection_ranking : {'subset', 'global'}, default 'subset'
-        ``'subset'``: run AO projection independently on the occupied and
-        virtual entropy-screened subspaces; ``'global'``: run it on the
-        combined set.
-    saving_folder : str, default './aegiss/examples/orbs/'
-        Directory where cube files are written when *save_orb* is ``True``.
-    saving_prefix : str, default 'benzene'
-        Prefix used for output cube file names.
+    dmrg_config : DMRGConfig
+        Configuration for the DMRG calculation (CAS size, bond dimension, symmetry).
+    entropy_config : EntropyConfig
+        Configuration for the entropy-based screening step.
+    projection_config : ProjectionConfig
+        Configuration for the AO projection-based screening step.
+    output_config : OutputConfig
+        Configuration for output options (file saving, plots).
     verbosity : int, default 0
         block2 output verbosity level.
-    save_plots : bool, default False
-        Whether to generate and save diagnostic plots (SOE heatmap and TH plot).
-    save_orb : bool, default True
-        Write cube files for the entropy-screened and final active orbitals.
 
     Returns:
     -------
     active_indices : np.ndarray of int
         Sorted array of orbital indices forming the selected active space.
     """
-    dmrg_ncas, dmrg_nelecas = dmrg_cas
-
-    if entropy_ranking not in ("subset", "global"):
+    if entropy_config.entropy_ranking not in ("subset", "global"):
         raise ValueError(
-            f"Invalid entropy_ranking {entropy_ranking!r}. Must be 'subset' or 'global'."
+            f"Invalid entropy_ranking {entropy_config.entropy_ranking!r}. Must be 'subset' or 'global'."
         )
-    if projection_ranking not in ("subset", "global"):
+    if projection_config.projection_ranking not in ("subset", "global"):
         raise ValueError(
-            f"Invalid projection_ranking {projection_ranking!r}. Must be 'subset' or 'global'."
+            f"Invalid projection_ranking {projection_config.projection_ranking!r}. Must be 'subset' or 'global'."
         )
-
-    if projection_ao_labels is None:
-        projection_ao_labels = ["C 2pz"]
 
     active_orbs, virt_orbs = get_subspaces_from_cas(
-        mf, ncas=dmrg_ncas, nelecas=dmrg_nelecas
+        mf, ncas=dmrg_config.ncas, nelecas=dmrg_config.nelecas
     )
     _energy, soe1, _soe2, _minfo = run_dmrg(
         mf,
-        ncas=dmrg_ncas,
-        nelecas=dmrg_nelecas,
-        symm_type=symm_type,
-        init_bond_dim=init_bond_dim,
+        ncas=dmrg_config.ncas,
+        nelecas=dmrg_config.nelecas,
+        symm_type=dmrg_config.symm_type,
+        init_bond_dim=dmrg_config.init_bond_dim,
         verbosity=verbosity,
         get_qmi=True,
     )
 
-    if save_plots and soe1 is not None:
-        _make_soe_plots(active_orbs, virt_orbs, soe1, saving_folder, saving_prefix)
+    if output_config.save_plots and soe1 is not None:
+        _make_soe_plots(
+            active_orbs,
+            virt_orbs,
+            soe1,
+            output_config.saving_folder,
+            output_config.saving_prefix,
+        )
 
     screened_occ, screened_virt = select_by_entropy(
         occ_orbs=active_orbs,
         virt_orbs=virt_orbs,
         soe1=soe1,
-        ranking=entropy_ranking,
-        fraction=entropy_fraction,
-        fraction_type=entropy_fraction_type,
+        ranking=entropy_config.entropy_ranking,
+        fraction=entropy_config.entropy_fraction,
+        fraction_type=entropy_config.entropy_fraction_type,
     )
 
-    if save_orb:
+    if output_config.save_orb:
         save_orbitals_from_entropies(
             mol,
             mf.mo_coeff,
             screened_occ,
-            filename_prefix=saving_prefix + "_entropy",
-            folder=saving_folder,
+            filename_prefix=output_config.saving_prefix + "_entropy",
+            folder=output_config.saving_folder,
         )
         save_orbitals_from_entropies(
             mol,
             mf.mo_coeff,
             screened_virt,
-            filename_prefix=saving_prefix + "_entropy",
-            folder=saving_folder,
+            filename_prefix=output_config.saving_prefix + "_entropy",
+            folder=output_config.saving_folder,
         )
 
     final_space: list[int] = []
-    if projection_ranking == "subset":
+    if projection_config.projection_ranking == "subset":
         print("\nRanking orbitals for AO projection based on subset contribution.")
         for sub in (screened_occ, screened_virt):
             final_space.extend(
                 select_by_ao_projection(
                     mf,
-                    ao_labels=projection_ao_labels,
-                    contribution=projection_contribution,
-                    projected_basis=projection_basis,
-                    contribution_type=projection_contribution_type,
-                    top_n=projection_top_n,
+                    ao_labels=projection_config.projection_ao_labels,
+                    contribution=projection_config.projection_contribution,
+                    projected_basis=projection_config.projection_basis,
+                    contribution_type=projection_config.projection_contribution_type,
+                    top_n=projection_config.projection_top_n,
                     restricted_space=sub,
                 )
             )
@@ -198,34 +161,34 @@ def select_aegiss(
         final_space.extend(
             select_by_ao_projection(
                 mf,
-                ao_labels=projection_ao_labels,
-                contribution=projection_contribution,
-                projected_basis=projection_basis,
-                contribution_type=projection_contribution_type,
-                top_n=projection_top_n,
+                ao_labels=projection_config.projection_ao_labels,
+                contribution=projection_config.projection_contribution,
+                projected_basis=projection_config.projection_basis,
+                contribution_type=projection_config.projection_contribution_type,
+                top_n=projection_config.projection_top_n,
                 restricted_space=(screened_occ, screened_virt),
             )
         )
 
     active_indices = np.asarray(sorted(set(final_space)))
 
-    if save_orb:
+    if output_config.save_orb:
         save_orbitals(
             mol,
             mf.mo_coeff,
             active_indices,
-            filename_prefix=saving_prefix + "_AEGISS",
-            folder=saving_folder,
+            filename_prefix=output_config.saving_prefix + "_AEGISS",
+            folder=output_config.saving_folder,
         )
 
-    if save_plots:
+    if output_config.save_plots:
         plot_pie_contribution(
             mol,
             mf,
-            ao_labels=projection_ao_labels,
-            labels_names=projection_ao_labels,
+            ao_labels=projection_config.projection_ao_labels,
+            labels_names=projection_config.projection_ao_labels,
             orbs=active_indices,
-            folder=saving_folder,
+            folder=output_config.saving_folder,
         )
 
     return active_indices
