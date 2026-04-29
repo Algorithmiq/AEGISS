@@ -8,6 +8,12 @@ import numpy as np
 import pytest
 
 from aegiss.active_space.aegiss import select_aegiss
+from aegiss.config_dataclasses import (
+    DMRGConfig,
+    EntropyConfig,
+    OutputConfig,
+    ProjectionConfig,
+)
 
 _MODULE = "aegiss.active_space.aegiss"
 
@@ -25,6 +31,26 @@ def mf_mock() -> MagicMock:
 @pytest.fixture
 def mol_mock() -> MagicMock:
     return MagicMock()
+
+
+@pytest.fixture
+def dmrg_config() -> DMRGConfig:
+    return DMRGConfig(ncas=4, nelecas=4)
+
+
+@pytest.fixture
+def entropy_config() -> EntropyConfig:
+    return EntropyConfig()
+
+
+@pytest.fixture
+def projection_config_subset() -> ProjectionConfig:
+    return ProjectionConfig(ao_labels=["C 2pz"], ranking="subset")
+
+
+@pytest.fixture
+def projection_config_global() -> ProjectionConfig:
+    return ProjectionConfig(ao_labels=["C 2pz"], ranking="global")
 
 
 @pytest.fixture
@@ -52,7 +78,12 @@ def pipeline_patches():
 @pytest.mark.usefixtures("pipeline_patches")
 class TestSubsetProjectionRanking:
     def test_ao_projection_called_per_subspace(
-        self, mol_mock: MagicMock, mf_mock: MagicMock
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        dmrg_config: DMRGConfig,
+        entropy_config: EntropyConfig,
+        projection_config_subset: ProjectionConfig,
     ) -> None:
         with patch(
             f"{_MODULE}.select_by_ao_projection",
@@ -61,16 +92,21 @@ class TestSubsetProjectionRanking:
             select_aegiss(
                 mol_mock,
                 mf_mock,
-                dmrg_ncas=4,
-                dmrg_nelecas=4,
-                projection_ranking="subset",
-                save_orb=False,
+                dmrg_config=dmrg_config,
+                entropy_config=entropy_config,
+                projection_config=projection_config_subset,
+                output_config=OutputConfig(save_orb=False),
             )
 
         assert mock_proj.call_count == 2
 
     def test_passes_occ_and_virt_separately(
-        self, mol_mock: MagicMock, mf_mock: MagicMock
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        dmrg_config: DMRGConfig,
+        entropy_config: EntropyConfig,
+        projection_config_subset: ProjectionConfig,
     ) -> None:
         with patch(
             f"{_MODULE}.select_by_ao_projection",
@@ -79,17 +115,22 @@ class TestSubsetProjectionRanking:
             select_aegiss(
                 mol_mock,
                 mf_mock,
-                dmrg_ncas=4,
-                dmrg_nelecas=4,
-                projection_ranking="subset",
-                save_orb=False,
+                dmrg_config=dmrg_config,
+                entropy_config=entropy_config,
+                projection_config=projection_config_subset,
+                output_config=OutputConfig(save_orb=False),
             )
 
         assert mock_proj.call_args_list[0].kwargs["restricted_space"] == _SCREENED_OCC
         assert mock_proj.call_args_list[1].kwargs["restricted_space"] == _SCREENED_VIRT
 
     def test_returns_sorted_ndarray(
-        self, mol_mock: MagicMock, mf_mock: MagicMock
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        dmrg_config: DMRGConfig,
+        entropy_config: EntropyConfig,
+        projection_config_subset: ProjectionConfig,
     ) -> None:
         with patch(
             f"{_MODULE}.select_by_ao_projection",
@@ -98,17 +139,22 @@ class TestSubsetProjectionRanking:
             result = select_aegiss(
                 mol_mock,
                 mf_mock,
-                dmrg_ncas=4,
-                dmrg_nelecas=4,
-                projection_ranking="subset",
-                save_orb=False,
+                dmrg_config=dmrg_config,
+                entropy_config=entropy_config,
+                projection_config=projection_config_subset,
+                output_config=OutputConfig(save_orb=False),
             )
 
         assert isinstance(result, np.ndarray)
         assert list(result) == [2, 3, 5]
 
     def test_duplicate_indices_deduplicated(
-        self, mol_mock: MagicMock, mf_mock: MagicMock
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        dmrg_config: DMRGConfig,
+        entropy_config: EntropyConfig,
+        projection_config_subset: ProjectionConfig,
     ) -> None:
         with patch(
             f"{_MODULE}.select_by_ao_projection",
@@ -117,10 +163,10 @@ class TestSubsetProjectionRanking:
             result = select_aegiss(
                 mol_mock,
                 mf_mock,
-                dmrg_ncas=4,
-                dmrg_nelecas=4,
-                projection_ranking="subset",
-                save_orb=False,
+                dmrg_config=dmrg_config,
+                entropy_config=entropy_config,
+                projection_config=projection_config_subset,
+                output_config=OutputConfig(save_orb=False),
             )
 
         assert list(result) == [2, 3, 5]
@@ -129,7 +175,12 @@ class TestSubsetProjectionRanking:
 @pytest.mark.usefixtures("pipeline_patches")
 class TestGlobalProjectionRanking:
     def test_ao_projection_called_once(
-        self, mol_mock: MagicMock, mf_mock: MagicMock
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        dmrg_config: DMRGConfig,
+        entropy_config: EntropyConfig,
+        projection_config_global: ProjectionConfig,
     ) -> None:
         with patch(
             f"{_MODULE}.select_by_ao_projection",
@@ -138,16 +189,21 @@ class TestGlobalProjectionRanking:
             select_aegiss(
                 mol_mock,
                 mf_mock,
-                dmrg_ncas=4,
-                dmrg_nelecas=4,
-                projection_ranking="global",
-                save_orb=False,
+                dmrg_config=dmrg_config,
+                entropy_config=entropy_config,
+                projection_config=projection_config_global,
+                output_config=OutputConfig(save_orb=False),
             )
 
         mock_proj.assert_called_once()
 
     def test_passes_combined_tuple(
-        self, mol_mock: MagicMock, mf_mock: MagicMock
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        dmrg_config: DMRGConfig,
+        entropy_config: EntropyConfig,
+        projection_config_global: ProjectionConfig,
     ) -> None:
         with patch(
             f"{_MODULE}.select_by_ao_projection",
@@ -156,10 +212,10 @@ class TestGlobalProjectionRanking:
             select_aegiss(
                 mol_mock,
                 mf_mock,
-                dmrg_ncas=4,
-                dmrg_nelecas=4,
-                projection_ranking="global",
-                save_orb=False,
+                dmrg_config=dmrg_config,
+                entropy_config=entropy_config,
+                projection_config=projection_config_global,
+                output_config=OutputConfig(save_orb=False),
             )
 
         assert mock_proj.call_args.kwargs["restricted_space"] == (
@@ -168,7 +224,12 @@ class TestGlobalProjectionRanking:
         )
 
     def test_returns_sorted_ndarray(
-        self, mol_mock: MagicMock, mf_mock: MagicMock
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        dmrg_config: DMRGConfig,
+        entropy_config: EntropyConfig,
+        projection_config_global: ProjectionConfig,
     ) -> None:
         with patch(
             f"{_MODULE}.select_by_ao_projection",
@@ -177,10 +238,10 @@ class TestGlobalProjectionRanking:
             result = select_aegiss(
                 mol_mock,
                 mf_mock,
-                dmrg_ncas=4,
-                dmrg_nelecas=4,
-                projection_ranking="global",
-                save_orb=False,
+                dmrg_config=dmrg_config,
+                entropy_config=entropy_config,
+                projection_config=projection_config_global,
+                output_config=OutputConfig(save_orb=False),
             )
 
         assert isinstance(result, np.ndarray)
@@ -189,7 +250,13 @@ class TestGlobalProjectionRanking:
 
 class TestOrbitalSaving:
     def test_save_orb_true_calls_save_functions(
-        self, mol_mock: MagicMock, mf_mock: MagicMock, pipeline_patches: dict
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        pipeline_patches: dict,
+        dmrg_config: DMRGConfig,
+        entropy_config: EntropyConfig,
+        projection_config_subset: ProjectionConfig,
     ) -> None:
         with patch(
             f"{_MODULE}.select_by_ao_projection",
@@ -198,16 +265,23 @@ class TestOrbitalSaving:
             select_aegiss(
                 mol_mock,
                 mf_mock,
-                dmrg_ncas=4,
-                dmrg_nelecas=4,
-                save_orb=True,
+                dmrg_config=dmrg_config,
+                entropy_config=entropy_config,
+                projection_config=projection_config_subset,
+                output_config=OutputConfig(save_orb=True),
             )
 
         assert pipeline_patches["save_ent"].call_count == 2
         pipeline_patches["save"].assert_called_once()
 
     def test_save_orb_false_skips_save_functions(
-        self, mol_mock: MagicMock, mf_mock: MagicMock, pipeline_patches: dict
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        pipeline_patches: dict,
+        dmrg_config: DMRGConfig,
+        entropy_config: EntropyConfig,
+        projection_config_subset: ProjectionConfig,
     ) -> None:
         with patch(
             f"{_MODULE}.select_by_ao_projection",
@@ -216,16 +290,23 @@ class TestOrbitalSaving:
             select_aegiss(
                 mol_mock,
                 mf_mock,
-                dmrg_ncas=4,
-                dmrg_nelecas=4,
-                save_orb=False,
+                dmrg_config=dmrg_config,
+                entropy_config=entropy_config,
+                projection_config=projection_config_subset,
+                output_config=OutputConfig(save_orb=False),
             )
 
         pipeline_patches["save_ent"].assert_not_called()
         pipeline_patches["save"].assert_not_called()
 
     def test_saving_prefix_used_in_filenames(
-        self, mol_mock: MagicMock, mf_mock: MagicMock, pipeline_patches: dict
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        pipeline_patches: dict,
+        dmrg_config: DMRGConfig,
+        entropy_config: EntropyConfig,
+        projection_config_subset: ProjectionConfig,
     ) -> None:
         with patch(
             f"{_MODULE}.select_by_ao_projection",
@@ -234,10 +315,10 @@ class TestOrbitalSaving:
             select_aegiss(
                 mol_mock,
                 mf_mock,
-                dmrg_ncas=4,
-                dmrg_nelecas=4,
-                saving_prefix="mytest",
-                save_orb=True,
+                dmrg_config=dmrg_config,
+                entropy_config=entropy_config,
+                projection_config=projection_config_subset,
+                output_config=OutputConfig(saving_prefix="mytest", save_orb=True),
             )
 
         for call_args in pipeline_patches["save_ent"].call_args_list:
