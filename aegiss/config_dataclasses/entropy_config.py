@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Literal
 from dataclasses import dataclass
+from typing import Literal
 
 
 @dataclass(frozen=True)
@@ -15,6 +15,13 @@ class EntropyConfig:
     entropy_ranking: Literal["subset", "global"] = "subset"
 
     def __post_init__(self) -> None:
+        """Validate the configuration parameters.
+
+        Raises:
+        ------
+        ValueError
+            If any of the parameters are out of their expected ranges or have invalid values.
+        """
         if not (0 <= self.entropy_fraction <= 1):
             raise ValueError(
                 f"Entropy fraction must be in the range [0, 1], got {self.entropy_fraction}."

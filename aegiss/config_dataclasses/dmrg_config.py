@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Literal
 from dataclasses import dataclass
+from typing import Literal
 
 
 @dataclass(frozen=True)
@@ -16,6 +16,13 @@ class DMRGConfig:
     symm_type: Literal["SZ", "SU2"] = "SZ"
 
     def __post_init__(self) -> None:
+        """Validate the configuration parameters.
+
+        Raises:
+        ------
+        ValueError
+            If any of the parameters are out of their expected ranges or have invalid values.
+        """
         if self.ncas <= 0:
             raise ValueError(
                 f"Number of active orbitals (ncas) must be positive, got {self.ncas}."

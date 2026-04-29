@@ -1,6 +1,7 @@
 """Output configuration dataclass for AEGISS."""
 
-from typing import Any, Literal
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 
@@ -14,6 +15,13 @@ class OutputConfig:
     save_plots: bool = False
 
     def __post_init__(self) -> None:
+        """Validate the configuration parameters.
+
+        Raises:
+        ------
+        ValueError
+            If any of the parameters are out of their expected ranges or have invalid values.
+        """
         if self.saving_folder and not isinstance(self.saving_folder, str):
             raise ValueError(
                 f"Saving folder must be a string, got {type(self.saving_folder).__name__}."
