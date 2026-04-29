@@ -14,7 +14,7 @@ from aegiss.utils.plotting import plot_ao_contribution
 def _compute_contribution(
     mf: Any,
     label: str | list[str],
-    active_mo_coeff: np.ndarray,
+    full_mo_coeff: np.ndarray,
     reduced_space_indices: list[tuple[int, float]],
     contribution: float,
     contribution_type: Literal["r", "a"],
@@ -28,8 +28,8 @@ def _compute_contribution(
         Mean-field object containing the molecule and MO coefficients.
     label : str or list of str
         AO label(s) to compute contributions for.
-    active_mo_coeff : np.ndarray
-        Coefficients of the active MOs in the AO basis.
+    full_mo_coeff : np.ndarray
+        Coefficients of the active MOs.
     reduced_space_indices : list of tuple[int, float]
         Orbital index/entropy pairs in the reduced space.
     contribution : float
@@ -62,11 +62,11 @@ def _compute_contribution(
     s21 = gto.intor_cross("int1e_ovlp", projection_mol, mol2)[baslst]
     if len(baslst) == 0:
         return [], []
-    if s21.shape[1] != active_mo_coeff.shape[0]:
+    if s21.shape[1] != full_mo_coeff.shape[0]:
         msg = "Mismatch in number of orbitals between s21 and active_mo_coeff"
         raise ValueError(msg)
 
-    reduced_mos = active_mo_coeff[
+    reduced_mos = full_mo_coeff[
         :, np.array([idx for idx, _ in reduced_space_indices])
     ]
 
@@ -107,7 +107,7 @@ def _compute_contribution(
 def select_by_label(
     label: str | list[str],
     mf: Any,
-    active_mo_coeff: np.ndarray,
+    full_mo_coeff: np.ndarray,
     space: list[tuple[int, float]],
     contribution: float,
     projected_basis: str | None,
@@ -124,8 +124,8 @@ def select_by_label(
         for each label separately and combined.
     mf : pyscf.scf.hf.SCF
         Mean-field object containing the molecule and MO coefficients.
-    active_mo_coeff : np.ndarray
-        Coefficients of the active MOs in the AO basis.
+    full_mo_coeff : np.ndarray
+        Coefficients of the full MOs.
     space : list of tuple[int, float]
         Orbital index/entropy pairs to restrict the selection to.
     contribution : float
@@ -145,7 +145,7 @@ def select_by_label(
     return _compute_contribution(
         mf,
         label,
-        active_mo_coeff,
+        full_mo_coeff,
         space,
         contribution,
         contribution_type,
@@ -262,7 +262,7 @@ def select_by_ao_projection(
             label=label,
             projected_basis=projected_basis,
             mf=mf,
-            active_mo_coeff=mf.mo_coeff,
+            full_mo_coeff=mf.mo_coeff,
             space=space,
             contribution=resolved_contribution,
             contribution_type=resolved_type,
