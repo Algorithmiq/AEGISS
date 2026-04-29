@@ -61,10 +61,7 @@ class ProjectionConfig:
             raise ValueError(
                 f"ProjectionConfig: Invalid `ranking` {self.ranking!r}. Must be 'subset' or 'global'."
             )
-        if (
-            not (0 <= self.contribution <= 1)
-            and self.contribution_type == "r"
-        ):
+        if not (0 <= self.contribution <= 1) and self.contribution_type == "r":
             raise ValueError(
                 f"ProjectionConfig: `contribution` must be in the range [0, 1]\
                 when `contribution_type` is 'r', got {self.contribution}."

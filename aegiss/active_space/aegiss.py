@@ -85,15 +85,6 @@ def select_aegiss(
     active_indices : np.ndarray of int
         Sorted array of orbital indices forming the selected active space.
     """
-    if entropy_config.entropy_ranking not in ("subset", "global"):
-        raise ValueError(
-            f"Invalid entropy_ranking {entropy_config.entropy_ranking!r}. Must be 'subset' or 'global'."
-        )
-    if projection_config.projection_ranking not in ("subset", "global"):
-        raise ValueError(
-            f"Invalid projection_ranking {projection_config.projection_ranking!r}. Must be 'subset' or 'global'."
-        )
-
     active_orbs, virt_orbs = get_subspaces_from_cas(
         mf, ncas=dmrg_config.ncas, nelecas=dmrg_config.nelecas
     )
@@ -120,9 +111,9 @@ def select_aegiss(
         occ_orbs=active_orbs,
         virt_orbs=virt_orbs,
         soe1=soe1,
-        ranking=entropy_config.entropy_ranking,
-        fraction=entropy_config.entropy_fraction,
-        fraction_type=entropy_config.entropy_fraction_type,
+        ranking=entropy_config.ranking,
+        fraction=entropy_config.fraction,
+        fraction_type=entropy_config.fraction_type,
     )
 
     if output_config.save_orb:
@@ -142,17 +133,17 @@ def select_aegiss(
         )
 
     final_space: list[int] = []
-    if projection_config.projection_ranking == "subset":
+    if projection_config.ranking == "subset":
         print("\nRanking orbitals for AO projection based on subset contribution.")
         for sub in (screened_occ, screened_virt):
             final_space.extend(
                 select_by_ao_projection(
                     mf,
-                    ao_labels=projection_config.projection_ao_labels,
-                    contribution=projection_config.projection_contribution,
-                    projected_basis=projection_config.projection_basis,
-                    contribution_type=projection_config.projection_contribution_type,
-                    top_n=projection_config.projection_top_n,
+                    ao_labels=projection_config.ao_labels,
+                    contribution=projection_config.contribution,
+                    projected_basis=projection_config.basis,
+                    contribution_type=projection_config.contribution_type,
+                    top_n=projection_config.top_n,
                     restricted_space=sub,
                 )
             )
@@ -161,11 +152,11 @@ def select_aegiss(
         final_space.extend(
             select_by_ao_projection(
                 mf,
-                ao_labels=projection_config.projection_ao_labels,
-                contribution=projection_config.projection_contribution,
-                projected_basis=projection_config.projection_basis,
-                contribution_type=projection_config.projection_contribution_type,
-                top_n=projection_config.projection_top_n,
+                ao_labels=projection_config.ao_labels,
+                contribution=projection_config.contribution,
+                projected_basis=projection_config.basis,
+                contribution_type=projection_config.contribution_type,
+                top_n=projection_config.top_n,
                 restricted_space=(screened_occ, screened_virt),
             )
         )
@@ -185,8 +176,8 @@ def select_aegiss(
         plot_pie_contribution(
             mol,
             mf,
-            ao_labels=projection_config.projection_ao_labels,
-            labels_names=projection_config.projection_ao_labels,
+            ao_labels=projection_config.ao_labels,
+            labels_names=projection_config.ao_labels,
             orbs=active_indices,
             folder=output_config.saving_folder,
         )
