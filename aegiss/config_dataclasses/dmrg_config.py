@@ -22,6 +22,7 @@ class DMRGConfig:
         Spin symmetry used by block2.  ``'SZ'`` is required for entropy
         calculations; ``'SU2'`` is faster but needs MPS conversion for entropies.
     """
+
     ncas: int
     nelecas: int
     init_bond_dim: int = 10

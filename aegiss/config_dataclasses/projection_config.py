@@ -46,7 +46,9 @@ class ProjectionConfig:
         ValueError
             If any of the parameters are out of their expected ranges or have invalid values.
         """
-        if not self.projection_ao_labels or not all(isinstance(label, str) for label in self.projection_ao_labels):
+        if not self.projection_ao_labels or not all(
+            isinstance(label, str) for label in self.projection_ao_labels
+        ):
             raise ValueError(
                 "projection_ao_labels must be a non-empty list of strings."
             )
