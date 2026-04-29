@@ -38,17 +38,17 @@ class DMRGConfig:
         """
         if self.ncas <= 0:
             raise ValueError(
-                f"Number of active orbitals (ncas) must be positive, got {self.ncas}."
+                f"DMRGConfig: Number of active orbitals (`ncas`) must be positive, got {self.ncas}."
             )
         if self.nelecas <= 0:
             raise ValueError(
-                f"Number of active electrons (nelecas) must be positive, got {self.nelecas}."
+                f"DMRGConfig: Number of active electrons (`nelecas`) must be positive, got {self.nelecas}."
             )
         if self.init_bond_dim <= 0:
             raise ValueError(
-                f"Initial bond dimension must be positive, got {self.init_bond_dim}."
+                f"DMRGConfig: Initial bond dimension (`init_bond_dim`) must be positive, got {self.init_bond_dim}."
             )
         if self.symm_type not in ("SZ", "SU2"):
             raise ValueError(
-                f"Invalid symmetry type {self.symm_type!r}. Must be 'SZ' or 'SU2'."
+                f"DMRGConfig: Invalid symmetry type (`symm_type`) {self.symm_type!r}. Must be 'SZ' or 'SU2'."
             )

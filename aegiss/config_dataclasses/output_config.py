@@ -36,17 +36,17 @@ class OutputConfig:
         """
         if self.saving_folder and not isinstance(self.saving_folder, str):
             raise ValueError(
-                f"Saving folder must be a string, got {type(self.saving_folder).__name__}."
+                f"OutputConfig: `saving_folder` must be a string, got {type(self.saving_folder).__name__}."
             )
         if self.saving_prefix and not isinstance(self.saving_prefix, str):
             raise ValueError(
-                f"Saving prefix must be a string, got {type(self.saving_prefix).__name__}."
+                f"OutputConfig: `saving_prefix` must be a string, got {type(self.saving_prefix).__name__}."
             )
         if not isinstance(self.save_orb, bool):
             raise ValueError(
-                f"save_orb must be a boolean, got {type(self.save_orb).__name__}."
+                f"OutputConfig: `save_orb` must be a boolean, got {type(self.save_orb).__name__}."
             )
         if not isinstance(self.save_plots, bool):
             raise ValueError(
-                f"save_plots must be a boolean, got {type(self.save_plots).__name__}."
+                f"OutputConfig: `save_plots` must be a boolean, got {type(self.save_plots).__name__}."
             )
