@@ -6,7 +6,9 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "block2==0.5.4rc13",
+    "matplotlib>=3.9",
     "pyscf>=2.12.1",
+    "seaborn>=0.13",
 ]
 
 [dependency-groups]
@@ -200,6 +202,7 @@ module = [
     "pyscf.*",
     "block2.*",
     "pyblock2.*",
+    "seaborn.*",
 ]
 ignore_missing_imports = true
 ignore_errors = true
