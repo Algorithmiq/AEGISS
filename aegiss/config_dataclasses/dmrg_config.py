@@ -13,9 +13,9 @@ class DMRGConfig:
     Parameters:
     ----------
     ncas : int
-        Number of active electrons for the DMRG calculation.
-    nelecas : int
         Number of active orbitals for the DMRG calculation.
+    nelecas : int
+        Number of active electrons for the DMRG calculation.
     init_bond_dim : int, default 10
         Initial DMRG bond dimension; grows automatically during the sweep schedule.
     symm_type : {'SZ', 'SU2'}, default 'SZ'
