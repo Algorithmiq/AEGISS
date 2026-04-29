@@ -40,14 +40,13 @@ def _global_entropy_ranking(
         Selected virtual orbitals with their entropy values.
     """
     max_s1 = np.max(soe1)
-    max_s1_index = np.argmax(soe1)
     orbitals_index = np.concatenate((occ_orbs, virt_orbs))
     ths_lists = soe1
     print("S(1) values for candidate orbitals:")
     for idx, s1 in zip(orbitals_index, ths_lists, strict=False):
         print(f"\tOrbital {idx}: S(1) = {s1:.4f}")
 
-    print(f"MAX S(1): {max_s1:.4f} (orbital {orbitals_index[max_s1_index]})\n")
+    print(f"MAX S(1): {max_s1:.4f} (orbital {orbitals_index[np.argmax(soe1)]})\n")
 
     if fraction_type == "r":
         print("Using relative threshold")
@@ -113,7 +112,6 @@ def _relative_entropy_ranking(
         Selected orbitals with their (possibly normalised) entropy values.
     """
     max_s1 = np.max(soe1)
-    max_s1_index = np.argmax(soe1)
 
     n_orbs = len(soe1)
 
@@ -122,7 +120,7 @@ def _relative_entropy_ranking(
     for idx, s1 in zip(subspace, ths_lists, strict=False):
         print(f"\tOrbital {idx}: S(1) = {s1:.4f}")
 
-    print(f"MAX S(1): {max_s1:.4f} (orbital {subspace[max_s1_index]})\n")
+    print(f"MAX S(1): {max_s1:.4f} (orbital {subspace[np.argmax(soe1)]})\n")
 
     if fraction_type == "r":
         print("Using relative threshold")

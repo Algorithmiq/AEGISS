@@ -14,7 +14,25 @@ from aegiss.utils.orbital_indices import (
     combine_candidate_entropies,
     get_orbital_spaces,
     get_subspaces_from_cas,
+    resolve_nelecas,
 )
+
+
+class TestResolveNelecas:
+    def test_even_int(self) -> None:
+        assert resolve_nelecas(10) == (5, 5)
+
+    def test_odd_int_high_spin(self) -> None:
+        assert resolve_nelecas(5) == (3, 2)
+
+    def test_odd_int_one_electron(self) -> None:
+        assert resolve_nelecas(1) == (1, 0)
+
+    def test_tuple_passthrough(self) -> None:
+        assert resolve_nelecas((3, 2)) == (3, 2)
+
+    def test_tuple_closed_shell(self) -> None:
+        assert resolve_nelecas((5, 5)) == (5, 5)
 
 
 class TestCombineCandidateEntropies:
@@ -131,9 +149,25 @@ class TestGetSubspacesFromCas:
             get_subspaces_from_cas(mock_mf_7mo, ncas=10, nelecas=4)
 
     def test_negative_nelecas_raises(self, mock_mf_7mo: MagicMock) -> None:
-        mock_mf_7mo.mol.nao = 7
-        with pytest.raises(ValueError, match="cannot be negative"):
+        with pytest.raises(ValueError, match="nalpha >= nbeta >= 0"):
             get_subspaces_from_cas(mock_mf_7mo, ncas=4, nelecas=-2)
+
+    def test_open_shell_tuple_active_occ_count(self, mock_mf_7mo: MagicMock) -> None:
+        """nelecas=(3, 2) → nalpha=3 active occupied orbitals."""
+        active_occ, _ = get_subspaces_from_cas(mock_mf_7mo, ncas=5, nelecas=(3, 2))
+        assert len(active_occ) == 3
+
+    def test_open_shell_tuple_active_occ_indices(self, mock_mf_7mo: MagicMock) -> None:
+        active_occ, _ = get_subspaces_from_cas(mock_mf_7mo, ncas=5, nelecas=(3, 2))
+        np.testing.assert_array_equal(active_occ, [1, 2, 3])
+
+    def test_open_shell_tuple_active_virt_indices(self, mock_mf_7mo: MagicMock) -> None:
+        _, active_virt = get_subspaces_from_cas(mock_mf_7mo, ncas=5, nelecas=(3, 2))
+        np.testing.assert_array_equal(active_virt, [4, 5])
+
+    def test_invalid_tuple_nalpha_lt_nbeta_raises(self, mock_mf_7mo: MagicMock) -> None:
+        with pytest.raises(ValueError, match="nalpha >= nbeta >= 0"):
+            get_subspaces_from_cas(mock_mf_7mo, ncas=4, nelecas=(2, 4))
 
     def test_nelecas_exceeds_total_raises(self, mock_mf_7mo: MagicMock) -> None:
         mock_mf_7mo.mol.nao = 7

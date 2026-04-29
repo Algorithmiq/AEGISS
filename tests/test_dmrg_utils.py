@@ -21,11 +21,11 @@ class TestDefaultDmrgSchedule:
 
     def test_noises_length(self) -> None:
         _, noises, _ = _default_dmrg_schedule()
-        assert len(noises) == 14
+        assert len(noises) == 16
 
     def test_thrds_length(self) -> None:
         _, _, thrds = _default_dmrg_schedule()
-        assert len(thrds) == 14
+        assert len(thrds) == 16
 
     def test_bond_dims_monotone(self) -> None:
         bond_dims, _, _ = _default_dmrg_schedule(init_bond_dim=10)

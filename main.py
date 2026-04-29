@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 from aegiss.active_space.aegiss import select_aegiss
 from aegiss.config_dataclasses import (
@@ -14,11 +15,9 @@ from aegiss.config_dataclasses import (
 from aegiss.initial_guess import build_mol, run_scf
 from aegiss.utils.banner import print_banner
 
-os.environ["OMP_NUM_THREADS"] = "4"
-os.environ["SCRATCH_DIR"] = "./aegiss/examples/tmp"
-
-
 if __name__ == "__main__":
+    os.environ["OMP_NUM_THREADS"] = "4"
+    os.environ["SCRATCH_DIR"] = str(Path(__file__).parent / "aegiss/examples/tmp")
     print_banner()
     atom = "./aegiss/examples/data/benzene.xyz"
     mol = build_mol(atom, basis="ccpvdz", symmetry=False, verbose=2)
@@ -34,13 +33,13 @@ if __name__ == "__main__":
     )
 
     entropy_config = EntropyConfig(
-        fraction=0,
+        fraction=0.1,
         fraction_type="r",
-        ranking="subset",
+        ranking="global",
     )
     projection_config = ProjectionConfig(
-        ao_labels=["C 2pz", "C 2px", "C 2py", ["C 2px", "C 2py"]],
-        contribution=0,
+        ao_labels=["C 2pz"],
+        contribution=0.5,
         contribution_type="a",
         basis="minao",
         top_n=None,
@@ -50,7 +49,7 @@ if __name__ == "__main__":
         saving_folder="./aegiss/examples/orbs/",
         saving_prefix="benzene_aegiss",
         save_orb=False,
-        save_plots=True,
+        save_plots=False,
     )
     active_indices = select_aegiss(
         mol,
