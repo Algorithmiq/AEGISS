@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 
@@ -13,75 +15,95 @@ from aegiss.active_space.ao_projection import (
 
 
 class TestComputeContribution:
-    def test_returns_list_of_tuples(self, h2_rhf) -> None:
+    def test_returns_tuple_of_lists(self, h2_rhf) -> None:
         space = [(0, 0.0), (1, 0.0)]
-        result = _compute_contribution(
+        selected, all_weights = _compute_contribution(
             mf=h2_rhf,
             label="H 1s",
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             reduced_space_indices=space,
             contribution=0.0,
             contribution_type="r",
             secondary_basis="minao",
         )
-        assert isinstance(result, list)
-        for item in result:
+        assert isinstance(selected, list)
+        assert isinstance(all_weights, list)
+        for item in selected:
             assert len(item) == 2
 
-    def test_returns_empty_for_bad_label(self, h2_rhf) -> None:
-        """A label matching no AOs in the projection mol returns []."""
+    def test_returns_empty_tuple_for_bad_label(self, h2_rhf) -> None:
+        """A label matching no AOs in the projection mol returns ([], [])."""
         space = [(0, 0.0), (1, 0.0)]
-        result = _compute_contribution(
+        selected, all_weights = _compute_contribution(
             mf=h2_rhf,
             label="Xe 1s",  # no Xe in H2
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             reduced_space_indices=space,
             contribution=0.0,
             contribution_type="a",
             secondary_basis="minao",
         )
-        assert result == []
+        assert selected == []
+        assert all_weights == []
 
-    def test_high_threshold_filters_all(self, h2_rhf) -> None:
-        """Contribution threshold of 2.0 (relative) should select nothing."""
+    def test_high_threshold_filters_selected_but_keeps_all_weights(
+        self, h2_rhf
+    ) -> None:
+        """Threshold of 2.0 (relative) selects nothing but all_weights still covers all orbitals."""
         space = [(0, 0.0), (1, 0.0)]
-        result = _compute_contribution(
+        selected, all_weights = _compute_contribution(
             mf=h2_rhf,
             label="H 1s",
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             reduced_space_indices=space,
             contribution=2.0,
             contribution_type="r",
             secondary_basis="minao",
         )
-        assert result == []
+        assert selected == []
+        assert len(all_weights) == 2
 
     def test_zero_threshold_selects_all(self, h2_rhf) -> None:
         """Contribution threshold of 0.0 selects every orbital."""
         space = [(0, 0.0), (1, 0.0)]
-        result = _compute_contribution(
+        selected, _ = _compute_contribution(
             mf=h2_rhf,
             label="H 1s",
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             reduced_space_indices=space,
             contribution=0.0,
             contribution_type="a",
             secondary_basis="minao",
         )
-        assert len(result) == 2
+        assert len(selected) == 2
+
+    def test_all_weights_covers_full_space(self, h2_rhf) -> None:
+        """all_weights always has one entry per orbital in the space regardless of threshold."""
+        space = [(0, 0.0), (1, 0.0)]
+        _, all_weights = _compute_contribution(
+            mf=h2_rhf,
+            label="H 1s",
+            full_mo_coeff=h2_rhf.mo_coeff,
+            reduced_space_indices=space,
+            contribution=0.9,
+            contribution_type="r",
+            secondary_basis="minao",
+        )
+        assert len(all_weights) == len(space)
 
     def test_no_secondary_basis_uses_original(self, h2_rhf) -> None:
         space = [(0, 0.0), (1, 0.0)]
-        result = _compute_contribution(
+        selected, all_weights = _compute_contribution(
             mf=h2_rhf,
             label="H 1s",
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             reduced_space_indices=space,
             contribution=0.0,
             contribution_type="a",
             secondary_basis=None,
         )
-        assert isinstance(result, list)
+        assert isinstance(selected, list)
+        assert isinstance(all_weights, list)
 
     def test_mismatched_mo_coeff_raises(self, h2_rhf) -> None:
         """Wrong-shape active_mo_coeff should raise ValueError."""
@@ -91,7 +113,7 @@ class TestComputeContribution:
             _compute_contribution(
                 mf=h2_rhf,
                 label="H 1s",
-                active_mo_coeff=bad_coeff,
+                full_mo_coeff=bad_coeff,
                 reduced_space_indices=space,
                 contribution=0.0,
                 contribution_type="a",
@@ -100,41 +122,44 @@ class TestComputeContribution:
 
     def test_weights_are_non_negative(self, h2_rhf) -> None:
         space = [(0, 0.0), (1, 0.0)]
-        result = _compute_contribution(
+        selected, all_weights = _compute_contribution(
             mf=h2_rhf,
             label="H 1s",
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             reduced_space_indices=space,
             contribution=0.0,
             contribution_type="a",
             secondary_basis="minao",
         )
-        for _, w in result:
+        for _, w in selected:
+            assert w >= 0.0
+        for _, w in all_weights:
             assert w >= 0.0
 
 
 class TestSelectByLabel:
     """select_by_label is a thin wrapper — just verify it delegates correctly."""
 
-    def test_returns_list(self, h2_rhf) -> None:
+    def test_returns_tuple_of_lists(self, h2_rhf) -> None:
         space = [(0, 0.0), (1, 0.0)]
-        result = select_by_label(
+        selected, all_weights = select_by_label(
             label="H 1s",
             mf=h2_rhf,
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             space=space,
             contribution=0.0,
             projected_basis="minao",
             contribution_type="a",
         )
-        assert isinstance(result, list)
+        assert isinstance(selected, list)
+        assert isinstance(all_weights, list)
 
     def test_consistent_with_compute_contribution(self, h2_rhf) -> None:
         space = [(0, 0.0), (1, 0.0)]
         direct = _compute_contribution(
             mf=h2_rhf,
             label="H 1s",
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             reduced_space_indices=space,
             contribution=0.5,
             contribution_type="r",
@@ -143,7 +168,7 @@ class TestSelectByLabel:
         via_label = select_by_label(
             label="H 1s",
             mf=h2_rhf,
-            active_mo_coeff=h2_rhf.mo_coeff,
+            full_mo_coeff=h2_rhf.mo_coeff,
             space=space,
             contribution=0.5,
             projected_basis="minao",
@@ -262,3 +287,42 @@ class TestSelectByAoProjection:
             contribution_type="a",
         )
         assert isinstance(result, np.ndarray)
+
+    def test_grouped_ao_labels_accepted(self, h2_rhf) -> None:
+        """Mixed list[str | list[str]] is handled without error."""
+        result = select_by_ao_projection(
+            mf=h2_rhf,
+            ao_labels=["H 1s", ["H 1s"]],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+        )
+        assert isinstance(result, np.ndarray)
+
+    def test_save_path_none_does_not_call_plot(self, h2_rhf) -> None:
+        """No heatmap is saved when save_path is None."""
+        with patch(
+            "aegiss.active_space.ao_projection.plot_ao_contribution"
+        ) as mock_plot:
+            select_by_ao_projection(
+                mf=h2_rhf,
+                ao_labels=["H 1s"],
+                projected_basis="minao",
+                contribution=0.0,
+                contribution_type="a",
+                save_path=None,
+            )
+        mock_plot.assert_not_called()
+
+    def test_save_path_calls_plot_and_creates_pdf(self, h2_rhf, tmp_path) -> None:
+        """Passing save_path triggers plot_ao_contribution and writes a PDF."""
+        save_stem = str(tmp_path / "ao_test")
+        select_by_ao_projection(
+            mf=h2_rhf,
+            ao_labels=["H 1s"],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+            save_path=save_stem,
+        )
+        assert (tmp_path / "ao_test_heatmap.pdf").exists()

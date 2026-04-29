@@ -37,6 +37,22 @@ class TestDMRGConfig:
         with pytest.raises(ValueError, match="nelecas"):
             DMRGConfig(ncas=4, nelecas=-2)
 
+    def test_nelecas_tuple_valid(self) -> None:
+        cfg = DMRGConfig(ncas=10, nelecas=(6, 4))
+        assert cfg.nelecas == (6, 4)
+
+    def test_nelecas_tuple_closed_shell_valid(self) -> None:
+        cfg = DMRGConfig(ncas=10, nelecas=(5, 5))
+        assert cfg.nelecas == (5, 5)
+
+    def test_nelecas_tuple_nalpha_lt_nbeta_raises(self) -> None:
+        with pytest.raises(ValueError, match="nelecas"):
+            DMRGConfig(ncas=10, nelecas=(2, 4))
+
+    def test_nelecas_tuple_negative_nbeta_raises(self) -> None:
+        with pytest.raises(ValueError, match="nelecas"):
+            DMRGConfig(ncas=10, nelecas=(3, -1))
+
     def test_zero_init_bond_dim_raises(self) -> None:
         with pytest.raises(ValueError, match="init_bond_dim"):
             DMRGConfig(ncas=4, nelecas=4, init_bond_dim=0)
@@ -159,6 +175,22 @@ class TestProjectionConfig:
     def test_multiple_ao_labels_valid(self) -> None:
         cfg = ProjectionConfig(ao_labels=["C 2pz", "C 2px", "C 2py"])
         assert len(cfg.ao_labels) == 3
+
+    def test_grouped_ao_label_entry_valid(self) -> None:
+        cfg = ProjectionConfig(ao_labels=["C 2pz", ["C 2px", "C 2py"]])
+        assert len(cfg.ao_labels) == 2
+
+    def test_all_grouped_ao_labels_valid(self) -> None:
+        cfg = ProjectionConfig(ao_labels=[["C 2pz", "C 2px"], ["Fe 3d", "Fe 4d"]])
+        assert len(cfg.ao_labels) == 2
+
+    def test_empty_inner_list_raises(self) -> None:
+        with pytest.raises(ValueError, match="ao_labels"):
+            ProjectionConfig(ao_labels=[[]])  # type: ignore[list-item]
+
+    def test_non_string_inner_list_raises(self) -> None:
+        with pytest.raises(ValueError, match="ao_labels"):
+            ProjectionConfig(ao_labels=[["C 2pz", 123]])  # type: ignore[list-item]
 
 
 class TestOutputConfig:

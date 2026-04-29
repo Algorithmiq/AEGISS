@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import string
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -48,7 +50,7 @@ def _save_contributions(
     shape: tuple[int, int],
     mol: pyscf.gto.Mole,
     orbs: np.ndarray | list[int],
-    ao_labels: list[str],
+    ao_labels: list[str | list[str]],
     labels_names: list[str],
     mo: np.ndarray,
     folder: str = "./",
@@ -56,7 +58,9 @@ def _save_contributions(
     min_pct: float = 0.01,
 ) -> None:
     n_orbs, n_labels = len(orbs), len(ao_labels)
-    total_ao_idx = mol.search_ao_label(ao_labels)
+    total_ao_idx = np.unique(
+        np.concatenate([mol.search_ao_label(lbl) for lbl in ao_labels])
+    )
     mo_orbs = mo[:, list(orbs)]
     total_norm = np.sum(mo_orbs[total_ao_idx, :] ** 2, axis=0)
 
@@ -93,8 +97,8 @@ def _save_contributions(
 def plot_pie_contribution(
     mol: pyscf.gto.Mole,
     mf: Any,
-    ao_labels: list[str] | str,
-    labels_names: list[str],
+    ao_labels: list[str | list[str]] | str,
+    labels_names: list[str | list[str]],
     orbs: list[int] | np.ndarray,
     filename: str = "composition",
     folder: str = "./",
@@ -146,13 +150,14 @@ def plot_pie_contribution(
     if orb_for_row <= 0:
         raise ValueError(f"orb_for_row must be a positive integer, got {orb_for_row}.")
 
+    str_labels_names = [" ".join(n) if isinstance(n, list) else n for n in labels_names]
     shape = (int(np.ceil(len(orbs) / orb_for_row)), orb_for_row)
     common = {
         "shape": shape,
         "mol": mol,
         "orbs": orbs,
         "ao_labels": ao_labels,
-        "labels_names": labels_names,
+        "labels_names": str_labels_names,
         "folder": folder,
         "min_pct": min_pct,
     }
@@ -166,12 +171,99 @@ def plot_pie_contribution(
 
 
 def plot_ao_contribution(
-    ao_contributions: list[tuple[int, float]],
-    ao_labels: list[str] | str,
+    ao_contributions: dict[int, list[tuple[int, float]]],
     save_path: str,
+    ao_labels: dict[int, str | list[str]] | None = None,
+    mo_labels: list[int] | np.ndarray | None = None,
+    mos_per_plot: int = 200,
 ) -> None:
-    """Plot AO contributions as a bar chart (not yet implemented)."""
-    raise NotImplementedError("plot_ao_contribution is not yet implemented.")
+    """Plot AO contributions as a heatmap, one row per AO group.
+
+    Each row is the contribution array for one AO group, normalised by its own
+    maximum so all rows share the same [0, 1] colour scale.
+
+    Parameters
+    ----------
+    ao_contributions:
+        Dict mapping integer group index to a list of (orbital_index, weight)
+        pairs covering all orbitals in the search space.
+    save_path:
+        Output path/stem; ``_heatmap.pdf`` is appended automatically.
+    ao_labels:
+        Dict mapping each group index to its label string (or list of strings,
+        which are joined with a space). When *None* (default), letter
+        identifiers A, B, C, … are used as y-tick labels.
+    mo_labels:
+        Orbital indices to use as x-tick labels. Defaults to sequential
+        integers when *None*.
+    mos_per_plot:
+        Maximum number of MOs shown in each subplot panel.
+    """
+    keys = list(ao_contributions.keys())
+
+    def _ytick(group_idx: int, position: int) -> str:
+        if ao_labels is not None:
+            raw = ao_labels.get(group_idx, str(group_idx))
+            return "\n".join(raw) if isinstance(raw, list) else raw
+        return (
+            string.ascii_uppercase[position]
+            if position < 26
+            else string.ascii_uppercase[position // 26 - 1]
+            + string.ascii_uppercase[position % 26]
+        )
+
+    heat_map_matrix: list[np.ndarray] = []
+    valid_yticks: list[str] = []
+    for i, group_idx in enumerate(keys):
+        weights = ao_contributions[group_idx]
+        if not weights:
+            continue
+        vals = np.array([w for _, w in weights])
+        max_val = np.max(vals)
+        heat_map_matrix.append(vals if max_val == 0 else vals / max_val)
+        valid_yticks.append(_ytick(group_idx, i))
+
+    if not heat_map_matrix:
+        return
+
+    matrix = np.array(heat_map_matrix)  # (n_groups, n_mos)
+    n_mos = matrix.shape[1]
+    n_plots = int(np.ceil(n_mos / mos_per_plot))
+    vmin, vmax = 0.0, 1.0
+
+    fig = plt.figure(figsize=(25, 3 * n_plots))
+    gs = fig.add_gridspec(n_plots, 1, wspace=0.3, hspace=0.25)
+
+    for i in range(n_plots):
+        start = i * mos_per_plot
+        end = min(start + mos_per_plot, n_mos)
+        subset = matrix[:, start:end]
+
+        ax = fig.add_subplot(gs[i, 0])
+        sns.heatmap(
+            subset,
+            ax=ax,
+            cbar=False,
+            cmap="magma",
+            vmin=vmin,
+            vmax=vmax,
+            yticklabels=valid_yticks,
+        )
+        ax.set_ylabel("Atomic Orbitals")
+        ax.set_xticks(np.arange(end - start) + 0.5)
+        if mo_labels is not None:
+            ax.set_xticklabels([str(m) for m in mo_labels[start:end]], rotation=90)
+
+    cbar_ax = fig.add_axes((0.92, 0.15, 0.02, 0.7))
+    sm = plt.cm.ScalarMappable(
+        cmap="magma", norm=mcolors.Normalize(vmin=vmin, vmax=vmax)
+    )
+    sm.set_array([])
+    fig.colorbar(sm, cax=cbar_ax)
+
+    plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
+    fig.savefig(Path(save_path + "_heatmap.pdf"), format="pdf", bbox_inches="tight")
+    plt.close(fig)
 
 
 def soe_heatmap(
