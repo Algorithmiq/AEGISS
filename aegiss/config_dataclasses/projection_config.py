@@ -66,12 +66,12 @@ class ProjectionConfig:
                 "ProjectionConfig: `contribution` must be in the range [0, 1]"
                 f"when `contribution_type` is 'r', got {self.contribution}."
             )
-        if self.contribution_type == 'a' and self.contribution < 0:
+        if self.contribution_type == "a" and self.contribution < 0:
             raise ValueError(
                 "ProjectionConfig: `contribution` must be non-negative when `contribution_type` is 'a',"
                 f"got {self.contribution}."
             )
         if self.top_n is not None and self.top_n <= 0:
             raise ValueError(
-                "ProjectionConfig: `top_n` must be a positive integer or None, got {self.top_n}."
+                f"ProjectionConfig: `top_n` must be a positive integer or None, got {self.top_n}."
             )
