@@ -55,3 +55,7 @@ class DMRGConfig:
             raise ValueError(
                 f"DMRGConfig: Invalid symmetry type (`symm_type`) {self.symm_type!r}. Must be 'SZ' or 'SU2'."
             )
+        if self.verbosity < 0:
+            raise ValueError(
+                f"DMRGConfig: `verbosity` must be non-negative, got {self.verbosity}."
+            )

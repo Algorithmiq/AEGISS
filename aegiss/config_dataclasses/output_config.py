@@ -25,3 +25,20 @@ class OutputConfig:
     saving_prefix: str = "aegiss_selection"
     save_orb: bool = True
     save_plots: bool = False
+
+    def __post_init__(self) -> None:
+        """Validate the configuration parameters.
+
+        Raises:
+        ----------
+        ValueError
+            If any of the parameters are out of their expected ranges or have invalid values.
+        """
+        if not self.saving_folder:
+            raise ValueError(
+                "OutputConfig: `saving_folder` must be a non-empty string."
+            )
+        if not self.saving_prefix:
+            raise ValueError(
+                "OutputConfig: `saving_prefix` must be a non-empty string."
+            )

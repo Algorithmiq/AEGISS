@@ -54,7 +54,7 @@ class ProjectionConfig:
             )
         if self.contribution_type not in ("a", "r"):
             raise ValueError(
-                "ProjectionConfig: Invalid `contribution_type`"
+                "ProjectionConfig: Invalid `contribution_type` "
                 f"{self.contribution_type!r}. Must be 'a' or 'r'."
             )
         if self.ranking not in ("subset", "global"):
@@ -63,12 +63,12 @@ class ProjectionConfig:
             )
         if not (0 <= self.contribution <= 1) and self.contribution_type == "r":
             raise ValueError(
-                "ProjectionConfig: `contribution` must be in the range [0, 1]"
+                "ProjectionConfig: `contribution` must be in the range [0, 1] "
                 f"when `contribution_type` is 'r', got {self.contribution}."
             )
         if self.contribution_type == "a" and self.contribution < 0:
             raise ValueError(
-                "ProjectionConfig: `contribution` must be non-negative when `contribution_type` is 'a',"
+                "ProjectionConfig: `contribution` must be non-negative when `contribution_type` is 'a', "
                 f"got {self.contribution}."
             )
         if self.top_n is not None and self.top_n <= 0:
