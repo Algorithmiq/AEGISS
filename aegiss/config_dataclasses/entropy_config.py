@@ -8,7 +8,20 @@ from typing import Literal
 
 @dataclass(frozen=True)
 class EntropyConfig:
-    """Configuration dataclass for entropy-based active space screening."""
+    """Configuration dataclass for entropy-based active space screening.
+
+    Parameters:
+    ----------
+    entropy_fraction : float, default 0.1
+        Entropy threshold value (see *entropy_fraction_type*).
+    entropy_fraction_type : {'r', 'a'}, default 'r'
+        ``'r'``: keep orbitals whose S(1) >= ``entropy_fraction x max(S(1))``;
+        ``'a'``: keep orbitals whose S(1) ≥ ``entropy_fraction`` (absolute).
+    entropy_ranking : {'subset', 'global'}, default 'subset'
+        How to rank orbitals for entropy screening.  ``'subset'`` applies the
+        threshold independently to occupied and virtual subspaces; ``'global'``
+        ranks all active orbitals together.
+    """
 
     entropy_fraction: float = 0.1
     entropy_fraction_type: Literal["r", "a"] = "r"

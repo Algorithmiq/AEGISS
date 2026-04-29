@@ -8,7 +8,28 @@ from typing import Literal
 
 @dataclass(frozen=True)
 class ProjectionConfig:
-    """Configuration dataclass for orbital selection based on atomic orbital projection."""
+    """Configuration dataclass for orbital selection based on atomic orbital projection.
+
+    Parameters:
+    -----------
+    projection_basis : str or None, default 'minao'
+        Basis set used for AO projection.  ``None`` uses the original
+        molecular basis.
+    projection_ao_labels : list of str, default ['C 2pz']
+        AO labels to project onto.  Format: ``"Element AtomicOrbital"``,
+        e.g. ``"C 2pz"``, ``"Fe 3d"``.
+    projection_contribution : float, default 0.5
+        Projection weight threshold (see *projection_contribution_type*).
+    projection_contribution_type : {'a', 'r'}, default 'a'
+        ``'a'``: absolute threshold; ``'r'``: relative to the maximum weight.
+    projection_top_n : int or None, default None
+        If set, keep the top-N orbitals per AO label instead of using a
+        contribution threshold.
+    projection_ranking : {'subset', 'global'}, default 'subset'
+        ``'subset'``: run AO projection independently on the occupied and
+        virtual entropy-screened subspaces; ``'global'``: run it on the
+        combined set.
+    """
 
     projection_basis: str | None = "minao"
     projection_ao_labels: list[str] | None = None

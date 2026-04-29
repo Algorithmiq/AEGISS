@@ -8,8 +8,20 @@ from typing import Literal
 
 @dataclass(frozen=True)
 class DMRGConfig:
-    """Configuration dataclass for DMRG calculations."""
+    """Configuration dataclass for DMRG calculations.
 
+    Parameters:
+    ----------
+    ncas : int
+        Number of active electrons for the DMRG calculation.
+    nelecas : int
+        Number of active orbitals for the DMRG calculation.
+    init_bond_dim : int, default 10
+        Initial DMRG bond dimension; grows automatically during the sweep schedule.
+    symm_type : {'SZ', 'SU2'}, default 'SZ'
+        Spin symmetry used by block2.  ``'SZ'`` is required for entropy
+        calculations; ``'SU2'`` is faster but needs MPS conversion for entropies.
+    """
     ncas: int
     nelecas: int
     init_bond_dim: int = 10
