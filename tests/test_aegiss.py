@@ -71,6 +71,9 @@ def pipeline_patches():
         ),
         patch(f"{_MODULE}.save_orbitals") as mock_save,
         patch(f"{_MODULE}.save_orbitals_from_entropies") as mock_save_ent,
+        patch(f"{_MODULE}.soe_heatmap"),
+        patch(f"{_MODULE}.th_plots"),
+        patch(f"{_MODULE}.plot_pie_contribution"),
     ):
         yield {"save": mock_save, "save_ent": mock_save_ent}
 
@@ -171,6 +174,61 @@ class TestSubsetProjectionRanking:
 
         assert list(result) == [2, 3, 5]
 
+    def test_save_path_none_when_save_plots_false(
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        dmrg_config: DMRGConfig,
+        entropy_config: EntropyConfig,
+        projection_config_subset: ProjectionConfig,
+    ) -> None:
+        with patch(
+            f"{_MODULE}.select_by_ao_projection",
+            side_effect=[np.array([2, 3]), np.array([5])],
+        ) as mock_proj:
+            select_aegiss(
+                mol_mock,
+                mf_mock,
+                dmrg_config=dmrg_config,
+                entropy_config=entropy_config,
+                projection_config=projection_config_subset,
+                output_config=OutputConfig(save_orb=False, save_plots=False),
+            )
+
+        for call in mock_proj.call_args_list:
+            assert call.kwargs["save_path"] is None
+
+    def test_save_path_has_occ_virt_suffixes_when_save_plots_true(
+        self,
+        tmp_path: pytest.TempPathFactory,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        dmrg_config: DMRGConfig,
+        entropy_config: EntropyConfig,
+        projection_config_subset: ProjectionConfig,
+    ) -> None:
+        with patch(
+            f"{_MODULE}.select_by_ao_projection",
+            side_effect=[np.array([2, 3]), np.array([5])],
+        ) as mock_proj:
+            select_aegiss(
+                mol_mock,
+                mf_mock,
+                dmrg_config=dmrg_config,
+                entropy_config=entropy_config,
+                projection_config=projection_config_subset,
+                output_config=OutputConfig(
+                    save_orb=False,
+                    save_plots=True,
+                    saving_folder=str(tmp_path) + "/",
+                    saving_prefix="mytest",
+                ),
+            )
+
+        paths = [call.kwargs["save_path"] for call in mock_proj.call_args_list]
+        assert any("_occ" in p for p in paths if p)
+        assert any("_virt" in p for p in paths if p)
+
 
 @pytest.mark.usefixtures("pipeline_patches")
 class TestGlobalProjectionRanking:
@@ -246,6 +304,38 @@ class TestGlobalProjectionRanking:
 
         assert isinstance(result, np.ndarray)
         assert list(result) == [2, 3, 5]
+
+    def test_save_path_no_suffix_for_global_when_save_plots_true(
+        self,
+        tmp_path: pytest.TempPathFactory,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        dmrg_config: DMRGConfig,
+        entropy_config: EntropyConfig,
+        projection_config_global: ProjectionConfig,
+    ) -> None:
+        with patch(
+            f"{_MODULE}.select_by_ao_projection",
+            return_value=np.array([2, 3, 5]),
+        ) as mock_proj:
+            select_aegiss(
+                mol_mock,
+                mf_mock,
+                dmrg_config=dmrg_config,
+                entropy_config=entropy_config,
+                projection_config=projection_config_global,
+                output_config=OutputConfig(
+                    save_orb=False,
+                    save_plots=True,
+                    saving_folder=str(tmp_path) + "/",
+                    saving_prefix="mytest",
+                ),
+            )
+
+        save_path = mock_proj.call_args.kwargs["save_path"]
+        assert save_path is not None
+        assert "_occ" not in save_path
+        assert "_virt" not in save_path
 
 
 class TestOrbitalSaving:
