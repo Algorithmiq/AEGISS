@@ -115,7 +115,7 @@ def get_subspaces_from_cas(
         f"\n----------DMRG CAS Subspace Selection"
         f" (ncas={ncas}, nelecas={nelecas})----------"
     )
-    nmos = mf.mol.nao
+    nmos = mf.mo_coeff.shape[1]
     neletot = int(np.sum(mf.mo_occ))
     if ncas > nmos:
         msg = "Number of active orbitals cannot exceed total number of MOs."
