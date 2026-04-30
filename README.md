@@ -24,6 +24,7 @@ workflows.
 
 - [Installation](#installation)
 - [Environment variables](#environment-variables)
+- [Logging](#logging)
 - [Tutorial — benzene π system](#tutorial--benzene-π-system)
 - [API reference](#api-reference)
   - [select_aegiss](#select_aegiss)
@@ -70,6 +71,42 @@ Set them before running any calculation:
 import os
 os.environ["OMP_NUM_THREADS"] = "8"
 os.environ["SCRATCH_DIR"] = "/scratch/my_job"
+```
+
+---
+
+## Logging
+
+AEGISS uses Python's standard `logging` module. The library never configures
+handlers or formatters — it only emits records through named loggers under the
+`aegiss.*` hierarchy. Callers control where and how output appears.
+
+**Enable output in a script:**
+
+```python
+import logging
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+```
+
+Use `logging.DEBUG` to also see per-orbital detail (contribution weights,
+individual S(1) values):
+
+```python
+logging.basicConfig(level=logging.DEBUG, format="%(message)s")
+```
+
+**Silence the library selectively (e.g. in a notebook):**
+
+```python
+logging.getLogger("aegiss").setLevel(logging.WARNING)
+```
+
+**structlog users** — configure structlog's stdlib integration before importing
+AEGISS and the library will emit through it automatically:
+
+```python
+import structlog
+structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.INFO))
 ```
 
 ---
@@ -229,9 +266,9 @@ ProjectionConfig(ao_labels, basis="minao", contribution=0.5, contribution_type="
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `ao_labels` | `list[str]` | — | AO labels to project onto, e.g. `["C 2pz"]`. See [AO label format](#ao-label-format) |
+| `ao_labels` | `list[str \| list[str]]` | — | AO labels to project onto, e.g. `["C 2pz"]`. Each entry is a single label string or a list of strings treated as one group. See [AO label format](#ao-label-format) |
 | `basis` | `str` or `None` | `"minao"` | Basis for projection; `None` uses the original molecular basis |
-| `contribution` | `float` | `0.5` | Projection weight threshold |
+| `contribution` | `float` or `list[float]` | `0.5` | Projection weight threshold. A single float applies to all labels; a list assigns per-label thresholds |
 | `contribution_type` | `"a"` or `"r"` | `"a"` | `"a"`: absolute threshold; `"r"`: relative to the maximum weight |
 | `top_n` | `int` or `None` | `None` | Keep top-N orbitals per label instead of using a threshold |
 | `ranking` | `"subset"` or `"global"` | `"subset"` | `"subset"`: project occ and virt subspaces separately; `"global"`: project the combined set |

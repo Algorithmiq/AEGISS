@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 def compute_fnos(
@@ -31,8 +34,8 @@ def compute_fnos(
     rdm1 = wfn_obj.make_rdm1()
 
     nocc = len(frozen) + len(active)
-    print("1-RDM in MO basis:\n", rdm1.shape)
-    print(
+    logger.debug("1-RDM in MO basis:\n%s", rdm1.shape)
+    logger.info(
         "Diagonalizing virtual block of the 1-RDM to construct FNOs for virtual orbitals."
     )
     dm_vv = rdm1[nocc:, nocc:]

@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 def compute_nos(wfn_obj: Any, *, split_nos: bool = False) -> np.ndarray:
@@ -28,9 +31,9 @@ def compute_nos(wfn_obj: Any, *, split_nos: bool = False) -> np.ndarray:
         Natural orbital coefficients in the AO basis.
     """
     rdm1_mo = wfn_obj.make_rdm1()
-    print("1-RDM in MO basis:\n", rdm1_mo.shape)
+    logger.debug("1-RDM in MO basis:\n%s", rdm1_mo.shape)
     if split_nos:
-        print(
+        logger.info(
             "Building Split NOs by diagonalizing occupied and virtual blocks separately."
         )
         nocc = wfn_obj.nocc
@@ -51,7 +54,7 @@ def compute_nos(wfn_obj: Any, *, split_nos: bool = False) -> np.ndarray:
         nos_occ = wfn_obj.mo_coeff[:, :nocc] @ u_occ
         nos_virt = wfn_obj.mo_coeff[:, nocc:] @ u_virt
         return np.hstack((nos_occ, nos_virt))
-    print("Building standard NOs by diagonalizing the full 1-RDM.")
+    logger.info("Building standard NOs by diagonalizing the full 1-RDM.")
     occ_mo, u = np.linalg.eigh(rdm1_mo)
     # sort descending
     idx = np.argsort(occ_mo)[::-1]

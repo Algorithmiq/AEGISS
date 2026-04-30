@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Literal
 
 from pyscf import cc, ci, mp
+
+logger = logging.getLogger(__name__)
 
 
 def run_cisd(mf: Any, **kwargs: Any) -> Any:
@@ -22,7 +25,7 @@ def run_cisd(mf: Any, **kwargs: Any) -> Any:
     myci : pyscf.ci.CISD
         Converged CISD object.
     """
-    print("Running CISD with options:", kwargs)
+    logger.info("Running CISD with options: %s", kwargs)
     myci = ci.CISD(mf)
     for key, val in kwargs.items():
         setattr(myci, key, val)
@@ -45,7 +48,7 @@ def run_mp2(mf: Any, **kwargs: Any) -> Any:
     mymp2 : pyscf.mp.MP2
         Converged MP2 object.
     """
-    print("Running MP2 with options:", kwargs)
+    logger.info("Running MP2 with options: %s", kwargs)
     mymp2 = mp.MP2(mf)
     for key, val in kwargs.items():
         setattr(mymp2, key, val)
@@ -68,7 +71,7 @@ def run_ccsd(mf: Any, **kwargs: Any) -> Any:
     mycc : pyscf.cc.CCSD
         Converged CCSD object.
     """
-    print("Running CCSD with options:", kwargs)
+    logger.info("Running CCSD with options: %s", kwargs)
     mycc = cc.CCSD(mf)
     for key, val in kwargs.items():
         setattr(mycc, key, val)

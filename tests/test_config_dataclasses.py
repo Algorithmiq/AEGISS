@@ -160,6 +160,30 @@ class TestProjectionConfig:
                 ao_labels=["C 2pz"], contribution=-0.1, contribution_type="a"
             )
 
+    def test_contribution_list_valid(self) -> None:
+        cfg = ProjectionConfig(ao_labels=["C 2pz", "Fe 3d"], contribution=[0.3, 0.5])
+        assert cfg.contribution == [0.3, 0.5]
+
+    def test_contribution_empty_list_raises(self) -> None:
+        with pytest.raises(ValueError, match="contribution"):
+            ProjectionConfig(ao_labels=["C 2pz"], contribution=[])  # type: ignore[arg-type]
+
+    def test_contribution_list_relative_above_one_raises(self) -> None:
+        with pytest.raises(ValueError, match="contribution"):
+            ProjectionConfig(
+                ao_labels=["C 2pz", "Fe 3d"],
+                contribution=[0.5, 1.5],
+                contribution_type="r",
+            )
+
+    def test_contribution_list_absolute_negative_raises(self) -> None:
+        with pytest.raises(ValueError, match="contribution"):
+            ProjectionConfig(
+                ao_labels=["C 2pz", "Fe 3d"],
+                contribution=[0.5, -0.1],
+                contribution_type="a",
+            )
+
     def test_zero_top_n_raises(self) -> None:
         with pytest.raises(ValueError, match="top_n"):
             ProjectionConfig(ao_labels=["C 2pz"], top_n=0)
