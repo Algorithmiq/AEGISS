@@ -72,9 +72,9 @@ def _compute_contribution(
     raw_weights: list[tuple[int, float]] = []
     print(f"\nComputing contributions for AO label(s): {label}")
     for idx in range(len(s22[0, :])):
-        tmp = np.sum(np.abs(s22[:, idx]))
+        weight = np.sum(np.abs(s22[:, idx]))
         orb = reduced_space_indices[idx][0]
-        raw_weights.append((orb, tmp))
+        raw_weights.append((orb, weight))
 
     projected_weights: list[tuple[int, float]]
     if contribution_type == "r":
