@@ -122,20 +122,14 @@ def select_aegiss(
         return np.array([], dtype=int)
 
     if output_config.save_orb:
-        save_orbitals_from_entropies(
-            mol,
-            mf.mo_coeff,
-            screened_occ,
-            filename_prefix=output_config.saving_prefix + "_entropy",
-            folder=output_config.saving_folder,
-        )
-        save_orbitals_from_entropies(
-            mol,
-            mf.mo_coeff,
-            screened_virt,
-            filename_prefix=output_config.saving_prefix + "_entropy",
-            folder=output_config.saving_folder,
-        )
+        for subspace in (screened_occ, screened_virt):
+            save_orbitals_from_entropies(
+                mol,
+                mf.mo_coeff,
+                subspace,
+                filename_prefix=output_config.saving_prefix + "_entropy",
+                folder=output_config.saving_folder,
+            )
 
     base_path = (
         str(Path(output_config.saving_folder) / output_config.saving_prefix)

@@ -59,12 +59,7 @@ def run_dmrg(
     """
     n_threads = int(os.environ.get("OMP_NUM_THREADS", "4"))
     scratch_dir = os.environ.get("SCRATCH_DIR", "./tmp")
-    if symm_type == "SU2":
-        symm = SymmetryTypes.SU2
-    elif symm_type == "SZ":
-        symm = SymmetryTypes.SZ
-    else:
-        raise ValueError(f"Unsupported symmetry type: {symm_type}")
+    symm = {"SU2": SymmetryTypes.SU2, "SZ": SymmetryTypes.SZ}[symm_type]
 
     print(
         f"\n----------------DMRG Calculation (symmetry: {symm_type})----------------\n"
