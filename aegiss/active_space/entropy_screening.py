@@ -71,7 +71,6 @@ def _global_entropy_ranking(
     soe1: np.ndarray,
     fraction_type: Literal["r", "a"],
     fraction: float,
-    n_orbs: int,
     occ_orbs: np.ndarray,
     virt_orbs: np.ndarray,
 ) -> tuple[list[tuple[int, float]], list[tuple[int, float]]]:
@@ -85,8 +84,6 @@ def _global_entropy_ranking(
         Relative or absolute threshold type.
     fraction : float
         Threshold value.
-    n_orbs : int
-        Total number of orbitals (kept for API compatibility).
     occ_orbs : np.ndarray
         Indices of occupied orbitals.
     virt_orbs : np.ndarray
@@ -174,12 +171,10 @@ def select_by_entropy(
     if soe1 is None:
         print("No single-orbital entropies provided. Returning empty selection.")
         return [], []
-    n_orbs = len(soe1)
-
     if ranking == "global":
         print("Using global ranking of orbitals by entropy values.")
         selected_occ, selected_virt = _global_entropy_ranking(
-            soe1, fraction_type, fraction, n_orbs, occ_orbs, virt_orbs
+            soe1, fraction_type, fraction, occ_orbs, virt_orbs
         )
     else:
         print(
