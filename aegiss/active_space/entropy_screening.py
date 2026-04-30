@@ -76,12 +76,14 @@ def _global_entropy_ranking(
             f" {fraction} (fraction type: {fraction_type})."
         )
 
+    occ_set = set(occ_orbs.tolist())
+    virt_set = set(virt_orbs.tolist())
     occ_selected = []
     virt_selected = []
     for idx, n_orb in enumerate(orbitals_index):
-        if n_orb in occ_orbs:
+        if n_orb in occ_set:
             occ_selected.append((n_orb, ths_lists[idx]))
-        elif n_orb in virt_orbs:
+        elif n_orb in virt_set:
             virt_selected.append((n_orb, ths_lists[idx]))
 
     return occ_selected, virt_selected
