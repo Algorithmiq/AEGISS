@@ -26,6 +26,22 @@ def _draw_pie_subplot(
     orb_id: int,
     min_pct: float,
 ) -> None:
+    """Draw a single pie chart for one orbital's AO composition.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes on which to draw the pie chart.
+    data : np.ndarray
+        Fractional contributions for each AO group (must sum to ≤ 1).
+    labels_names : list of str
+        Slice labels corresponding to each entry in *data*.
+    orb_id : int
+        Orbital index displayed as the subplot title.
+    min_pct : float
+        Minimum fractional contribution below which the slice label and
+        percentage text are hidden.
+    """
     n_labels = len(data)
     explode = np.zeros(n_labels)
     explode[np.argmax(data)] = 0.1
@@ -60,6 +76,33 @@ def _save_contributions(
     filename: str = "major_composition",
     min_pct: float = 0.01,
 ) -> None:
+    """Compute AO compositions and save a grid of pie charts as a PDF.
+
+    Computes the fractional contribution of each AO group to every orbital in
+    *orbs*, lays out the charts in a *shape* grid, and writes a single PDF file.
+
+    Parameters
+    ----------
+    shape : tuple[int, int]
+        Grid dimensions ``(n_rows, n_cols)`` for the subplot layout.
+    mol : pyscf.gto.Mole
+        PySCF Mole object used to resolve AO labels.
+    orbs : np.ndarray or list of int
+        Indices of the molecular orbitals to plot.
+    ao_labels : list of str or list of str
+        AO label strings recognised by ``mol.search_ao_label``.
+    labels_names : list of str
+        Human-readable names for each AO group, used as pie slice labels.
+    mo : np.ndarray, shape (n_ao, n_mo)
+        MO coefficient matrix for one spin channel.
+    folder : str
+        Directory where the PDF is saved.
+    filename : str
+        Output filename without extension.
+    min_pct : float
+        Minimum fractional contribution below which the slice label and
+        percentage are hidden.
+    """
     n_orbs, n_labels = len(orbs), len(ao_labels)
     total_ao_idx = np.unique(
         np.concatenate([mol.search_ao_label(lbl) for lbl in ao_labels])
@@ -344,6 +387,35 @@ def _detect_plateaus(
     indices_above: dict[int, np.ndarray],
     plateau_size: int,
 ) -> tuple[list[float], list[float], list[int], list[list[float]]]:
+    """Identify flat regions (plateaus) in a threshold curve.
+
+    Scans *y_values* for runs of identical consecutive values and marks those
+    of length ≥ *plateau_size* as plateaus. Returns the data needed to annotate
+    the threshold curve plot.
+
+    Parameters
+    ----------
+    y_values : np.ndarray, shape (n_thresholds,)
+        Number of orbitals above each threshold step.
+    indices_above : dict[int, np.ndarray]
+        Mapping from threshold step index to the array of orbital indices above
+        that threshold.
+    plateau_size : int
+        Minimum run length (in threshold steps) for a flat region to be
+        considered a plateau.
+
+    Returns:
+    -------
+    plateau_vector : list of float
+        y-values belonging to plateau points.
+    plateau_index : list of float
+        x-coordinates (threshold fractions) of plateau points.
+    starting_plateaus_indices : list of int
+        Index into *y_values* at which each plateau begins.
+    rect_size : list of list of float
+        For each plateau: ``[x_start, x_end, n_orbs]``, used to draw bounding
+        rectangles on the plot.
+    """
     tmp_val = y_values[0]
     plateau_vector: list[float] = []
     plateau_index: list[float] = []
@@ -378,6 +450,22 @@ def _detect_plateaus(
 
 
 def _define_cas_size(selected_ones: np.ndarray, occ_index: int) -> tuple[int, int]:
+    """Return ``(n_orbs, n_elec)`` for a CAS defined by a set of orbital indices.
+
+    Parameters
+    ----------
+    selected_ones : np.ndarray
+        Orbital indices in the candidate active space.
+    occ_index : int
+        Index of HOMO + 1 (first virtual orbital). Orbitals with index strictly
+        below this value are treated as occupied.
+
+    Returns:
+    -------
+    cas_size : tuple[int, int]
+        ``(n_orbs, n_elec)`` where *n_orbs* is the total number of selected
+        orbitals and *n_elec* is twice the number of selected occupied orbitals.
+    """
     return (len(selected_ones), 2 * int(np.sum(selected_ones < occ_index)))
 
 

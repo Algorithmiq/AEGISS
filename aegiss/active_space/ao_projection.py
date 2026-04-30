@@ -160,6 +160,25 @@ def _resolve_space(
     | tuple[list[tuple[int, float]], list[tuple[int, float]]]
     | None,
 ) -> list[tuple[int, float]]:
+    """Resolve the orbital search space from the ``restricted_space`` argument.
+
+    Parameters
+    ----------
+    mf : pyscf.scf.hf.SCF
+        Converged mean-field object; used to determine the total number of MOs
+        when *restricted_space* is ``None``.
+    restricted_space : list of tuple, tuple of lists, or None
+        If ``None``, all MOs are returned with a placeholder entropy of 0.0.
+        If a flat list of ``(index, entropy)`` pairs, returned unchanged.
+        If a ``(occ_list, virt_list)`` tuple (as returned by
+        ``select_by_entropy``), the two lists are merged with
+        ``combine_candidate_entropies``.
+
+    Returns:
+    -------
+    space : list of tuple[int, float]
+        Orbital index / entropy pairs for the search space.
+    """
     if restricted_space is None:
         logger.info(
             "No restriction on orbital indices for selection. Using all orbitals."

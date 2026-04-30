@@ -24,9 +24,11 @@ workflows.
 
 - [Installation](#installation)
 - [Environment variables](#environment-variables)
+- [Logging](#logging)
 - [Tutorial — benzene π system](#tutorial--benzene-π-system)
 - [API reference](#api-reference)
   - [select_aegiss](#select_aegiss)
+  - [Configuration dataclasses](#configuration-dataclasses)
   - [build_mol](#build_mol)
   - [run_scf](#run_scf)
   - [run_dmrg](#run_dmrg)
@@ -73,6 +75,42 @@ os.environ["SCRATCH_DIR"] = "/scratch/my_job"
 
 ---
 
+## Logging
+
+AEGISS uses Python's standard `logging` module. The library never configures
+handlers or formatters — it only emits records through named loggers under the
+`aegiss.*` hierarchy. Callers control where and how output appears.
+
+**Enable output in a script:**
+
+```python
+import logging
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+```
+
+Use `logging.DEBUG` to also see per-orbital detail (contribution weights,
+individual S(1) values):
+
+```python
+logging.basicConfig(level=logging.DEBUG, format="%(message)s")
+```
+
+**Silence the library selectively (e.g. in a notebook):**
+
+```python
+logging.getLogger("aegiss").setLevel(logging.WARNING)
+```
+
+**structlog users** — configure structlog's stdlib integration before importing
+AEGISS and the library will emit through it automatically:
+
+```python
+import structlog
+structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.INFO))
+```
+
+---
+
 ## Tutorial — benzene π system
 
 This walkthrough reproduces the `main.py` example and explains each step.
@@ -99,85 +137,52 @@ keyword argument (`charge`, `spin`, `verbose`, …).
 mf = run_scf(mol, method="RHF")
 ```
 
-### 3. Run DMRG on a preliminary active space
-
-Before screening, we need single-orbital entropies. We run DMRG on a generous
-active space that over-selects orbitals.
+### 3. Configure and run the full pipeline
 
 ```python
-from aegiss.wavefunction.dmrg import run_dmrg
-from aegiss.utils.orbital_indices import get_subspaces_from_cas
+from aegiss.active_space.aegiss import select_aegiss
+from aegiss.config_dataclasses import DMRGConfig, EntropyConfig, ProjectionConfig, OutputConfig
 
-ncas, nelecas = 20, 20
-active_orbs, virt_orbs = get_subspaces_from_cas(mf, ncas=ncas, nelecas=nelecas)
+dmrg_config = DMRGConfig(ncas=20, nelecas=20, init_bond_dim=10, symm_type="SZ")
 
-energy, soe1, _soe2, minfo = run_dmrg(
-    mf,
-    ncas=ncas,
-    nelecas=nelecas,
-    symm_type="SZ",
-    init_bond_dim=10,
-    get_qmi=True,
+entropy_config = EntropyConfig(
+    fraction=0.1,
+    fraction_type="r",
+    ranking="global",
+)
+
+projection_config = ProjectionConfig(
+    ao_labels=["C 2pz"],
+    contribution=0.5,
+    contribution_type="a",
+)
+
+output_config = OutputConfig(
+    saving_folder="./orbs/",
+    saving_prefix="benzene_aegiss",
+    save_orb=True,
+    save_plots=False,
+)
+
+active_indices = select_aegiss(
+    mol, mf,
+    dmrg_config=dmrg_config,
+    entropy_config=entropy_config,
+    projection_config=projection_config,
+    output_config=output_config,
 )
 ```
 
-`soe1` is a 1-D array of single-orbital entropies for all `ncas` orbitals.
+`select_aegiss` runs the full pipeline — DMRG → entropy screening → AO projection
+— and optionally writes orbital cube files and diagnostic plots.
 
-### 4. Screen by entropy
+Here `ranking="global"` means occupied and virtual orbitals are ranked together by
+entropy before the 10 % threshold is applied, so only the most entangled orbitals
+across the full CAS survive. Narrowing `ao_labels` to `["C 2pz"]` targets the
+benzene π manifold exclusively.
 
-```python
-from aegiss.active_space.entropy_screening import select_by_entropy
-
-screened_occ, screened_virt = select_by_entropy(
-    occ_orbs=active_orbs,
-    virt_orbs=virt_orbs,
-    soe1=soe1,
-    ranking="subset",     # rank occ and virt separately
-    fraction=0.1,         # keep orbitals with S(1) ≥ 10 % of the maximum
-    fraction_type="r",    # 'r' = relative threshold
-)
-```
-
-Both return values are `list[tuple[int, float]]` — orbital index paired with its
-(possibly normalised) entropy.
-
-### 5. Refine with AO projection
-
-```python
-from aegiss.active_space.ao_projection import select_by_ao_projection
-
-final_space = select_by_ao_projection(
-    mf,
-    ao_labels=["C 2pz"],          # project onto carbon 2pz orbitals
-    contribution=0.5,              # keep orbitals with weight ≥ 0.5
-    contribution_type="a",         # 'a' = absolute threshold
-    projected_basis="minao",       # project in a minimal basis
-    restricted_space=(screened_occ, screened_virt),  # only consider entropy-screened orbitals
-)
-# final_space : np.ndarray of orbital indices
-```
-
-### 6. Save orbitals for visualisation
-
-```python
-from aegiss.utils.dump_info import save_orbitals, save_orbitals_from_entropies
-
-# Save entropy-screened orbitals (colour-coded by entropy)
-save_orbitals_from_entropies(
-    mol, mf.mo_coeff, screened_occ,
-    filename_prefix="benzene_entropy_occ",
-    folder="./orbs/",
-)
-
-# Save the final AEGISS active space
-save_orbitals(
-    mol, mf.mo_coeff, final_space,
-    filename_prefix="benzene_aegiss",
-    folder="./orbs/",
-)
-```
-
-Cube files can be opened in VESTA, VMD, or Avogadro.
+For custom workflows that call individual steps directly, see `run_dmrg`,
+`select_by_entropy`, and `select_by_ao_projection` in the API reference below.
 
 ---
 
@@ -190,22 +195,10 @@ from aegiss.active_space.aegiss import select_aegiss
 
 active_indices = select_aegiss(
     mol, mf,
-    dmrg_ncas, dmrg_nelecas,
-    init_bond_dim=10,
-    symm_type="SZ",
-    entropy_ranking="subset",
-    entropy_fraction=0.1,
-    entropy_fraction_type="r",
-    projection_basis="minao",
-    projection_ao_labels=["C 2pz"],
-    projection_contribution=0.5,
-    projection_contribution_type="a",
-    projection_top_n=None,
-    projection_ranking="subset",
-    saving_folder="./orbs/",
-    saving_prefix="molecule",
-    verbosity=0,
-    save_orb=True,
+    dmrg_config=dmrg_config,
+    entropy_config=entropy_config,
+    projection_config=projection_config,
+    output_config=output_config,
 )
 ```
 
@@ -214,32 +207,87 @@ specified CAS → entropy screening → AO projection. An orbital is kept when i
 *both* criteria — AO projection is restricted to the entropy-screened candidate set.
 If entropy screening returns no orbitals, the function returns an empty array early.
 
-| Parameter | Type | Default | Description |
+| Parameter | Type | Description |
+|---|---|---|
+| `mol` | `pyscf.gto.Mole` | Molecular geometry and basis set |
+| `mf` | SCF object | Converged mean-field |
+| `dmrg_config` | `DMRGConfig` | DMRG calculation settings |
+| `entropy_config` | `EntropyConfig` | Entropy screening settings |
+| `projection_config` | `ProjectionConfig` | AO projection settings |
+| `output_config` | `OutputConfig` | Output and saving settings |
+
+Returns `np.ndarray` of sorted orbital indices. See
+[Configuration dataclasses](#configuration-dataclasses) for field-level documentation.
+
+---
+
+### Configuration dataclasses
+
+All four dataclasses are frozen (immutable) and validate their inputs on
+construction. They are exported from the top-level package:
+
+```python
+from aegiss.config_dataclasses import DMRGConfig, EntropyConfig, ProjectionConfig, OutputConfig
+```
+
+#### `DMRGConfig`
+
+```python
+DMRGConfig(ncas, nelecas, init_bond_dim=10, symm_type="SZ", verbosity=0)
+```
+
+| Field | Type | Default | Description |
 |---|---|---|---|
-| `mol` | `pyscf.gto.Mole` | — | Molecular geometry and basis set |
-| `mf` | SCF object | — | Converged mean-field |
-| `dmrg_ncas` | `int` | — | Number of active orbitals for the DMRG calculation |
-| `dmrg_nelecas` | `int` | — | Number of active electrons for the DMRG calculation |
-| `init_bond_dim` | `int` | `10` | Initial DMRG bond dimension; grows automatically |
-| `symm_type` | `str` | `"SZ"` | Spin symmetry: `"SZ"` (required for entropies) or `"SU2"` (faster) |
-| `entropy_ranking` | `str` | `"subset"` | `"subset"`: threshold per subspace; `"global"`: all orbitals ranked together |
-| `entropy_fraction` | `float` | `0.1` | Entropy threshold value (see `entropy_fraction_type`) |
-| `entropy_fraction_type` | `str` | `"r"` | `"r"`: keep S(1) ≥ fraction × max S(1); `"a"`: absolute threshold |
-| `projection_basis` | `str` or `None` | `"minao"` | Basis for AO projection; `None` uses the original molecular basis |
-| `projection_ao_labels` | `list[str]` | `["C 2pz"]` | AO labels to project onto — same format as `select_by_ao_projection` |
-| `projection_contribution` | `float` | `0.5` | Projection weight threshold |
-| `projection_contribution_type` | `str` | `"a"` | `"a"`: absolute; `"r"`: relative to maximum weight |
-| `projection_top_n` | `int` or `None` | `None` | Keep top-N orbitals per label instead of thresholding |
-| `projection_ranking` | `str` | `"subset"` | `"subset"`: project occ and virt subspaces separately; `"global"`: project combined set |
-| `saving_folder` | `str` | `"./aegiss/examples/orbs/"` | Directory for output cube files |
-| `saving_prefix` | `str` | `"benzene"` | Base prefix for cube file names (see note below for suffix behavior) |
+| `ncas` | `int` | — | Number of active orbitals |
+| `nelecas` | `int` or `tuple[int, int]` | — | Number of active electrons. An integer total count or an explicit `(nalpha, nbeta)` pair — same convention as PySCF's CASCI. Odd integers are treated as high-spin doublets. |
+| `init_bond_dim` | `int` | `10` | Initial DMRG bond dimension; grows automatically during the sweep schedule |
+| `symm_type` | `"SZ"` or `"SU2"` | `"SZ"` | Spin symmetry: `"SZ"` is required for entropy calculations; `"SU2"` is faster |
 | `verbosity` | `int` | `0` | block2 output verbosity |
-| `save_orb` | `bool` | `True` | Write cube files for screened and final orbitals, grouped by the suffixed prefixes derived from `saving_prefix` |
 
-`saving_prefix` is expanded with selection-specific suffixes before writing cube files:
+Open-shell example: `DMRGConfig(ncas=10, nelecas=(5, 4))` sets up a doublet CAS with 5α and 4β electrons.
+
+#### `EntropyConfig`
+
+```python
+EntropyConfig(fraction=0.1, fraction_type="r", ranking="subset")
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `fraction` | `float` | `0.1` | Entropy threshold value (see `fraction_type`) |
+| `fraction_type` | `"r"` or `"a"` | `"r"` | `"r"`: keep S(1) ≥ `fraction × max(S(1))`; `"a"`: absolute threshold |
+| `ranking` | `"subset"` or `"global"` | `"subset"` | `"subset"`: threshold occ and virt independently; `"global"`: rank all orbitals together |
+
+#### `ProjectionConfig`
+
+```python
+ProjectionConfig(ao_labels, basis="minao", contribution=0.5, contribution_type="a", top_n=None, ranking="subset")
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `ao_labels` | `list[str \| list[str]]` | — | AO labels to project onto, e.g. `["C 2pz"]`. Each entry is a single label string or a list of strings treated as one group. See [AO label format](#ao-label-format) |
+| `basis` | `str` or `None` | `"minao"` | Basis for projection; `None` uses the original molecular basis |
+| `contribution` | `float` or `list[float]` | `0.5` | Projection weight threshold. A single float applies to all labels; a list assigns per-label thresholds |
+| `contribution_type` | `"a"` or `"r"` | `"a"` | `"a"`: absolute threshold; `"r"`: relative to the maximum weight |
+| `top_n` | `int` or `None` | `None` | Keep top-N orbitals per label instead of using a threshold |
+| `ranking` | `"subset"` or `"global"` | `"subset"` | `"subset"`: project occ and virt subspaces separately; `"global"`: project the combined set |
+
+#### `OutputConfig`
+
+```python
+OutputConfig(saving_folder="./aegiss_output/", saving_prefix="aegiss_selection", save_orb=True, save_plots=False)
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `saving_folder` | `str` | `"./aegiss_output/"` | Directory for output files |
+| `saving_prefix` | `str` | `"aegiss_selection"` | Base prefix for output file names |
+| `save_orb` | `bool` | `True` | Write cube files for entropy-screened and final active orbitals |
+| `save_plots` | `bool` | `False` | Generate and save diagnostic plots (SOE heatmap and threshold analysis) |
+
+`saving_prefix` is expanded with selection-specific suffixes:
 `{saving_prefix}_entropy_{idx}.cube` and `{saving_prefix}_AEGISS_{idx}.cube`.
-
-Returns `np.ndarray` of sorted orbital indices.
 
 ---
 
@@ -298,7 +346,7 @@ energy, soe1, soe2, minfo = run_dmrg(
 |---|---|---|---|
 | `mf` | SCF object | — | Converged mean-field |
 | `ncas` | `int` | — | Number of active orbitals |
-| `nelecas` | `int` | — | Number of active electrons |
+| `nelecas` | `int` or `tuple[int, int]` | — | Number of active electrons. An integer total count or an explicit `(nalpha, nbeta)` pair. Odd integers are treated as high-spin doublets. |
 | `init_bond_dim` | `int` | `10` | Initial DMRG bond dimension; the schedule grows to a larger final dimension automatically |
 | `symm_type` | `str` | `"SU2"` | Spin symmetry: `"SU2"` (faster) or `"SZ"` (required for entropy calculation without MPS conversion) |
 | `verbosity` | `int` | `0` | block2 output verbosity |

@@ -33,6 +33,24 @@ def _make_soe_plots(
     saving_folder: str,
     saving_prefix: str,
 ) -> None:
+    """Generate and save single-orbital entropy diagnostic plots.
+
+    Saves both an SOE heatmap and a threshold curve (TH plot) to *saving_folder*.
+
+    Parameters
+    ----------
+    active_orbs : np.ndarray
+        Indices of the occupied (active) orbitals in the CAS.
+    virt_orbs : np.ndarray
+        Indices of the virtual orbitals in the CAS.
+    soe1 : np.ndarray
+        Single-orbital entropies for all CAS orbitals, ordered as
+        ``[active_orbs..., virt_orbs...]``.
+    saving_folder : str
+        Directory where the PDF files are written.
+    saving_prefix : str
+        Filename prefix; ``_SOE_heatmap.pdf`` and ``_TH_plot.pdf`` are appended.
+    """
     tagged = [(orb_id, soe1[idx]) for idx, orb_id in enumerate(active_orbs)]
     tagged += [
         (orb_id, soe1[len(active_orbs) + idx]) for idx, orb_id in enumerate(virt_orbs)
