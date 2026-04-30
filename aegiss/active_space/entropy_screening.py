@@ -40,7 +40,11 @@ def _rank_and_threshold(
 
     if fraction_type == "r":
         print("Using relative threshold")
-        entropies = soe1 / max_s1
+        if max_s1 == 0.0:
+            print("All candidate entropies are zero; keeping relative entropies at 0.0.")
+            entropies = np.zeros_like(soe1, dtype=float)
+        else:
+            entropies = soe1 / max_s1
     else:
         print("Using absolute threshold")
         entropies = soe1
