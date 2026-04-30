@@ -135,14 +135,12 @@ ignore = [
     "PLR0915", # pylint refactor: too many statements
     "PLR2004", # pylint refactor: magic value used in comparison
     "W191",    # tab-indentation: enforced by the formatter
-    "T201",    # print: intentional progress output in scientific code
     "ANN401",  # Any type: needed for pyscf/block2 untyped objects
 ]
 unfixable = [
     "ERA",  # removes commented-out code
     "F401", # removes unused imports
     "F841", # removes unused variables
-    "T20",  # removes print statements
 ]
 isort.required-imports = ["from __future__ import annotations"]
 flake8-unused-arguments.ignore-variadic-names = true

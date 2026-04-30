@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 def dump_qmi(
@@ -31,4 +34,4 @@ def dump_qmi(
     if soe2 is not None:
         data["soe2"] = soe2
     np.savez(filename, **data)  # type: ignore[arg-type]
-    print(f"QMI data dumped to {filename}")
+    logger.info("QMI data dumped to %s", filename)

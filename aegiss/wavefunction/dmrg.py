@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import time
 from typing import TYPE_CHECKING, Any
@@ -14,6 +15,8 @@ from aegiss.utils.orbital_indices import resolve_nelecas
 
 if TYPE_CHECKING:
     import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 def run_dmrg(
@@ -66,16 +69,16 @@ def run_dmrg(
         )
     symm = _symm_map[symm_type]
 
-    print(
-        f"\n----------------DMRG Calculation (symmetry: {symm_type})----------------\n"
+    logger.info(
+        "----------------DMRG Calculation (symmetry: %s)----------------\n", symm_type
     )
     driver = DMRGDriver(
         scratch=scratch_dir, symm_type=symm, n_threads=n_threads, n_mkl_threads=1
     )
 
     mycas = mcscf.CASCI(mf, ncas, nelecas)
-    print("Using pyscf.CASCI to obtain integrals for DMRG...")
-    print(f"CAS (ncas={ncas}, nelecas={nelecas})")
+    logger.info("Using pyscf.CASCI to obtain integrals for DMRG...")
+    logger.info("CAS (ncas=%d, nelecas=%s)", ncas, nelecas)
     h1e, ecore = mycas.get_h1eff()
     g2e = ao2mo.restore(1, mycas.get_h2eff(), ncas)
 
@@ -84,24 +87,30 @@ def run_dmrg(
     spin = nalpha - nbeta
     driver.initialize_system(n_sites=ncas, n_elec=n_elec, spin=spin)
 
-    print(
-        f"System parameters: n_sites={driver.n_sites}, n_elec={driver.n_elec},"
-        f" spin={spin}, symm_type={symm_type}"
+    logger.info(
+        "System parameters: n_sites=%d, n_elec=%d, spin=%d, symm_type=%s",
+        driver.n_sites,
+        driver.n_elec,
+        spin,
+        symm_type,
     )
-    print(f"Scratch directory: {scratch_dir}")
-    print(f"Number of threads: {n_threads}")
+    logger.info("Scratch directory: %s", scratch_dir)
+    logger.info("Number of threads: %d", n_threads)
 
     bond_dims, noises, thrds = _default_dmrg_schedule(init_bond_dim=init_bond_dim)
 
     n_sweeps = len(bond_dims)
     twosite_to_onesite = max(n_sweeps - 2, 0)
-    print(
-        f"DMRG settings: n_sweeps = {n_sweeps}, init_bond_dim = {init_bond_dim},"
-        f" final_bond_dim = {bond_dims[-1]},"
-        f" twosite_to_onesite = {twosite_to_onesite}"
+    logger.info(
+        "DMRG settings: n_sweeps = %d, init_bond_dim = %d, final_bond_dim = %d,"
+        " twosite_to_onesite = %d",
+        n_sweeps,
+        init_bond_dim,
+        bond_dims[-1],
+        twosite_to_onesite,
     )
-    print(f"DMRG Noise: init = {noises[0]}, final = {noises[-1]}")
-    print(f"DMRG Threshold: init = {thrds[0]}, final = {thrds[-1]}\n")
+    logger.info("DMRG Noise: init = %s, final = %s", noises[0], noises[-1])
+    logger.info("DMRG Threshold: init = %s, final = %s\n", thrds[0], thrds[-1])
     mpo = driver.get_qc_mpo(
         h1e=h1e,
         g2e=g2e,
@@ -122,12 +131,12 @@ def run_dmrg(
         thrds=thrds,
         twosite_to_onesite=twosite_to_onesite,
     )
-    print(f"DMRG completed in {time.time() - t:.3f} [s]")
-    print(f"DMRG Energy ({symm_type})\t : {energy:.8f}")
+    logger.info("DMRG completed in %.3f [s]", time.time() - t)
+    logger.info("DMRG Energy (%s)\t : %.8f", symm_type, energy)
 
     soe1, soe2, minfo = None, None, None
     if symm_type == "SU2":
-        print("Mapping SU(2) MPS and MPO to SZ")
+        logger.info("Mapping SU(2) MPS and MPO to SZ")
 
         driver.align_mps_center(ket, ref=0)
         zket = driver.mps_change_to_sz(ket, "ZKET")
@@ -138,7 +147,7 @@ def run_dmrg(
         impo = driver.get_identity_mpo()
         norm = driver.expectation(zket, impo, zket)
         zket.iscale(1 / norm)
-        print(f"SZ Energy: {driver.expectation(zket, mpo, zket):.8f}")
+        logger.info("SZ Energy: %.8f", driver.expectation(zket, mpo, zket))
         if get_qmi:
             soe1, soe2, minfo = compute_qmi(driver, zket)
 

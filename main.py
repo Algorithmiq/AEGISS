@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 
@@ -16,6 +17,11 @@ from aegiss.initial_guess import build_mol, run_scf
 from aegiss.utils.banner import print_banner
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
     os.environ["OMP_NUM_THREADS"] = "4"
     os.environ["SCRATCH_DIR"] = str(Path(__file__).parent / "aegiss/examples/tmp")
     print_banner()

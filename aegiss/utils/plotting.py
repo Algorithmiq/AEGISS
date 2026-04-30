@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import string
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -14,6 +15,8 @@ from matplotlib import patches
 
 if TYPE_CHECKING:
     import pyscf
+
+logger = logging.getLogger(__name__)
 
 
 def _draw_pie_subplot(
@@ -88,7 +91,7 @@ def _save_contributions(
                 min_pct=min_pct,
             )
 
-    print(f"Saving {filename}.pdf")
+    logger.info("Saving %s.pdf", filename)
     fig.tight_layout()
     fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf", bbox_inches="tight")
     plt.close(fig)
@@ -485,8 +488,11 @@ def th_plots(
             backgroundcolor="white",
             bbox={"edgecolor": "teal", "facecolor": "white"},
         )
-        print(
-            f"\nPlateau #{i + 1}:\nN_MOs: {len(indices_above[idx])}\nList of MOs: {indices_above[idx]}\n"
+        logger.info(
+            "\nPlateau #%d:\nN_MOs: %d\nList of MOs: %s\n",
+            i + 1,
+            len(indices_above[idx]),
+            indices_above[idx],
         )
 
     fig.tight_layout()

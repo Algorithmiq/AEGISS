@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Literal
 
 import numpy as np
@@ -9,6 +10,8 @@ from pyscf import gto, lo
 
 from aegiss.utils.orbital_indices import get_orbital_spaces
 from aegiss.wavefunction.methods import build_correlated_wfn
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Per-method functions
@@ -143,7 +146,7 @@ def localize_fnos(
     """
     from aegiss.localization.fnos import compute_fnos  # noqa: PLC0415
 
-    print(f"Computing FNOs using {correlated_method.upper()}")
+    logger.info("Computing FNOs using %s", correlated_method.upper())
 
     frozen_orbs, active_orbs, _, frozen_virt = get_orbital_spaces(
         mf,
@@ -151,9 +154,9 @@ def localize_fnos(
         unique_virt_space=True,
     )
     wfn_obj = build_correlated_wfn(mf, correlated_method, frozen=frozen_orbs)
-    print("Frozen orbitals: ", frozen_orbs)
-    print("Active orbitals: ", active_orbs)
-    print("Frozen virtual orbitals: ", frozen_virt)
+    logger.info("Frozen orbitals: %s", frozen_orbs)
+    logger.info("Active orbitals: %s", active_orbs)
+    logger.info("Frozen virtual orbitals: %s", frozen_virt)
 
     return compute_fnos(
         wfn_obj,
@@ -185,10 +188,10 @@ def localize_nos(
     """
     from aegiss.localization.nos import compute_nos  # noqa: PLC0415
 
-    print(f"Computing NOs using {correlated_method.upper()}")
+    logger.info("Computing NOs using %s", correlated_method.upper())
     wfn_obj = build_correlated_wfn(mf, correlated_method)
-    print(
-        "Using standard NOs without freezing. ",
+    logger.info(
+        "Using standard NOs without freezing. %s",
         "With Splitted NOs." if split else "Without Split NOs.",
     )
     result: np.ndarray = compute_nos(wfn_obj, split_nos=split)
