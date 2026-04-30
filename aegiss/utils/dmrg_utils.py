@@ -13,15 +13,26 @@ if TYPE_CHECKING:
 def _default_dmrg_schedule(
     init_bond_dim: int = 20,
 ) -> tuple[list[int], list[float], list[float]]:
-    """Define a default DMRG schedule for Block2 ``DMRGDriver.solve`` method.
+    """Define a default DMRG sweep schedule for the Block2 ``DMRGDriver.solve`` method.
 
-    Args:
-        init_bond_dim: Initial bond dimension for the first two sweeps. The
-            subsequent bond dimensions are multiples of this value.
+    Builds a 16-sweep schedule that starts at *init_bond_dim* and grows through
+    multipliers ``[1x, 2x, 4x, 6x]``, with noise and convergence thresholds
+    tightened in lock-step.
+
+    Parameters
+    ----------
+    init_bond_dim : int
+        Initial bond dimension for the first sweeps. Subsequent bond dimensions
+        are integer multiples of this value.
 
     Returns:
-        A tuple of three lists: bond dimensions, noise values, and convergence
-        thresholds for each sweep.
+    -------
+    bond_dims : list of int
+        Bond dimension for each sweep.
+    noises : list of float
+        Perturbative noise injected at each sweep.
+    thrds : list of float
+        Davidson convergence threshold for each sweep.
     """
     if init_bond_dim <= 0:
         raise ValueError("init_bond_dim must be a positive integer")

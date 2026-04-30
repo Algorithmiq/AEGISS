@@ -25,12 +25,14 @@ def localize_boys(
     *,
     on_virtual: bool = False,
 ) -> np.ndarray:
-    """Boys (Foster-Boys) localization.
+    """Boys (Foster-Boys) localization — minimises the spatial spread of each orbital.
 
     Parameters
     ----------
     mol : pyscf.gto.Mole
-    mf : SCF object
+        Molecular geometry and basis set.
+    mf : pyscf.scf.hf.SCF
+        Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
     n_occ : int, optional
         Number of occupied orbitals. Inferred from *mf* if not given.
     on_virtual : bool
@@ -59,12 +61,14 @@ def localize_edmiston(
     *,
     on_virtual: bool = False,
 ) -> np.ndarray:
-    """Edmiston-Ruedenberg localization.
+    """Edmiston-Ruedenberg localization — maximises orbital self-repulsion energy.
 
     Parameters
     ----------
     mol : pyscf.gto.Mole
-    mf : SCF object
+        Molecular geometry and basis set.
+    mf : pyscf.scf.hf.SCF
+        Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
     n_occ : int, optional
         Number of occupied orbitals. Inferred from *mf* if not given.
     on_virtual : bool
@@ -94,12 +98,14 @@ def localize_pipek_mezey(
     on_virtual: bool = False,
     pop_method: str = "becke",
 ) -> np.ndarray:
-    """Pipek-Mezey localization.
+    """Pipek-Mezey localization — maximises orbital partial charges on atoms.
 
     Parameters
     ----------
     mol : pyscf.gto.Mole
-    mf : SCF object
+        Molecular geometry and basis set.
+    mf : pyscf.scf.hf.SCF
+        Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
     n_occ : int, optional
         Number of occupied orbitals. Inferred from *mf* if not given.
     on_virtual : bool
@@ -128,16 +134,22 @@ def localize_fnos(
     correlated_method: Literal["mp2", "cisd", "ccsd"],
     active: bool | list[int] = True,  # noqa: FBT001, FBT002
 ) -> np.ndarray:
-    """Frozen Natural orbital (FNO) localization.
+    """Frozen natural orbital (FNO) transformation.
+
+    Builds a correlated wavefunction, partitions orbitals into a frozen core and
+    an active set, and returns the FNO coefficient matrix.
 
     Parameters
     ----------
-    mf : SCF object
+    mf : pyscf.scf.hf.SCF
+        Converged mean-field object.
     correlated_method : {'mp2', 'cisd', 'ccsd'}
-        Correlated method used to compute the NOs.
+        Correlated method used to build the 1-RDM for the NO transformation.
     active : bool or list of int
-        If ``True``, all occupied orbitals are used for NO construction.
-        If a list of integers, these are the orbital indices to be frozen.
+        Controls which occupied orbitals enter the correlated calculation.
+        ``True`` uses all occupied orbitals (no freezing). A list of integers
+        specifies the indices of orbitals to freeze; all other occupied orbitals
+        are treated as active.
 
     Returns:
     -------
@@ -171,15 +183,17 @@ def localize_nos(
     *,
     split: bool = False,
 ) -> np.ndarray:
-    """Natural orbital (NO) localization.
+    """Natural orbital (NO) transformation from a correlated 1-RDM.
 
     Parameters
     ----------
-    mf : SCF object
+    mf : pyscf.scf.hf.SCF
+        Converged mean-field object.
     correlated_method : {'mp2', 'cisd', 'ccsd'}
-        Correlated method used to compute the NOs.
+        Correlated method used to build the 1-RDM for the NO transformation.
     split : bool
-        Diagonalise occupied and virtual blocks of the 1-RDM separately.
+        If ``True``, diagonalise the occupied and virtual blocks of the 1-RDM
+        separately instead of the full matrix.
 
     Returns:
     -------
