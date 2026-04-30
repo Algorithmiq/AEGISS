@@ -226,6 +226,10 @@ module = [
 ]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["aegiss.utils.mol_tagger._window"]
+disable_error_code = ["misc"]
+
 
 [tool.pyright]
 pythonVersion = "3.12"
