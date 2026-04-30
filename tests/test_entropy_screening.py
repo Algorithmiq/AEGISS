@@ -23,17 +23,13 @@ def simple_orbs() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 class TestGlobalEntropyRanking:
     def test_returns_occ_and_virt(self, simple_orbs) -> None:
         occ, virt, soe1 = simple_orbs
-        occ_sel, virt_sel = _global_entropy_ranking(
-            soe1, "r", 0.5, len(soe1), occ, virt
-        )
+        occ_sel, virt_sel = _global_entropy_ranking(soe1, "r", 0.5, occ, virt)
         assert isinstance(occ_sel, list)
         assert isinstance(virt_sel, list)
 
     def test_relative_threshold_selects_high_entropy(self, simple_orbs) -> None:
         occ, virt, soe1 = simple_orbs
-        occ_sel, virt_sel = _global_entropy_ranking(
-            soe1, "r", 0.5, len(soe1), occ, virt
-        )
+        occ_sel, virt_sel = _global_entropy_ranking(soe1, "r", 0.5, occ, virt)
         all_sel = occ_sel + virt_sel
         # All selected should have s1 / max_s1 >= 0.5
         max_s1 = np.max(soe1)
@@ -42,9 +38,7 @@ class TestGlobalEntropyRanking:
 
     def test_absolute_threshold(self, simple_orbs) -> None:
         occ, virt, soe1 = simple_orbs
-        occ_sel, virt_sel = _global_entropy_ranking(
-            soe1, "a", 0.5, len(soe1), occ, virt
-        )
+        occ_sel, virt_sel = _global_entropy_ranking(soe1, "a", 0.5, occ, virt)
         all_sel = occ_sel + virt_sel
         # absolute: raw soe1 values >=0.5
         for idx, _s in all_sel:
@@ -52,20 +46,18 @@ class TestGlobalEntropyRanking:
 
     def test_all_selected_when_threshold_zero(self, simple_orbs) -> None:
         occ, virt, soe1 = simple_orbs
-        occ_sel, virt_sel = _global_entropy_ranking(
-            soe1, "a", 0.0, len(soe1), occ, virt
-        )
+        occ_sel, virt_sel = _global_entropy_ranking(soe1, "a", 0.0, occ, virt)
         assert len(occ_sel) + len(virt_sel) == len(soe1)
 
     def test_occ_indices_belong_to_occ(self, simple_orbs) -> None:
         occ, virt, soe1 = simple_orbs
-        occ_sel, _ = _global_entropy_ranking(soe1, "r", 0.1, len(soe1), occ, virt)
+        occ_sel, _ = _global_entropy_ranking(soe1, "r", 0.1, occ, virt)
         for idx, _ in occ_sel:
             assert idx in occ
 
     def test_virt_indices_belong_to_virt(self, simple_orbs) -> None:
         occ, virt, soe1 = simple_orbs
-        _, virt_sel = _global_entropy_ranking(soe1, "r", 0.1, len(soe1), occ, virt)
+        _, virt_sel = _global_entropy_ranking(soe1, "r", 0.1, occ, virt)
         for idx, _ in virt_sel:
             assert idx in virt
 

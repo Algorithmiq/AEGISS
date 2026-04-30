@@ -77,11 +77,9 @@ def _compute_contribution(
     raw_weights: list[tuple[int, float]] = []
     logger.info("Computing contributions for AO label(s): %s", label)
     for idx in range(len(s22[0, :])):
-        tmp: float = 0.0
-        for j in s22[:, idx]:
-            tmp += abs(j)
+        weight = np.sum(np.abs(s22[:, idx]))
         orb = reduced_space_indices[idx][0]
-        raw_weights.append((orb, tmp))
+        raw_weights.append((orb, weight))
 
     projected_weights: list[tuple[int, float]]
     if contribution_type == "r":
@@ -178,27 +176,66 @@ def _resolve_space(
 
 
 def _resolve_contribution(
-    contribution: float | list[float] | None,
+    contribution: float | list[float],
+    n_labels: int,
     top_n: int | list[int] | None,
-    contribution_type: Literal["r", "a"] | None,
-) -> tuple[float, Literal["r", "a"]]:
-    resolved_type: Literal["r", "a"] = (
-        contribution_type if contribution_type is not None else "a"
-    )
+) -> list[float]:
+    """Helper function to resolve contribution thresholds for AO projection selection.
+
+    Parameters:
+    ----------
+    contribution : float or list of float
+        Contribution threshold(s) for selecting orbitals.
+        A single float applies to all labels; a list specifies per-label thresholds.
+    n_labels : int
+        Number of AO labels being considered for selection.
+    top_n : int or list of int or None
+        If specified, selects the top N orbitals per label instead of using contribution thresholds.
+        A single int applies to all labels; a list specifies per-label counts.
+        If None, uses contribution thresholds for selection.
+
+    Returns:
+    -------
+    resolved_contribution : list of float
+        List of contribution thresholds for each AO label, resolved based on the input parameters.
+    """
     if top_n is not None:
         logger.info(
             "Selecting top orbitals based on contribution. Ignoring contribution threshold."
         )
-        return 0.0, resolved_type
-    return (contribution if isinstance(contribution, float) else 0.0), resolved_type
+        if isinstance(contribution, list):
+            print(
+                "Warning: contribution is a list but top_n is specified."
+                " Ignoring contribution thresholds and using top_n for selection."
+            )
+            return [0.0] * n_labels
+        return [0.0] * n_labels
+
+    if isinstance(contribution, list):
+        print(
+            "\nSelecting orbitals based on contribution thresholds per AO label: ",
+            contribution,
+        )
+        if len(contribution) != n_labels:
+            print(
+                "Warning: Length of contribution list does not match number of AO labels. "
+                "Using the first contribution value for all labels."
+            )
+            return [contribution[0]] * n_labels
+        return contribution
+    print(
+        "\nSelecting orbitals based on a single contribution threshold for all AO labels: ",
+        contribution,
+    )
+    return [contribution] * n_labels
 
 
 def select_by_ao_projection(
     mf: Any,
     ao_labels: list[str | list[str]],
     projected_basis: str | None = "minao",
-    contribution: float | list[float] | None = None,
-    contribution_type: Literal["r", "a"] | None = None,
+    contribution_type: Literal["r", "a"] = "a",
+    contribution: float | list[float] = 0.0,
     top_n: int | list[int] | None = None,
     restricted_space: list[tuple[int, float]]
     | tuple[list[tuple[int, float]], list[tuple[int, float]]]
@@ -220,13 +257,13 @@ def select_by_ao_projection(
         Basis set to use for the projection. ``None`` uses the original basis.
         A minimal basis (e.g. ``'minao'``) helps focus the selection on
         chemically relevant orbitals and reduces noise from diffuse functions.
-    contribution : float or list of float, optional
+    contribution_type : {'r', 'a'}
+        Relative (``'r'``) or absolute (``'a'``) contribution. Required when
+        *contribution* is specified.
+    contribution : float or list of float, default 0.0
         Threshold for selecting orbitals based on their contribution.
         A single float applies to all AO groups; a list specifies per-group
         thresholds and must match the length of *ao_labels*.
-    contribution_type : {'r', 'a'}, optional
-        Relative (``'r'``) or absolute (``'a'``) contribution. Required when
-        *contribution* is specified.
     top_n : int or list of int, optional
         Alternative to *contribution* thresholding. Selects the top N orbitals
         per AO group. A list specifies per-group counts.
@@ -250,9 +287,7 @@ def select_by_ao_projection(
         logger.info("Top N orbitals to select: %s", top_n)
 
     space = _resolve_space(mf, restricted_space)
-    resolved_contribution, resolved_type = _resolve_contribution(
-        contribution, top_n, contribution_type
-    )
+    resolved_contribution = _resolve_contribution(contribution, len(ao_labels), top_n)
 
     if projected_basis is not None:
         logger.info("Using projected basis for AO projection: %s", projected_basis)
@@ -269,8 +304,8 @@ def select_by_ao_projection(
             mf=mf,
             full_mo_coeff=mf.mo_coeff,
             space=space,
-            contribution=resolved_contribution,
-            contribution_type=resolved_type,
+            contribution=resolved_contribution[loop_idx],
+            contribution_type=contribution_type,
         )
         if top_n is not None and isinstance(top_n, int):
             selected_indices_for_label = selected_indices_for_label[:top_n]

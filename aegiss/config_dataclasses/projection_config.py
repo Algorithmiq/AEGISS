@@ -19,8 +19,10 @@ class ProjectionConfig:
     basis : str or None, default 'minao'
         Basis set used for AO projection.  ``None`` uses the original
         molecular basis.
-    contribution : float, default 0.5
-        Projection weight threshold (see *contribution_type*).
+    contribution : float or list[float], default 0.5
+        Projection weight threshold (see *contribution_type*). A list specifies
+        per-label thresholds and must be non-empty; if its length does not match
+        *ao_labels*, the first value is broadcast to all labels.
     contribution_type : {'a', 'r'}, default 'a'
         ``'a'``: absolute threshold; ``'r'``: relative to the maximum weight.
     top_n : int or None, default None
@@ -34,7 +36,7 @@ class ProjectionConfig:
 
     ao_labels: list[str | list[str]]
     basis: str | None = "minao"
-    contribution: float = 0.5
+    contribution: float | list[float] = 0.5
     contribution_type: Literal["a", "r"] = "a"
     top_n: int | None = None
     ranking: Literal["subset", "global"] = "subset"
@@ -69,16 +71,26 @@ class ProjectionConfig:
             raise ValueError(
                 f"ProjectionConfig: Invalid `ranking` {self.ranking!r}. Must be 'subset' or 'global'."
             )
-        if not (0 <= self.contribution <= 1) and self.contribution_type == "r":
+        contribution_values = (
+            self.contribution
+            if isinstance(self.contribution, list)
+            else [self.contribution]
+        )
+        if not contribution_values:
             raise ValueError(
-                "ProjectionConfig: `contribution` must be in the range [0, 1] "
-                f"when `contribution_type` is 'r', got {self.contribution}."
+                "ProjectionConfig: `contribution` must be a non-empty list when provided as a list."
             )
-        if self.contribution_type == "a" and self.contribution < 0:
-            raise ValueError(
-                "ProjectionConfig: `contribution` must be non-negative when `contribution_type` is 'a', "
-                f"got {self.contribution}."
-            )
+        for val in contribution_values:
+            if self.contribution_type == "r" and not (0 <= val <= 1):
+                raise ValueError(
+                    "ProjectionConfig: `contribution` must be in the range [0, 1] "
+                    f"when `contribution_type` is 'r', got {val}."
+                )
+            if self.contribution_type == "a" and val < 0:
+                raise ValueError(
+                    "ProjectionConfig: `contribution` must be non-negative when `contribution_type` is 'a', "
+                    f"got {val}."
+                )
         if self.top_n is not None and self.top_n <= 0:
             raise ValueError(
                 f"ProjectionConfig: `top_n` must be a positive integer or None, got {self.top_n}."

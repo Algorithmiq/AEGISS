@@ -11,11 +11,76 @@ logger = logging.getLogger(__name__)
 _ORB_S1_FMT = "\tOrbital %d: S(1) = %.4f"
 
 
+def _rank_and_threshold(
+    soe1: np.ndarray,
+    orbitals_index: np.ndarray,
+    fraction: float,
+    fraction_type: Literal["r", "a"],
+) -> list[tuple[int, float]]:
+    """Sort orbitals by entropy, apply a threshold, and return selected pairs.
+
+    Parameters
+    ----------
+    soe1 : np.ndarray
+        Single-orbital entropies for the orbitals in *orbitals_index*.
+    orbitals_index : np.ndarray
+        Orbital indices corresponding to *soe1*.
+    fraction : float
+        Threshold value.
+    fraction_type : {'r', 'a'}
+        Relative (normalise by max before thresholding) or absolute.
+
+    Returns:
+    -------
+    selected : list of tuple[int, float]
+        Orbital index / (possibly normalised) entropy pairs above the threshold,
+        sorted by descending entropy.
+    """
+    max_s1 = float(np.max(soe1))
+    print("S(1) values for candidate orbitals:")
+    for orb, s1 in zip(orbitals_index, soe1, strict=False):
+        print(f"\tOrbital {orb}: S(1) = {s1:.4f}")
+    print(f"MAX S(1): {max_s1:.4f} (orbital {orbitals_index[np.argmax(soe1)]})\n")
+
+    if fraction_type == "r":
+        print("Using relative threshold")
+        if max_s1 == 0.0:
+            print(
+                "All candidate entropies are zero; keeping relative entropies at 0.0."
+            )
+            entropies = np.zeros_like(soe1, dtype=float)
+        else:
+            entropies = soe1 / max_s1
+    else:
+        print("Using absolute threshold")
+        entropies = soe1
+
+    sortkey = np.argsort(entropies)[::-1]
+    entropies = entropies[sortkey]
+    sorted_indices = orbitals_index[sortkey]
+    for orb, s1 in zip(sorted_indices, entropies, strict=False):
+        print(f"\tOrbital {orb}: S(1) = {s1:.4f}")
+
+    stop_idx = next((k for k, s in enumerate(entropies) if s < fraction), None)
+    if stop_idx is None:
+        print(
+            f"All {len(soe1)} orbitals are selected by the entropy threshold {fraction}."
+        )
+    else:
+        entropies = entropies[:stop_idx]
+        sorted_indices = sorted_indices[:stop_idx]
+        print(
+            f"\nSelected {len(sorted_indices)} orbitals by entropy threshold"
+            f" {fraction} (fraction type: {fraction_type})."
+        )
+
+    return list(zip(sorted_indices.tolist(), entropies.tolist(), strict=False))
+
+
 def _global_entropy_ranking(
     soe1: np.ndarray,
     fraction_type: Literal["r", "a"],
     fraction: float,
-    n_orbs: int,
     occ_orbs: np.ndarray,
     virt_orbs: np.ndarray,
 ) -> tuple[list[tuple[int, float]], list[tuple[int, float]]]:
@@ -29,8 +94,6 @@ def _global_entropy_ranking(
         Relative or absolute threshold type.
     fraction : float
         Threshold value.
-    n_orbs : int
-        Total number of orbitals.
     occ_orbs : np.ndarray
         Indices of occupied orbitals.
     virt_orbs : np.ndarray
@@ -43,7 +106,6 @@ def _global_entropy_ranking(
     virt_selected : list of tuple[int, float]
         Selected virtual orbitals with their entropy values.
     """
-    max_s1 = np.max(soe1)
     orbitals_index = np.concatenate((occ_orbs, virt_orbs))
     ths_lists = soe1
     logger.debug("S(1) values for candidate orbitals:")
@@ -205,27 +267,21 @@ def select_by_entropy(
     if soe1 is None:
         logger.info("No single-orbital entropies provided. Returning empty selection.")
         return [], []
-    n_orbs = len(soe1)
-
     if ranking == "global":
         logger.info("Using global ranking of orbitals by entropy values.")
         selected_occ, selected_virt = _global_entropy_ranking(
-            soe1, fraction_type, fraction, n_orbs, occ_orbs, virt_orbs
+            soe1, fraction_type, fraction, occ_orbs, virt_orbs
         )
     else:
         logger.info(
             "Using relative ranking of orbitals by entropy values within the subspace."
         )
-        soe1_occ = np.array([soe1[idx] for idx in range(len(occ_orbs))])
-
-        off_set = len(occ_orbs)
-        soe1_virt = np.array([soe1[off_set + idx] for idx in range(len(virt_orbs))])
-
+        n_occ = len(occ_orbs)
         selected_occ = _relative_entropy_ranking(
-            soe1_occ, fraction_type, fraction, occ_orbs
+            soe1[:n_occ], fraction_type, fraction, occ_orbs
         )
         selected_virt = _relative_entropy_ranking(
-            soe1_virt, fraction_type, fraction, virt_orbs
+            soe1[n_occ:], fraction_type, fraction, virt_orbs
         )
 
     for i in selected_occ:

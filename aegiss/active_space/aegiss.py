@@ -97,7 +97,6 @@ def select_aegiss(
         symm_type=dmrg_config.symm_type,
         init_bond_dim=dmrg_config.init_bond_dim,
         verbosity=dmrg_config.verbosity,
-        get_qmi=True,
     )
 
     if output_config.save_plots and soe1 is not None:
@@ -126,20 +125,14 @@ def select_aegiss(
         return np.array([], dtype=int)
 
     if output_config.save_orb:
-        save_orbitals_from_entropies(
-            mol,
-            mf.mo_coeff,
-            screened_occ,
-            filename_prefix=output_config.saving_prefix + "_entropy",
-            folder=output_config.saving_folder,
-        )
-        save_orbitals_from_entropies(
-            mol,
-            mf.mo_coeff,
-            screened_virt,
-            filename_prefix=output_config.saving_prefix + "_entropy",
-            folder=output_config.saving_folder,
-        )
+        for subspace in (screened_occ, screened_virt):
+            save_orbitals_from_entropies(
+                mol,
+                mf.mo_coeff,
+                subspace,
+                filename_prefix=output_config.saving_prefix + "_entropy",
+                folder=output_config.saving_folder,
+            )
 
     base_path = (
         str(Path(output_config.saving_folder) / output_config.saving_prefix)
