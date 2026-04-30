@@ -6,7 +6,7 @@ import pytest
 
 pytest.importorskip("pyblock2")
 
-from aegiss.wavefunction.dmrg import run_dmrg  # noqa: E402
+from aegiss.wavefunction.dmrg import run_dmrg
 
 
 class TestRunDmrgSymmTypeValidation:
