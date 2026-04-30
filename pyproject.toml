@@ -11,6 +11,15 @@ dependencies = [
     "seaborn>=0.13",
 ]
 
+[project.optional-dependencies]
+viz = [
+    "ase",
+    "pyvista",
+    "pyvistaqt",
+    "qtpy",
+    "pyqt5",
+]
+
 [dependency-groups]
 dev = [
     "mypy==1.15.0",
@@ -148,6 +157,9 @@ flake8-annotations.allow-star-arg-any = true
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "D", "C901", "INP001", "E721", "T20"]
+"mol_tagger.py" = ["INP001"]
+"main.py" = ["INP001"]
+"plot.py" = ["INP001"]
 "tests/**/test_*.py" = ["ANN", "I002"]
 "aegiss/**/__init__.py" = ["I002"]
 "*.ipynb" = ["I002"]
@@ -204,6 +216,15 @@ module = [
 ]
 ignore_missing_imports = true
 ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "ase.*",
+    "pyvista.*",
+    "pyvistaqt.*",
+    "qtpy.*",
+]
+ignore_missing_imports = true
 
 
 [tool.pyright]
