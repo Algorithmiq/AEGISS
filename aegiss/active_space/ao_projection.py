@@ -201,7 +201,7 @@ def _resolve_contribution(
                 "Warning: contribution is a list but top_n is specified."
                 " Ignoring contribution thresholds and using top_n for selection."
             )
-            return [0.0] * len(contribution)
+            return [0.0] * n_labels
         return [0.0] * n_labels
 
     if isinstance(contribution, list):
