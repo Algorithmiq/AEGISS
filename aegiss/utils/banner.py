@@ -31,4 +31,4 @@ BANNER = r"""
 
 def print_banner() -> None:
     """Print the AEGISS ASCII art banner to stdout."""
-    print(BANNER)
+    print(BANNER)  # noqa: T201

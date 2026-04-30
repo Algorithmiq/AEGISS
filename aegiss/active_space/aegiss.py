@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -21,6 +22,8 @@ if TYPE_CHECKING:
         OutputConfig,
         ProjectionConfig,
     )
+
+logger = logging.getLogger(__name__)
 
 
 def _make_soe_plots(
@@ -116,8 +119,8 @@ def select_aegiss(
     )
 
     if len(screened_occ) == 0 and len(screened_virt) == 0:
-        print(
-            "\nNo orbitals passed the entropy screening step. Consider adjusting the "
+        logger.info(
+            "No orbitals passed the entropy screening step. Consider adjusting the "
             "entropy_fraction or using 'global' ranking for a more inclusive selection."
         )
         return np.array([], dtype=int)
@@ -146,7 +149,7 @@ def select_aegiss(
 
     final_space: list[int] = []
     if projection_config.ranking == "subset":
-        print("\nRanking orbitals for AO projection based on subset contribution.")
+        logger.info("Ranking orbitals for AO projection based on subset contribution.")
         for suffix, sub in (("_occ", screened_occ), ("_virt", screened_virt)):
             if not sub:
                 continue
@@ -163,7 +166,7 @@ def select_aegiss(
                 )
             )
     else:
-        print("\nRanking orbitals for AO projection based on global contribution.")
+        logger.info("Ranking orbitals for AO projection based on global contribution.")
         final_space.extend(
             select_by_ao_projection(
                 mf,

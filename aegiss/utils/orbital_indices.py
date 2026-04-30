@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 def resolve_nelecas(nelecas: int | tuple[int, int]) -> tuple[int, int]:
@@ -85,7 +88,7 @@ def get_orbital_spaces(
     """
     selected = set(orbital_list)
     if not selected:
-        print(
+        logger.info(
             "Using all the occupied orbitals and all virtual orbitals as"
             " frozen and active spaces, respectively."
         )
@@ -131,9 +134,10 @@ def get_subspaces_from_cas(
     virt_orbs : np.ndarray of int
         Orbital indices (0-based) of the virtual space (not in the active space).
     """
-    print(
-        f"\n----------DMRG CAS Subspace Selection"
-        f" (ncas={ncas}, nelecas={nelecas})----------"
+    logger.info(
+        "----------DMRG CAS Subspace Selection (ncas=%d, nelecas=%s)----------",
+        ncas,
+        nelecas,
     )
     nalpha, nbeta = resolve_nelecas(nelecas)
     neletot = int(np.sum(mf.mo_occ))
@@ -150,19 +154,21 @@ def get_subspaces_from_cas(
         raise ValueError(msg)
 
     nocc = np.count_nonzero(mf.mo_occ > 0)
-    print(f"\n\nTotal MOs: {nmos}, Occupied MOs: {nocc}, Virtual MOs: {nmos - nocc}")
+    logger.info(
+        "Total MOs: %d, Occupied MOs: %d, Virtual MOs: %d", nmos, nocc, nmos - nocc
+    )
 
     n_active_occ = nalpha  # highest-energy nalpha occupied orbitals enter the CAS
     n_active_virt = ncas - n_active_occ
     if nmos - nocc - n_active_virt < 0:
         msg = "Not enough virtual orbitals to accommodate the active space."
         raise ValueError(msg)
-    print(f"Active occupied orbitals: {n_active_occ}")
-    print(f"Active virtual orbitals: {n_active_virt}")
+    logger.info("Active occupied orbitals: %d", n_active_occ)
+    logger.info("Active virtual orbitals: %d", n_active_virt)
 
     active_occ = np.arange(nocc - n_active_occ, nocc)
     active_virt = np.arange(nocc, nocc + n_active_virt)
-    print(f"Active occupied orbital indices: {active_occ}")
-    print(f"Active virtual orbital indices: {active_virt}\n\n")
+    logger.info("Active occupied orbital indices: %s", active_occ)
+    logger.info("Active virtual orbital indices: %s\n\n", active_virt)
 
     return active_occ, active_virt

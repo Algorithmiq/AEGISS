@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Literal, overload
 
 from pyscf import dft, scf
+
+logger = logging.getLogger(__name__)
 
 
 def build_mol(atom: Any, **kwargs: Any) -> Any:
@@ -24,13 +27,13 @@ def build_mol(atom: Any, **kwargs: Any) -> Any:
     mol : pyscf.gto.Mole
         Molecule object with specified geometry and basis set.
     """
-    print("\n----------Building Molecule----------")
+    logger.info("----------Building Molecule----------")
     mol = scf.gto.Mole()
     mol.atom = atom
-    print("Molecular geometry:")
-    print(mol.atom)
+    logger.info("Molecular geometry:")
+    logger.info("%s", mol.atom)
     for key, val in kwargs.items():
-        print(f"Setting mol.{key} = {val}")
+        logger.debug("Setting mol.%s = %s", key, val)
         setattr(mol, key, val)
     mol.build()
     return mol
@@ -85,7 +88,7 @@ def run_scf(
     """
     method = method.upper()
 
-    print(f"\n----------SCF Calculation (Method {method})----------")
+    logger.info("----------SCF Calculation (Method %s)----------", method)
 
     if method in ("RHF", "UHF"):
         mf = getattr(scf, method)(mol)

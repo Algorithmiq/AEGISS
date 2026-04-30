@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Literal
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
+_ORB_S1_FMT = "\tOrbital %d: S(1) = %.4f"
 
 
 def _global_entropy_ranking(
@@ -42,22 +46,24 @@ def _global_entropy_ranking(
     max_s1 = np.max(soe1)
     orbitals_index = np.concatenate((occ_orbs, virt_orbs))
     ths_lists = soe1
-    print("S(1) values for candidate orbitals:")
+    logger.debug("S(1) values for candidate orbitals:")
     for idx, s1 in zip(orbitals_index, ths_lists, strict=False):
-        print(f"\tOrbital {idx}: S(1) = {s1:.4f}")
+        logger.debug(_ORB_S1_FMT, idx, s1)
 
-    print(f"MAX S(1): {max_s1:.4f} (orbital {orbitals_index[np.argmax(soe1)]})\n")
+    logger.debug(
+        "MAX S(1): %.4f (orbital %d)\n", max_s1, orbitals_index[np.argmax(soe1)]
+    )
 
     if fraction_type == "r":
-        print("Using relative threshold")
+        logger.info("Using relative threshold")
         ths_lists = ths_lists / max_s1
     else:
-        print("Using absolute threshold")
+        logger.info("Using absolute threshold")
     sortkey = np.argsort(ths_lists)[::-1]
     ths_lists = ths_lists[sortkey]
     orbitals_index = orbitals_index[sortkey]
     for idx, s1 in zip(orbitals_index, ths_lists, strict=False):
-        print(f"\tOrbital {idx}: S(1) = {s1:.4f}")
+        logger.debug(_ORB_S1_FMT, idx, s1)
 
     stop_idx = None
     for k, ths in enumerate(ths_lists):
@@ -65,15 +71,19 @@ def _global_entropy_ranking(
             stop_idx = k
             break
     if stop_idx is None:
-        print(
-            f"All {n_orbs} orbitals are selected by the entropy threshold {fraction}."
+        logger.info(
+            "All %d orbitals are selected by the entropy threshold %g.",
+            n_orbs,
+            fraction,
         )
     else:
         ths_lists = ths_lists[:stop_idx]
         orbitals_index = orbitals_index[:stop_idx]
-        print(
-            f"\nSelected {len(orbitals_index)} orbitals by entropy threshold"
-            f" {fraction} (fraction type: {fraction_type})."
+        logger.info(
+            "Selected %d orbitals by entropy threshold %g (fraction type: %s).",
+            len(orbitals_index),
+            fraction,
+            fraction_type,
         )
 
     occ_selected = []
@@ -116,22 +126,22 @@ def _relative_entropy_ranking(
     n_orbs = len(soe1)
 
     ths_lists = soe1
-    print("S(1) values for candidate orbitals:")
+    logger.debug("S(1) values for candidate orbitals:")
     for idx, s1 in zip(subspace, ths_lists, strict=False):
-        print(f"\tOrbital {idx}: S(1) = {s1:.4f}")
+        logger.debug(_ORB_S1_FMT, idx, s1)
 
-    print(f"MAX S(1): {max_s1:.4f} (orbital {subspace[np.argmax(soe1)]})\n")
+    logger.debug("MAX S(1): %.4f (orbital %d)\n", max_s1, subspace[np.argmax(soe1)])
 
     if fraction_type == "r":
-        print("Using relative threshold")
+        logger.info("Using relative threshold")
         ths_lists = ths_lists / max_s1
     else:
-        print("Using absolute threshold")
+        logger.info("Using absolute threshold")
     sortkey = np.argsort(ths_lists)[::-1]
     ths_lists = ths_lists[sortkey]
     orbitals_index = subspace[sortkey]
     for idx, s1 in zip(orbitals_index, ths_lists, strict=False):
-        print(f"\tOrbital {idx}: S(1) = {s1:.4f}")
+        logger.debug(_ORB_S1_FMT, idx, s1)
 
     stop_idx = None
     for k, ths in enumerate(ths_lists):
@@ -139,15 +149,19 @@ def _relative_entropy_ranking(
             stop_idx = k
             break
     if stop_idx is None:
-        print(
-            f"All {n_orbs} orbitals are selected by the entropy threshold {fraction}."
+        logger.info(
+            "All %d orbitals are selected by the entropy threshold %g.",
+            n_orbs,
+            fraction,
         )
     else:
         ths_lists = ths_lists[:stop_idx]
         orbitals_index = orbitals_index[:stop_idx]
-        print(
-            f"\nSelected {len(orbitals_index)} orbitals by entropy threshold"
-            f" {fraction} (fraction type: {fraction_type})."
+        logger.info(
+            "Selected %d orbitals by entropy threshold %g (fraction type: %s).",
+            len(orbitals_index),
+            fraction,
+            fraction_type,
         )
 
     return [(n_orb, ths_lists[idx]) for idx, n_orb in enumerate(orbitals_index)]
@@ -187,19 +201,19 @@ def select_by_entropy(
     selected_virt : list of tuple[int, float]
         Selected virtual orbitals with entropy values.
     """
-    print("\n----------------Entropy Screening for AEGISS----------------\n")
+    logger.info("----------------Entropy Screening for AEGISS----------------\n")
     if soe1 is None:
-        print("No single-orbital entropies provided. Returning empty selection.")
+        logger.info("No single-orbital entropies provided. Returning empty selection.")
         return [], []
     n_orbs = len(soe1)
 
     if ranking == "global":
-        print("Using global ranking of orbitals by entropy values.")
+        logger.info("Using global ranking of orbitals by entropy values.")
         selected_occ, selected_virt = _global_entropy_ranking(
             soe1, fraction_type, fraction, n_orbs, occ_orbs, virt_orbs
         )
     else:
-        print(
+        logger.info(
             "Using relative ranking of orbitals by entropy values within the subspace."
         )
         soe1_occ = np.array([soe1[idx] for idx in range(len(occ_orbs))])
@@ -215,8 +229,8 @@ def select_by_entropy(
         )
 
     for i in selected_occ:
-        print(f"\tSelected occupied orbital {i[0]}: S(1) = {i[1]:.4f}")
+        logger.info("\tSelected occupied orbital %d: S(1) = %.4f", i[0], i[1])
     for i in selected_virt:
-        print(f"\tSelected virtual orbital {i[0]}:  S(1) = {i[1]:.4f}")
+        logger.info("\tSelected virtual orbital %d:  S(1) = %.4f", i[0], i[1])
 
     return selected_occ, selected_virt
