@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import time
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 from pyblock2.driver.core import DMRGDriver, SymmetryTypes
 from pyscf import ao2mo, mcscf
@@ -21,7 +21,7 @@ def run_dmrg(
     ncas: int,
     nelecas: int | tuple[int, int],
     init_bond_dim: int = 10,
-    symm_type: Literal["SZ", "SU2"] = "SU2",
+    symm_type: str = "SU2",
     verbosity: int = 0,
     *,
     get_qmi: bool = True,
@@ -59,7 +59,12 @@ def run_dmrg(
     """
     n_threads = int(os.environ.get("OMP_NUM_THREADS", "4"))
     scratch_dir = os.environ.get("SCRATCH_DIR", "./tmp")
-    symm = {"SU2": SymmetryTypes.SU2, "SZ": SymmetryTypes.SZ}[symm_type]
+    _symm_map = {"SU2": SymmetryTypes.SU2, "SZ": SymmetryTypes.SZ}
+    if symm_type not in _symm_map:
+        raise ValueError(
+            f"Unsupported symmetry type: {symm_type!r}. Expected one of {list(_symm_map)}."
+        )
+    symm = _symm_map[symm_type]
 
     print(
         f"\n----------------DMRG Calculation (symmetry: {symm_type})----------------\n"
