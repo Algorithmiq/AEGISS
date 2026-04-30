@@ -204,7 +204,7 @@ def _resolve_contribution(
             "Selecting top orbitals based on contribution. Ignoring contribution threshold."
         )
         if isinstance(contribution, list):
-            print(
+            logger.info(
                 "Warning: contribution is a list but top_n is specified."
                 " Ignoring contribution thresholds and using top_n for selection."
             )
@@ -212,19 +212,19 @@ def _resolve_contribution(
         return [0.0] * n_labels
 
     if isinstance(contribution, list):
-        print(
-            "\nSelecting orbitals based on contribution thresholds per AO label: ",
+        logger.info(
+            "\nSelecting orbitals based on contribution thresholds per AO label: %s",
             contribution,
         )
         if len(contribution) != n_labels:
-            print(
+            logger.info(
                 "Warning: Length of contribution list does not match number of AO labels. "
                 "Using the first contribution value for all labels."
             )
             return [contribution[0]] * n_labels
         return contribution
-    print(
-        "\nSelecting orbitals based on a single contribution threshold for all AO labels: ",
+    logger.info(
+        "\nSelecting orbitals based on a single contribution threshold for all AO labels: %s",
         contribution,
     )
     return [contribution] * n_labels
