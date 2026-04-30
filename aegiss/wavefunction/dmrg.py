@@ -24,7 +24,7 @@ def run_dmrg(
     symm_type: Literal["SZ", "SU2"] = "SU2",
     verbosity: int = 0,
     *,
-    get_qmi: bool = False,
+    get_qmi: bool = True,
 ) -> tuple[float, np.ndarray | None, np.ndarray | None, np.ndarray | None]:
     """Run a DMRG calculation using block2 via a PySCF CASCI integral driver.
 
