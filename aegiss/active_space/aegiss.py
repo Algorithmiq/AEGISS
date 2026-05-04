@@ -9,11 +9,14 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from aegiss.active_space.ao_projection import select_by_ao_projection
-from aegiss.active_space.entropy_screening import select_by_entropy
+from aegiss.active_space.entropy_screening import (
+    select_by_entropy,
+    select_by_sa_entropy,
+)
 from aegiss.utils.dump_info import save_orbitals, save_orbitals_from_entropies
 from aegiss.utils.orbital_indices import get_subspaces_from_cas
 from aegiss.utils.plotting import plot_pie_contribution, soe_heatmap, th_plots
-from aegiss.wavefunction.dmrg import run_dmrg
+from aegiss.wavefunction.dmrg import run_dmrg, run_sa_dmrg
 
 if TYPE_CHECKING:
     from aegiss.config_dataclasses import (
@@ -24,6 +27,71 @@ if TYPE_CHECKING:
     )
 
 logger = logging.getLogger(__name__)
+
+
+def _run_entropy_screening(
+    mf: Any,
+    dmrg_config: DMRGConfig,
+    entropy_config: EntropyConfig,
+    active_orbs: np.ndarray,
+    virt_orbs: np.ndarray,
+    output_config: OutputConfig,
+) -> tuple[list[tuple[int, float]], list[tuple[int, float]]]:
+    """Dispatch to the SA or single-state DMRG + entropy screening path."""
+    if dmrg_config.nroots > 1:
+        _energies, soe1_list, _soe2_list, _minfo_list = run_sa_dmrg(
+            mf,
+            ncas=dmrg_config.ncas,
+            nelecas=dmrg_config.nelecas,
+            nroots=dmrg_config.nroots,
+            weights=dmrg_config.weights,
+            init_bond_dim=dmrg_config.init_bond_dim,
+            symm_type=dmrg_config.symm_type,
+            n_refinement_sweeps=dmrg_config.n_refinement_sweeps,
+            verbosity=dmrg_config.verbosity,
+        )
+        valid_soe1 = [s for s in soe1_list if s is not None]
+        if output_config.save_plots and valid_soe1:
+            _make_soe_plots(
+                active_orbs,
+                virt_orbs,
+                np.max(np.stack(valid_soe1), axis=0),
+                output_config.saving_folder,
+                output_config.saving_prefix,
+            )
+        return select_by_sa_entropy(
+            occ_orbs=active_orbs,
+            virt_orbs=virt_orbs,
+            soe1_per_state=valid_soe1,
+            ranking=entropy_config.ranking,
+            fraction=entropy_config.fraction,
+            fraction_type=entropy_config.fraction_type,
+        )
+
+    _energy, soe1, _soe2, _minfo = run_dmrg(
+        mf,
+        ncas=dmrg_config.ncas,
+        nelecas=dmrg_config.nelecas,
+        symm_type=dmrg_config.symm_type,
+        init_bond_dim=dmrg_config.init_bond_dim,
+        verbosity=dmrg_config.verbosity,
+    )
+    if output_config.save_plots and soe1 is not None:
+        _make_soe_plots(
+            active_orbs,
+            virt_orbs,
+            soe1,
+            output_config.saving_folder,
+            output_config.saving_prefix,
+        )
+    return select_by_entropy(
+        occ_orbs=active_orbs,
+        virt_orbs=virt_orbs,
+        soe1=soe1,
+        ranking=entropy_config.ranking,
+        fraction=entropy_config.fraction,
+        fraction_type=entropy_config.fraction_type,
+    )
 
 
 def _make_soe_plots(
@@ -108,31 +176,8 @@ def select_aegiss(
     active_orbs, virt_orbs = get_subspaces_from_cas(
         mf, ncas=dmrg_config.ncas, nelecas=dmrg_config.nelecas
     )
-    _energy, soe1, _soe2, _minfo = run_dmrg(
-        mf,
-        ncas=dmrg_config.ncas,
-        nelecas=dmrg_config.nelecas,
-        symm_type=dmrg_config.symm_type,
-        init_bond_dim=dmrg_config.init_bond_dim,
-        verbosity=dmrg_config.verbosity,
-    )
-
-    if output_config.save_plots and soe1 is not None:
-        _make_soe_plots(
-            active_orbs,
-            virt_orbs,
-            soe1,
-            output_config.saving_folder,
-            output_config.saving_prefix,
-        )
-
-    screened_occ, screened_virt = select_by_entropy(
-        occ_orbs=active_orbs,
-        virt_orbs=virt_orbs,
-        soe1=soe1,
-        ranking=entropy_config.ranking,
-        fraction=entropy_config.fraction,
-        fraction_type=entropy_config.fraction_type,
+    screened_occ, screened_virt = _run_entropy_screening(
+        mf, dmrg_config, entropy_config, active_orbs, virt_orbs, output_config
     )
 
     if len(screened_occ) == 0 and len(screened_virt) == 0:

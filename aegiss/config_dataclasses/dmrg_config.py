@@ -26,6 +26,18 @@ class DMRGConfig:
         calculations; ``'SU2'`` is faster but needs MPS conversion for entropies.
     verbosity : int, default 0
         Verbosity level for block2 output.  Higher values produce more detailed logs.
+    nroots : int, default 1
+        Number of electronic states to target.  ``1`` runs a standard ground-state
+        DMRG; values greater than ``1`` activate the SA-DMRG path (state-averaged
+        optimization followed by state-specific refinement sweeps).
+    weights : tuple of float or None, default None
+        Per-state weights for the state-averaged DMRG objective.  Must have
+        ``len(weights) == nroots`` when provided.  ``None`` uses uniform weights
+        ``1 / nroots`` for each state.  Ignored when ``nroots == 1``.
+    n_refinement_sweeps : int, default 4
+        Number of state-specific refinement sweeps to run after SA-DMRG
+        convergence.  ``0`` skips refinement and computes entropies directly from
+        the SA-MPS.  Ignored when ``nroots == 1``.
     """
 
     ncas: int
@@ -33,6 +45,9 @@ class DMRGConfig:
     init_bond_dim: int = 10
     symm_type: Literal["SZ", "SU2"] = "SZ"
     verbosity: int = 0
+    nroots: int = 1
+    weights: tuple[float, ...] | None = None
+    n_refinement_sweeps: int = 4
 
     def __post_init__(self) -> None:
         """Validate the configuration parameters.
@@ -70,4 +85,26 @@ class DMRGConfig:
         if self.verbosity < 0:
             raise ValueError(
                 f"DMRGConfig: `verbosity` must be non-negative, got {self.verbosity}."
+            )
+        self._validate_sa_params()
+
+    def _validate_sa_params(self) -> None:
+        """Validate SA-DMRG-specific fields (nroots, weights, n_refinement_sweeps)."""
+        if self.nroots < 1:
+            raise ValueError(
+                f"DMRGConfig: `nroots` must be at least 1, got {self.nroots}."
+            )
+        if self.weights is not None:
+            if len(self.weights) != self.nroots:
+                raise ValueError(
+                    f"DMRGConfig: `weights` must have exactly `nroots` ({self.nroots}) entries, "
+                    f"got {len(self.weights)}."
+                )
+            if any(w <= 0 for w in self.weights):
+                raise ValueError(
+                    "DMRGConfig: All entries in `weights` must be positive."
+                )
+        if self.n_refinement_sweeps < 0:
+            raise ValueError(
+                f"DMRGConfig: `n_refinement_sweeps` must be non-negative, got {self.n_refinement_sweeps}."
             )

@@ -209,3 +209,78 @@ def select_by_entropy(
         logger.info("\tSelected virtual orbital %d:  S(1) = %.4f", i[0], i[1])
 
     return selected_occ, selected_virt
+
+
+def select_by_sa_entropy(
+    occ_orbs: np.ndarray,
+    virt_orbs: np.ndarray,
+    soe1_per_state: list[np.ndarray],
+    fraction: float = 0.1,
+    fraction_type: Literal["r", "a"] = "r",
+    ranking: Literal["global", "subset"] = "global",
+) -> tuple[list[tuple[int, float]], list[tuple[int, float]]]:
+    """Select active orbitals by taking the union of per-state entropy screens.
+
+    For each state, the standard entropy threshold is applied independently
+    (delegating to :func:`select_by_entropy`).  An orbital is included in the
+    final active space when it is selected by **at least one** state.  The
+    reported entropy value for each orbital is the maximum across the states
+    that selected it.
+
+    Parameters
+    ----------
+    occ_orbs : np.ndarray, shape (n_occ,)
+        Indices of occupied orbitals.
+    virt_orbs : np.ndarray, shape (n_virt,)
+        Indices of virtual orbitals.
+    soe1_per_state : list of np.ndarray, each shape (n_occ + n_virt,)
+        Single-orbital entropies for each electronic state, ordered as
+        ``[occ_orbs..., virt_orbs...]``.
+    fraction : float, optional
+        Threshold value passed to each per-state screen.
+    fraction_type : {'r', 'a'}, optional
+        Threshold interpretation: ``'r'`` normalises by per-state max before
+        thresholding; ``'a'`` applies *fraction* as an absolute cutoff.
+    ranking : {'global', 'subset'}, optional
+        Ranking strategy used within each per-state screen.
+
+    Returns:
+    -------
+    selected_occ : list of tuple[int, float]
+        Union of selected occupied orbitals, each paired with the maximum
+        entropy value seen across all states that selected it, sorted by
+        descending entropy.
+    selected_virt : list of tuple[int, float]
+        Same for virtual orbitals.
+    """
+    logger.info(
+        "----------------SA Entropy Screening (%d states)----------------\n",
+        len(soe1_per_state),
+    )
+    occ_union: dict[int, float] = {}
+    virt_union: dict[int, float] = {}
+
+    for k, soe1 in enumerate(soe1_per_state):
+        logger.info("--- State %d ---", k)
+        sel_occ, sel_virt = select_by_entropy(
+            occ_orbs, virt_orbs, soe1, fraction, fraction_type, ranking
+        )
+        for orb, s1 in sel_occ:
+            occ_union[orb] = max(occ_union.get(orb, 0.0), s1)
+        for orb, s1 in sel_virt:
+            virt_union[orb] = max(virt_union.get(orb, 0.0), s1)
+
+    selected_occ = sorted(occ_union.items(), key=lambda x: x[1], reverse=True)
+    selected_virt = sorted(virt_union.items(), key=lambda x: x[1], reverse=True)
+
+    logger.info(
+        "SA union: %d occupied + %d virtual orbitals selected.",
+        len(selected_occ),
+        len(selected_virt),
+    )
+    for i, s1 in selected_occ:
+        logger.info("\tSelected occupied orbital %d: max S(1) = %.4f", i, s1)
+    for i, s1 in selected_virt:
+        logger.info("\tSelected virtual orbital %d:  max S(1) = %.4f", i, s1)
+
+    return selected_occ, selected_virt
