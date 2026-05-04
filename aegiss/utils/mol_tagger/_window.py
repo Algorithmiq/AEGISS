@@ -338,8 +338,8 @@ class MolViewWindow(QMainWindow):
         tag = f"{self.tags[i]}" if i in self.tags else ""
         if tag != "":
             tag = f"{tag}"
-            return f"{i:>3d} {tag:>2s} {x:8.3f} {y:8.3f} {z:8.3f}"
-        return f"{i:>3d} {self.syms[i]:>2s} {x:8.3f} {y:8.3f} {z:8.3f}"
+            return f"#{i:>1d} {tag:>2s} {x:8.3f} {y:8.3f} {z:8.3f}"
+        return f"#{i:>1d} {self.syms[i]:>2s} {x:8.3f} {y:8.3f} {z:8.3f}"
 
     # ------------------------------------------------------------------
     # Orbital info panel
