@@ -8,7 +8,7 @@ from typing import Any
 
 import numpy as np
 from pyvistaqt import QtInteractor
-from qtpy.QtCore import Qt
+from qtpy.QtCore import QEvent, QObject, Qt
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QFileDialog,
@@ -25,12 +25,38 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from vtkmodules.vtkRenderingCore import vtkPropPicker
 
 from aegiss.utils.mol_tagger._atoms import detect_bonds, get_basis, load_xyz
-from aegiss.utils.mol_tagger._constants import DARK_STYLE
+from aegiss.utils.mol_tagger._constants import DARK_STYLE, DRAG_THRESHOLD_SQ
 from aegiss.utils.mol_tagger._renderer import MolRenderer
 
 logger = logging.getLogger(__name__)
+
+
+class _RightClickPickFilter(QObject):
+    """Qt event filter: right-click (not drag) on the 3D view picks an atom."""
+
+    def __init__(self, window: MolViewWindow) -> None:
+        super().__init__(window)
+        self._win = window
+        self._press: tuple[int, int] | None = None
+
+    def eventFilter(self, obj: Any, event: Any) -> bool:  # noqa: ANN401
+        t = event.type()
+        if t == QEvent.MouseButtonPress and event.button() == Qt.RightButton:
+            self._press = (int(event.x()), int(event.y()))
+        elif (
+            t == QEvent.MouseButtonRelease
+            and event.button() == Qt.RightButton
+            and self._press is not None
+        ):
+            dx = int(event.x()) - self._press[0]
+            dy = int(event.y()) - self._press[1]
+            self._press = None
+            if dx * dx + dy * dy <= DRAG_THRESHOLD_SQ:
+                self._win._pick_at_qt(int(event.x()), int(event.y()))
+        return False  # let Qt and VTK handle the event normally
 
 
 class MolViewWindow(QMainWindow):
@@ -87,14 +113,8 @@ class MolViewWindow(QMainWindow):
 
         self.plotter = QtInteractor(splitter)
         self.plotter.set_background("#0f0f19")
-        self.plotter.enable_point_picking(
-            callback=self._on_pick,
-            use_picker=True,
-            show_message=False,
-            show_point=False,
-            picker="point",
-            tolerance=0.02,
-        )
+        self._pick_filter = _RightClickPickFilter(self)
+        self.plotter.interactor.installEventFilter(self._pick_filter)
         splitter.addWidget(self.plotter.interactor)
         splitter.addWidget(self._make_sidebar())
         splitter.setSizes([800, 290])
@@ -199,6 +219,28 @@ class MolViewWindow(QMainWindow):
     # Selection
     # ------------------------------------------------------------------
 
+    def _pick_at_qt(self, qx: int, qy: int) -> None:
+        """Translate Qt pixel coordinates to a 3D pick and toggle atom selection.
+
+        Qt origin is top-left; VTK origin is bottom-left, so y must be flipped.
+        On HiDPI screens the physical pixel count is scaled by devicePixelRatio.
+        """
+        widget = self.plotter.interactor
+        dpr = int(widget.devicePixelRatio())
+        vtk_x = qx * dpr
+        vtk_y = (widget.height() - qy - 1) * dpr
+        picker = vtkPropPicker()
+        if picker.Pick(vtk_x, vtk_y, 0, self.plotter.renderer):
+            self._on_pick(picker.GetPickPosition())
+        else:
+            logger.debug(
+                "Right-click at Qt(%d,%d) / VTK(%d,%d): no actor hit",
+                qx,
+                qy,
+                vtk_x,
+                vtk_y,
+            )
+
     def _on_pick(self, point: Any) -> None:
         """Toggle selection of the atom nearest to the picked 3D point."""
         if point is None:
@@ -230,10 +272,10 @@ class MolViewWindow(QMainWindow):
 
     def _sync_list_from_selected(self) -> None:
         """Update list widget selection to match ``self.selected``."""
-        self.atom_list.blockSignals(b=True)
+        self.atom_list.blockSignals(True)
         for i in range(self.n):
             self.atom_list.item(i).setSelected(i in self.selected)
-        self.atom_list.blockSignals(b=False)
+        self.atom_list.blockSignals(False)
 
     def _select_all(self) -> None:
         """Select every atom in the molecule."""

@@ -11,6 +11,10 @@ HIGHLIGHT_COLOR: tuple[float, float, float] = (1.0, 0.25, 0.25)
 HIGHLIGHT_OPACITY: float = 0.35
 HIGHLIGHT_SCALE: float = 1.8
 
+DRAG_THRESHOLD_SQ: int = (
+    25  # 5-pixel radius; clicks within this distance trigger atom pick
+)
+
 DARK_STYLE: str = """
 QMainWindow, QWidget {
     background-color: #1a1a2e;
