@@ -11,6 +11,8 @@ from pyvistaqt import QtInteractor
 from qtpy.QtCore import QEvent, QObject, Qt
 from qtpy.QtWidgets import (
     QAbstractItemView,
+    QApplication,
+    QComboBox,
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
@@ -27,6 +29,7 @@ from qtpy.QtWidgets import (
 )
 from vtkmodules.vtkRenderingCore import vtkPropPicker
 
+from aegiss.utils.mol_tagger._ao_suggest import suggest_ao_labels
 from aegiss.utils.mol_tagger._atoms import detect_bonds, get_basis, load_xyz
 from aegiss.utils.mol_tagger._constants import DARK_STYLE, DRAG_THRESHOLD_SQ
 from aegiss.utils.mol_tagger._renderer import MolRenderer
@@ -148,6 +151,7 @@ class MolViewWindow(QMainWindow):
         sl.addWidget(self._make_atom_panel())
         sl.addWidget(self._make_tag_panel())
         sl.addWidget(self._make_orbital_panel())
+        sl.addWidget(self._make_ao_label_panel())
         sl.addWidget(self._make_export_panel())
         sl.addStretch()
         return sidebar
@@ -201,6 +205,43 @@ class MolViewWindow(QMainWindow):
             '<span style="color:#666;">Select atoms to see info</span>'
         )
         layout.addWidget(self.orbital_text)
+        return grp
+
+    def _make_ao_label_panel(self) -> QGroupBox:
+        """Build the AO label suggestion panel."""
+        grp = QGroupBox("AO Labels")
+        layout = QVBoxLayout(grp)
+
+        self._char_map: list[str] = ["auto", "d-shell", "sigma", "custom"]
+        self.ao_char_combo = QComboBox()
+        self.ao_char_combo.addItems(["π / Auto", "d-shell", "σ framework", "Custom"])  # noqa: RUF001
+        layout.addWidget(self.ao_char_combo)
+
+        self.ao_label_text = QTextEdit()
+        self.ao_label_text.setReadOnly(True)
+        self.ao_label_text.setFixedHeight(52)
+        self.ao_label_text.setPlaceholderText("select atoms to see suggestions")
+        layout.addWidget(self.ao_label_text)
+
+        btn_row = QHBoxLayout()
+        btn_copy = QPushButton("Copy")
+        btn_copy.setFixedWidth(60)
+        btn_copy.clicked.connect(self._copy_ao_labels)
+        btn_row.addWidget(btn_copy)
+        self.ao_info_label = QLabel("")
+        self.ao_info_label.setStyleSheet(
+            "color: #777; font-size: 10px; font-family: monospace;"
+        )
+        self.ao_info_label.setWordWrap(True)
+        btn_row.addWidget(self.ao_info_label, 1)
+        layout.addLayout(btn_row)
+
+        self.ao_warn_label = QLabel("")
+        self.ao_warn_label.setStyleSheet("color: #ffaa44; font-size: 10px;")
+        self.ao_warn_label.setWordWrap(True)
+        layout.addWidget(self.ao_warn_label)
+
+        self.ao_char_combo.currentIndexChanged.connect(self._update_ao_suggestions)
         return grp
 
     def _make_export_panel(self) -> QGroupBox:
@@ -258,6 +299,7 @@ class MolViewWindow(QMainWindow):
         self._sync_list_from_selected()
         self._renderer.draw_atom(nearest, selected=nearest in self.selected)
         self._update_orbital_info()
+        self._update_ao_suggestions()
         self.plotter.render()
 
     def _on_list_selection(self) -> None:
@@ -268,6 +310,7 @@ class MolViewWindow(QMainWindow):
         for i in changed:
             self._renderer.draw_atom(i, selected=i in self.selected)
         self._update_orbital_info()
+        self._update_ao_suggestions()
         self.plotter.render()
 
     def _sync_list_from_selected(self) -> None:
@@ -284,6 +327,7 @@ class MolViewWindow(QMainWindow):
         for i in range(self.n):
             self._renderer.draw_atom(i, selected=True)
         self._update_orbital_info()
+        self._update_ao_suggestions()
         self.plotter.render()
 
     def _clear_selection(self) -> None:
@@ -294,6 +338,7 @@ class MolViewWindow(QMainWindow):
         for i in old:
             self._renderer.draw_atom(i, selected=False)
         self._update_orbital_info()
+        self._update_ao_suggestions()
         self.plotter.render()
 
     # ------------------------------------------------------------------
@@ -330,7 +375,9 @@ class MolViewWindow(QMainWindow):
     def _refresh_list_labels(self) -> None:
         """Redraw atom list labels to reflect current tag state."""
         for i in range(self.n):
-            self.atom_list.item(i).setText(self._atom_label(i))
+            item = self.atom_list.item(i)
+            if item is not None:
+                item.setText(self._atom_label(i))
 
     def _atom_label(self, i: int) -> str:
         """Format the display label for atom *i*."""
@@ -367,6 +414,36 @@ class MolViewWindow(QMainWindow):
             )
             lines.append("")
         self.orbital_text.setHtml("<pre>" + "\n".join(lines) + "</pre>")
+
+    # ------------------------------------------------------------------
+    # AO label suggestions
+    # ------------------------------------------------------------------
+
+    def _update_ao_suggestions(self) -> None:
+        """Refresh the AO label panel for the current selection and character mode."""
+        character = self._char_map[self.ao_char_combo.currentIndex()]
+
+        if character == "custom":
+            self.ao_label_text.setReadOnly(False)
+            self.ao_warn_label.setText("")
+            self.ao_info_label.setText("enter manually")
+            return
+
+        self.ao_label_text.setReadOnly(True)
+        labels, warning, info = suggest_ao_labels(
+            self.nums, self.syms, self.pos, self.selected, character
+        )
+        display = '["' + '", "'.join(labels) + '"]' if labels else "[]"
+        self.ao_label_text.setPlainText(display)
+        self.ao_info_label.setText(info)
+        self.ao_warn_label.setText(f"⚠ {warning}" if warning else "")
+
+    def _copy_ao_labels(self) -> None:
+        """Copy the suggested AO labels to the system clipboard."""
+        text = self.ao_label_text.toPlainText().strip()
+        if text and text != "[]":
+            QApplication.clipboard().setText(text)
+            self.ao_info_label.setText("copied!")
 
     # ------------------------------------------------------------------
     # Export

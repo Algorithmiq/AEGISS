@@ -81,6 +81,24 @@ QTextEdit {
     font-family: 'Fira Code', 'Consolas', monospace;
     font-size: 11px;
 }
+QComboBox {
+    background: #12121e;
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 3px 8px;
+    color: #eee;
+    font-size: 12px;
+}
+QComboBox::drop-down {
+    border: none;
+    width: 18px;
+}
+QComboBox QAbstractItemView {
+    background: #1a1a2e;
+    color: #eee;
+    selection-background-color: #2a1a3e;
+    border: 1px solid #444;
+}
 QLabel#header {
     font-size: 18px;
     font-weight: bold;
