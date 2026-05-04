@@ -42,7 +42,7 @@ class _RightClickPickFilter(QObject):
         self._win = window
         self._press: tuple[int, int] | None = None
 
-    def eventFilter(self, obj: Any, event: Any) -> bool:  # noqa: ANN401
+    def eventFilter(self, _obj: Any, event: Any) -> bool:  # noqa: N802
         t = event.type()
         if t == QEvent.MouseButtonPress and event.button() == Qt.RightButton:
             self._press = (int(event.x()), int(event.y()))
@@ -272,10 +272,10 @@ class MolViewWindow(QMainWindow):
 
     def _sync_list_from_selected(self) -> None:
         """Update list widget selection to match ``self.selected``."""
-        self.atom_list.blockSignals(True)
+        self.atom_list.blockSignals(b=True)
         for i in range(self.n):
             self.atom_list.item(i).setSelected(i in self.selected)
-        self.atom_list.blockSignals(False)
+        self.atom_list.blockSignals(b=False)
 
     def _select_all(self) -> None:
         """Select every atom in the molecule."""
