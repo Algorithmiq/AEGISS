@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+from pyvistaqt import QtInteractor
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QAbstractItemView,
@@ -24,7 +25,6 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from pyvistaqt import QtInteractor
 
 from aegiss.utils.mol_tagger._atoms import detect_bonds, get_basis, load_xyz
 from aegiss.utils.mol_tagger._constants import DARK_STYLE
@@ -226,10 +226,10 @@ class MolViewWindow(QMainWindow):
 
     def _sync_list_from_selected(self) -> None:
         """Update list widget selection to match ``self.selected``."""
-        self.atom_list.blockSignals(True)
+        self.atom_list.blockSignals(b=True)
         for i in range(self.n):
             self.atom_list.item(i).setSelected(i in self.selected)
-        self.atom_list.blockSignals(False)
+        self.atom_list.blockSignals(b=False)
 
     def _select_all(self) -> None:
         """Select every atom in the molecule."""
@@ -291,8 +291,7 @@ class MolViewWindow(QMainWindow):
         if tag != "":
             tag = f"{tag}"
             return f"{i:>3d} {tag:>2s} {x:8.3f} {y:8.3f} {z:8.3f}"
-        else:
-            return f"{i:>3d} {self.syms[i]:>2s} {x:8.3f} {y:8.3f} {z:8.3f}"
+        return f"{i:>3d} {self.syms[i]:>2s} {x:8.3f} {y:8.3f} {z:8.3f}"
 
     # ------------------------------------------------------------------
     # Orbital info panel
