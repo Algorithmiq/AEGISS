@@ -27,6 +27,7 @@ _D_SHELL_SECONDARY: dict[int, str] = {
     **dict.fromkeys(range(90, 104), "6d"),  # Th-Lr: 5f primary + 6d secondary
 }
 
+_Z_P1: int = 2  # He  — last period-1 element (H, He have only 1s, no p)
 _Z_P2: int = 10  # Ne  — last period-2 element
 _Z_P3: int = 18  # Ar  — last period-3 element
 _Z_P4: int = 36  # Kr  — last period-4 element
@@ -40,9 +41,11 @@ def _valence_n(sym: str) -> int:
         sym: Chemical symbol (e.g. ``"C"``, ``"N"``).
 
     Returns:
-        Principal quantum number (2 for period 2, 3 for period 3, ...).
+        Principal quantum number (1 for H/He, 2 for period 2, 3 for period 3, ...).
     """
     Z = _atomic_numbers.get(sym, 6)
+    if Z <= _Z_P1:
+        return 1
     if Z <= _Z_P2:
         return 2
     if Z <= _Z_P3:
@@ -197,6 +200,49 @@ def _pi_labels(
     return labels, warning, " | ".join(info_parts) or "No atoms classified."
 
 
+def _collect_s_labels(org_syms: list[str], seen: set[str]) -> list[str]:
+    """Collect ns labels for *org_syms*, skipping duplicates already in *seen*.
+
+    Args:
+        org_syms: Sorted list of unique chemical symbols.
+        seen: Already-used label set; updated in place to avoid duplicates.
+
+    Returns:
+        New ``"El ns"`` labels added.
+    """
+    labels: list[str] = []
+    for sym in org_syms:
+        lbl = f"{sym} {_valence_n(sym)}s"
+        if lbl not in seen:
+            labels.append(lbl)
+            seen.add(lbl)
+    return labels
+
+
+def _collect_p_labels(org_syms: list[str], suffix: str, seen: set[str]) -> list[str]:
+    """Collect p-orbital labels for *org_syms*, appending *suffix* to the angular part.
+
+    Args:
+        org_syms: Sorted list of unique chemical symbols.
+        suffix: Axis qualifier appended to ``p``, e.g. ``"z"`` → ``"2pz"``,
+            or ``""`` for all-p (``"2p"``).
+        seen: Already-used label set; updated in place to avoid duplicates.
+
+    Returns:
+        New labels added; H/He (n=1) are silently skipped — they have no p orbitals.
+    """
+    labels: list[str] = []
+    for sym in org_syms:
+        n = _valence_n(sym)
+        if n < 2:
+            continue
+        lbl = f"{sym} {n}p{suffix}"
+        if lbl not in seen:
+            labels.append(lbl)
+            seen.add(lbl)
+    return labels
+
+
 def _organic_pi_labels(
     organics: list[tuple[int, int, str]],
     pos: np.ndarray,
@@ -214,36 +260,24 @@ def _organic_pi_labels(
     """
     org_pos = pos[[i for i, _, _ in organics]]
     org_syms = sorted({s for _, _, s in organics})
-    labels: list[str] = []
 
     if len(organics) < _MIN_PLANE_ATOMS:
-        for sym in org_syms:
-            lbl = f"{sym} {_valence_n(sym)}p"
-            if lbl not in seen:
-                labels.append(lbl)
-                seen.add(lbl)
         return (
-            labels,
+            _collect_p_labels(org_syms, "", seen),
             "Fewer than 3 organic atoms; pi axis undetermined - using all p.",
             "organics: all p",
         )
 
     axis, score = _pi_axis(org_pos)
     if score < _PLANARITY_THRESHOLD:
-        for sym in org_syms:
-            lbl = f"{sym} {_valence_n(sym)}p{axis}"
-            if lbl not in seen:
-                labels.append(lbl)
-                seen.add(lbl)
-        return labels, None, f"pi-normal ~ {axis.upper()} (score {score:.2f})"
+        return (
+            _collect_p_labels(org_syms, axis, seen),
+            None,
+            f"pi-normal ~ {axis.upper()} (score {score:.2f})",
+        )
 
-    for sym in org_syms:
-        lbl = f"{sym} {_valence_n(sym)}p"
-        if lbl not in seen:
-            labels.append(lbl)
-            seen.add(lbl)
     return (
-        labels,
+        _collect_p_labels(org_syms, "", seen),
         f"Atoms not coplanar (score {score:.2f} >= {_PLANARITY_THRESHOLD}); using all p.",
         f"non-planar ({', '.join(org_syms)})",
     )
@@ -270,13 +304,11 @@ def _sigma_labels(
 
     if len(organics) < _MIN_PLANE_ATOMS:
         seen: set[str] = set()
-        labels: list[str] = []
-        for sym in org_syms:
-            n = _valence_n(sym)
-            for lbl in (f"{sym} {n}s", f"{sym} {n}px", f"{sym} {n}py"):
-                if lbl not in seen:
-                    labels.append(lbl)
-                    seen.add(lbl)
+        labels = (
+            _collect_s_labels(org_syms, seen)
+            + _collect_p_labels(org_syms, "x", seen)
+            + _collect_p_labels(org_syms, "y", seen)
+        )
         return (
             labels,
             "Fewer than 3 atoms; sigma axis undetermined.",
@@ -285,20 +317,12 @@ def _sigma_labels(
 
     axis, score = _pi_axis(org_pos)
     in_plane = [a for a in ("x", "y", "z") if a != axis]
-
     seen = set()
-    labels = []
-    for sym in org_syms:
-        n = _valence_n(sym)
-        for lbl in (
-            f"{sym} {n}s",
-            f"{sym} {n}p{in_plane[0]}",
-            f"{sym} {n}p{in_plane[1]}",
-        ):
-            if lbl not in seen:
-                labels.append(lbl)
-                seen.add(lbl)
-
+    labels = (
+        _collect_s_labels(org_syms, seen)
+        + _collect_p_labels(org_syms, in_plane[0], seen)
+        + _collect_p_labels(org_syms, in_plane[1], seen)
+    )
     warning = (
         None
         if score < _PLANARITY_THRESHOLD
