@@ -272,10 +272,10 @@ class MolViewWindow(QMainWindow):
 
     def _sync_list_from_selected(self) -> None:
         """Update list widget selection to match ``self.selected``."""
-        self.atom_list.blockSignals(b=True)
+        self.atom_list.blockSignals(True)  # noqa: FBT003
         for i in range(self.n):
             self.atom_list.item(i).setSelected(i in self.selected)
-        self.atom_list.blockSignals(b=False)
+        self.atom_list.blockSignals(False)  # noqa: FBT003
 
     def _select_all(self) -> None:
         """Select every atom in the molecule."""
