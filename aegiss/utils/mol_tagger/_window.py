@@ -287,8 +287,12 @@ class MolViewWindow(QMainWindow):
     def _atom_label(self, i: int) -> str:
         """Format the display label for atom *i*."""
         x, y, z = self.pos[i]
-        tag = f"  {self.tags[i]}" if i in self.tags else ""
-        return f"#{i:>3d}  {self.syms[i]:>2s}   ({x:8.3f}, {y:8.3f}, {z:8.3f}){tag}"
+        tag = f"{self.tags[i]}" if i in self.tags else ""
+        if tag != "":
+            tag = f"{tag}"
+            return f"{i:>3d} {tag:>2s} {x:8.3f} {y:8.3f} {z:8.3f}"
+        else:
+            return f"{i:>3d} {self.syms[i]:>2s} {x:8.3f} {y:8.3f} {z:8.3f}"
 
     # ------------------------------------------------------------------
     # Orbital info panel
