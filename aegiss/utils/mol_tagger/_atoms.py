@@ -72,11 +72,11 @@ def _guess_basis(Z: int) -> dict[str, list[str]]:
     remaining = Z
     shells: list[str] = []
     last_n = 0
-    for n, l in order:
+    for n, l_qn in order:
         if remaining <= 0:
             break
-        shells.append(f"{n}{l}")
-        remaining -= min(remaining, max_e[l])
+        shells.append(f"{n}{l_qn}")
+        remaining -= min(remaining, max_e[l_qn])
         last_n = max(last_n, n)
     valence = [
         s for s in shells
