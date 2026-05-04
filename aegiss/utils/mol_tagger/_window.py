@@ -84,7 +84,7 @@ class MolViewWindow(QMainWindow):
         self.pos: np.ndarray = self.atoms.get_positions()
         self.selected: set[int] = set()
 
-        self.setWindowTitle(f"MolTagger — {Path(xyz_path).name}")
+        self.setWindowTitle(f"AEGISS > MolTagger — {Path(xyz_path).name}")
         self.resize(1100, 700)
         self.setStyleSheet(DARK_STYLE)
         self._build_ui()
@@ -126,7 +126,7 @@ class MolViewWindow(QMainWindow):
         header.setStyleSheet("background: #111; border-bottom: 1px solid #333;")
         hl = QHBoxLayout(header)
         hl.setContentsMargins(16, 0, 16, 0)
-        title = QLabel("MolTagger")
+        title = QLabel("AEGISS > MolTagger")
         title.setObjectName("header")
         hl.addWidget(title)
         info = QLabel(
