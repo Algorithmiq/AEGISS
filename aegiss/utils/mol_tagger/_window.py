@@ -192,13 +192,13 @@ class MolViewWindow(QMainWindow):
 
     def _make_orbital_panel(self) -> QGroupBox:
         """Build the orbital-info read-only panel."""
-        grp = QGroupBox("Orbital Info")
+        grp = QGroupBox("Atom Info")
         layout = QVBoxLayout(grp)
         self.orbital_text = QTextEdit()
         self.orbital_text.setReadOnly(True)
         self.orbital_text.setMinimumHeight(100)
         self.orbital_text.setHtml(
-            '<span style="color:#666;">Select atoms to see orbitals</span>'
+            '<span style="color:#666;">Select atoms to see info</span>'
         )
         layout.addWidget(self.orbital_text)
         return grp
