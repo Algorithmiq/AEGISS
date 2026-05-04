@@ -15,42 +15,60 @@ if TYPE_CHECKING:
 BOND_TOLERANCE: float = 1.3
 
 MINIMAL_BASIS: dict[int, dict[str, list[str]]] = {
-    1:  {"all": ["1s"],                                                        "valence": ["1s"]},
-    2:  {"all": ["1s"],                                                        "valence": ["1s"]},
-    3:  {"all": ["1s", "2s"],                                                  "valence": ["2s"]},
-    4:  {"all": ["1s", "2s"],                                                  "valence": ["2s"]},
-    5:  {"all": ["1s", "2s", "2p"],                                            "valence": ["2s", "2p"]},
-    6:  {"all": ["1s", "2s", "2p"],                                            "valence": ["2s", "2p"]},
-    7:  {"all": ["1s", "2s", "2p"],                                            "valence": ["2s", "2p"]},
-    8:  {"all": ["1s", "2s", "2p"],                                            "valence": ["2s", "2p"]},
-    9:  {"all": ["1s", "2s", "2p"],                                            "valence": ["2s", "2p"]},
-    10: {"all": ["1s", "2s", "2p"],                                            "valence": ["2s", "2p"]},
-    11: {"all": ["1s", "2s", "2p", "3s"],                                      "valence": ["3s"]},
-    12: {"all": ["1s", "2s", "2p", "3s"],                                      "valence": ["3s"]},
-    13: {"all": ["1s", "2s", "2p", "3s", "3p"],                                "valence": ["3s", "3p"]},
-    14: {"all": ["1s", "2s", "2p", "3s", "3p"],                                "valence": ["3s", "3p"]},
-    15: {"all": ["1s", "2s", "2p", "3s", "3p"],                                "valence": ["3s", "3p"]},
-    16: {"all": ["1s", "2s", "2p", "3s", "3p"],                                "valence": ["3s", "3p"]},
-    17: {"all": ["1s", "2s", "2p", "3s", "3p"],                                "valence": ["3s", "3p"]},
-    18: {"all": ["1s", "2s", "2p", "3s", "3p"],                                "valence": ["3s", "3p"]},
-    19: {"all": ["1s", "2s", "2p", "3s", "3p", "4s"],                          "valence": ["4s"]},
-    20: {"all": ["1s", "2s", "2p", "3s", "3p", "4s"],                          "valence": ["4s"]},
-    21: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"],                    "valence": ["3d", "4s"]},
-    22: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"],                    "valence": ["3d", "4s"]},
-    23: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"],                    "valence": ["3d", "4s"]},
-    24: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"],                    "valence": ["3d", "4s"]},
-    25: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"],                    "valence": ["3d", "4s"]},
-    26: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"],                    "valence": ["3d", "4s"]},
-    27: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"],                    "valence": ["3d", "4s"]},
-    28: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"],                    "valence": ["3d", "4s"]},
-    29: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"],                    "valence": ["3d", "4s"]},
-    30: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"],                    "valence": ["3d", "4s"]},
-    31: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s", "4p"],              "valence": ["4s", "4p"]},
-    32: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s", "4p"],              "valence": ["4s", "4p"]},
-    33: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s", "4p"],              "valence": ["4s", "4p"]},
-    34: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s", "4p"],              "valence": ["4s", "4p"]},
-    35: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s", "4p"],              "valence": ["4s", "4p"]},
-    36: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s", "4p"],              "valence": ["4s", "4p"]},
+    1: {"all": ["1s"], "valence": ["1s"]},
+    2: {"all": ["1s"], "valence": ["1s"]},
+    3: {"all": ["1s", "2s"], "valence": ["2s"]},
+    4: {"all": ["1s", "2s"], "valence": ["2s"]},
+    5: {"all": ["1s", "2s", "2p"], "valence": ["2s", "2p"]},
+    6: {"all": ["1s", "2s", "2p"], "valence": ["2s", "2p"]},
+    7: {"all": ["1s", "2s", "2p"], "valence": ["2s", "2p"]},
+    8: {"all": ["1s", "2s", "2p"], "valence": ["2s", "2p"]},
+    9: {"all": ["1s", "2s", "2p"], "valence": ["2s", "2p"]},
+    10: {"all": ["1s", "2s", "2p"], "valence": ["2s", "2p"]},
+    11: {"all": ["1s", "2s", "2p", "3s"], "valence": ["3s"]},
+    12: {"all": ["1s", "2s", "2p", "3s"], "valence": ["3s"]},
+    13: {"all": ["1s", "2s", "2p", "3s", "3p"], "valence": ["3s", "3p"]},
+    14: {"all": ["1s", "2s", "2p", "3s", "3p"], "valence": ["3s", "3p"]},
+    15: {"all": ["1s", "2s", "2p", "3s", "3p"], "valence": ["3s", "3p"]},
+    16: {"all": ["1s", "2s", "2p", "3s", "3p"], "valence": ["3s", "3p"]},
+    17: {"all": ["1s", "2s", "2p", "3s", "3p"], "valence": ["3s", "3p"]},
+    18: {"all": ["1s", "2s", "2p", "3s", "3p"], "valence": ["3s", "3p"]},
+    19: {"all": ["1s", "2s", "2p", "3s", "3p", "4s"], "valence": ["4s"]},
+    20: {"all": ["1s", "2s", "2p", "3s", "3p", "4s"], "valence": ["4s"]},
+    21: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"], "valence": ["3d", "4s"]},
+    22: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"], "valence": ["3d", "4s"]},
+    23: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"], "valence": ["3d", "4s"]},
+    24: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"], "valence": ["3d", "4s"]},
+    25: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"], "valence": ["3d", "4s"]},
+    26: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"], "valence": ["3d", "4s"]},
+    27: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"], "valence": ["3d", "4s"]},
+    28: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"], "valence": ["3d", "4s"]},
+    29: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"], "valence": ["3d", "4s"]},
+    30: {"all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s"], "valence": ["3d", "4s"]},
+    31: {
+        "all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s", "4p"],
+        "valence": ["4s", "4p"],
+    },
+    32: {
+        "all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s", "4p"],
+        "valence": ["4s", "4p"],
+    },
+    33: {
+        "all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s", "4p"],
+        "valence": ["4s", "4p"],
+    },
+    34: {
+        "all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s", "4p"],
+        "valence": ["4s", "4p"],
+    },
+    35: {
+        "all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s", "4p"],
+        "valence": ["4s", "4p"],
+    },
+    36: {
+        "all": ["1s", "2s", "2p", "3s", "3p", "3d", "4s", "4p"],
+        "valence": ["4s", "4p"],
+    },
 }
 
 
@@ -64,9 +82,25 @@ def _guess_basis(Z: int) -> dict[str, list[str]]:
         Dictionary with ``"all"`` and ``"valence"`` shell lists.
     """
     order = [
-        (1, "s"), (2, "s"), (2, "p"), (3, "s"), (3, "p"), (4, "s"),
-        (3, "d"), (4, "p"), (5, "s"), (4, "d"), (5, "p"), (6, "s"),
-        (4, "f"), (5, "d"), (6, "p"), (7, "s"), (5, "f"), (6, "d"), (7, "p"),
+        (1, "s"),
+        (2, "s"),
+        (2, "p"),
+        (3, "s"),
+        (3, "p"),
+        (4, "s"),
+        (3, "d"),
+        (4, "p"),
+        (5, "s"),
+        (4, "d"),
+        (5, "p"),
+        (6, "s"),
+        (4, "f"),
+        (5, "d"),
+        (6, "p"),
+        (7, "s"),
+        (5, "f"),
+        (6, "d"),
+        (7, "p"),
     ]
     max_e: dict[str, int] = {"s": 2, "p": 6, "d": 10, "f": 14}
     remaining = Z
@@ -79,7 +113,8 @@ def _guess_basis(Z: int) -> dict[str, list[str]]:
         remaining -= min(remaining, max_e[l_qn])
         last_n = max(last_n, n)
     valence = [
-        s for s in shells
+        s
+        for s in shells
         if int(s[0]) >= last_n - 1 and (s[1] != "s" or int(s[0]) == last_n)
     ]
     if not valence:

@@ -5,10 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+import pyvista as pv
 from ase.data import covalent_radii
 from ase.data.colors import jmol_colors
-
-import pyvista as pv
 
 from aegiss.utils.mol_tagger._constants import (
     ATOM_RADIUS_SCALE,

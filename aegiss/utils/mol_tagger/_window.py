@@ -64,7 +64,9 @@ class MolViewWindow(QMainWindow):
         self._build_ui()
         self._renderer = MolRenderer(self.plotter, self.atoms, self.bonds)
         self._renderer.render_all(self.selected)
-        logger.info("MolViewWindow opened for %s (%d atoms)", Path(xyz_path).name, self.n)
+        logger.info(
+            "MolViewWindow opened for %s (%d atoms)", Path(xyz_path).name, self.n
+        )
 
     # ------------------------------------------------------------------
     # UI construction
@@ -175,7 +177,9 @@ class MolViewWindow(QMainWindow):
         self.orbital_text = QTextEdit()
         self.orbital_text.setReadOnly(True)
         self.orbital_text.setMinimumHeight(100)
-        self.orbital_text.setHtml('<span style="color:#666;">Select atoms to see orbitals</span>')
+        self.orbital_text.setHtml(
+            '<span style="color:#666;">Select atoms to see orbitals</span>'
+        )
         layout.addWidget(self.orbital_text)
         return grp
 
@@ -267,7 +271,9 @@ class MolViewWindow(QMainWindow):
         self.tag_input.clear()
         self._refresh_list_labels()
         self._update_orbital_info()
-        self.status_label.setText(f"Tagged {len(self.selected)} atom(s) with label {raw}")
+        self.status_label.setText(
+            f"Tagged {len(self.selected)} atom(s) with label {raw}"
+        )
 
     def _remove_tags(self) -> None:
         """Remove all tags from the selected atoms."""
@@ -312,10 +318,10 @@ class MolViewWindow(QMainWindow):
             if i in self.tags:
                 hdr += f"  {self.tags[i]}"
             lines.append(f'<b style="color:#ffdd57;">{hdr}</b>')
-            lines.append(f'  Minimal basis : {", ".join(basis["all"])}')
+            lines.append(f"  Minimal basis : {', '.join(basis['all'])}")
             lines.append(
                 f'  <span style="color:#77ddff;">Valence       : '
-                f'{", ".join(basis["valence"])}</span>'
+                f"{', '.join(basis['valence'])}</span>"
             )
             lines.append("")
         self.orbital_text.setHtml("<pre>" + "\n".join(lines) + "</pre>")
