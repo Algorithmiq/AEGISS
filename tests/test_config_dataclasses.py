@@ -77,6 +77,54 @@ class TestDMRGConfig:
         cfg = DMRGConfig(ncas=4, nelecas=4, verbosity=0)
         assert cfg.verbosity == 0
 
+    def test_nroots_default_is_one(self) -> None:
+        cfg = DMRGConfig(ncas=4, nelecas=4)
+        assert cfg.nroots == 1
+
+    def test_nroots_valid(self) -> None:
+        cfg = DMRGConfig(ncas=4, nelecas=4, nroots=3)
+        assert cfg.nroots == 3
+
+    def test_nroots_zero_raises(self) -> None:
+        with pytest.raises(ValueError, match="nroots"):
+            DMRGConfig(ncas=4, nelecas=4, nroots=0)
+
+    def test_nroots_negative_raises(self) -> None:
+        with pytest.raises(ValueError, match="nroots"):
+            DMRGConfig(ncas=4, nelecas=4, nroots=-1)
+
+    def test_weights_none_default(self) -> None:
+        cfg = DMRGConfig(ncas=4, nelecas=4, nroots=3)
+        assert cfg.weights is None
+
+    def test_weights_valid(self) -> None:
+        cfg = DMRGConfig(ncas=4, nelecas=4, nroots=3, weights=(0.5, 0.25, 0.25))
+        assert cfg.weights == (0.5, 0.25, 0.25)
+
+    def test_weights_wrong_length_raises(self) -> None:
+        with pytest.raises(ValueError, match="weights"):
+            DMRGConfig(ncas=4, nelecas=4, nroots=3, weights=(0.5, 0.5))
+
+    def test_weights_zero_entry_raises(self) -> None:
+        with pytest.raises(ValueError, match="weights"):
+            DMRGConfig(ncas=4, nelecas=4, nroots=3, weights=(0.5, 0.0, 0.5))
+
+    def test_weights_negative_entry_raises(self) -> None:
+        with pytest.raises(ValueError, match="weights"):
+            DMRGConfig(ncas=4, nelecas=4, nroots=2, weights=(1.0, -0.5))
+
+    def test_n_refinement_sweeps_default(self) -> None:
+        cfg = DMRGConfig(ncas=4, nelecas=4)
+        assert cfg.n_refinement_sweeps == 4
+
+    def test_n_refinement_sweeps_zero_valid(self) -> None:
+        cfg = DMRGConfig(ncas=4, nelecas=4, n_refinement_sweeps=0)
+        assert cfg.n_refinement_sweeps == 0
+
+    def test_n_refinement_sweeps_negative_raises(self) -> None:
+        with pytest.raises(ValueError, match="n_refinement_sweeps"):
+            DMRGConfig(ncas=4, nelecas=4, n_refinement_sweeps=-1)
+
 
 class TestEntropyConfig:
     def test_valid_default_config(self) -> None:

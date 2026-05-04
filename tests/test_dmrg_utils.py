@@ -5,7 +5,11 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from aegiss.utils.dmrg_utils import _default_dmrg_schedule, compute_qmi
+from aegiss.utils.dmrg_utils import (
+    _default_dmrg_schedule,
+    _refinement_schedule,
+    compute_qmi,
+)
 
 
 class TestDefaultDmrgSchedule:
@@ -110,3 +114,38 @@ class TestComputeQmi:
 
         _, _, minfo = compute_qmi(driver, ket=None)
         assert np.all(minfo >= -1e-14)
+
+
+class TestRefinementSchedule:
+    def test_returns_three_lists(self) -> None:
+        bd, ns, th = _refinement_schedule(4, 100)
+        assert isinstance(bd, list)
+        assert isinstance(ns, list)
+        assert isinstance(th, list)
+
+    def test_lengths_match_n_sweeps(self) -> None:
+        for n in (1, 4, 10):
+            bd, ns, th = _refinement_schedule(n, 50)
+            assert len(bd) == n
+            assert len(ns) == n
+            assert len(th) == n
+
+    def test_bond_dim_constant(self) -> None:
+        bd, _, _ = _refinement_schedule(4, 200)
+        assert all(d == 200 for d in bd)
+
+    def test_noises_all_zero(self) -> None:
+        _, ns, _ = _refinement_schedule(4, 100)
+        assert all(n == 0.0 for n in ns)
+
+    def test_thrds_all_tight(self) -> None:
+        _, _, th = _refinement_schedule(4, 100)
+        assert all(t <= 1e-9 for t in th)
+
+    def test_zero_sweeps_raises(self) -> None:
+        with pytest.raises(ValueError, match="n_sweeps"):
+            _refinement_schedule(0, 100)
+
+    def test_zero_bond_dim_raises(self) -> None:
+        with pytest.raises(ValueError, match="bond_dim"):
+            _refinement_schedule(4, 0)

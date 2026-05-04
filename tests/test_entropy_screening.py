@@ -9,6 +9,7 @@ from aegiss.active_space.entropy_screening import (
     _global_entropy_ranking,
     _relative_entropy_ranking,
     select_by_entropy,
+    select_by_sa_entropy,
 )
 
 
@@ -176,3 +177,92 @@ class TestSelectByEntropy:
         # The results may differ; at minimum both calls should succeed
         assert isinstance(sel_occ_r, list)
         assert isinstance(sel_occ_a, list)
+
+
+class TestSelectBySaEntropy:
+    """Tests for select_by_sa_entropy (SA union logic)."""
+
+    @pytest.fixture
+    def three_state_data(self) -> tuple[np.ndarray, np.ndarray, list[np.ndarray]]:
+        occ_orbs = np.array([0, 1, 2])
+        virt_orbs = np.array([3, 4])
+        # State 0: orbital 1 and 3 are important
+        soe1_s0 = np.array([0.1, 0.9, 0.1, 0.8, 0.05])
+        # State 1: orbital 0 and 4 are important
+        soe1_s1 = np.array([0.8, 0.1, 0.1, 0.1, 0.9])
+        # State 2: orbital 2 is important
+        soe1_s2 = np.array([0.1, 0.1, 0.9, 0.1, 0.1])
+        return occ_orbs, virt_orbs, [soe1_s0, soe1_s1, soe1_s2]
+
+    def test_returns_two_lists(self, three_state_data) -> None:
+        occ, virt, soe1_list = three_state_data
+        sel_occ, sel_virt = select_by_sa_entropy(occ, virt, soe1_list, fraction=0.5)
+        assert isinstance(sel_occ, list)
+        assert isinstance(sel_virt, list)
+
+    def test_union_includes_state_specific_orbitals(self, three_state_data) -> None:
+        occ, virt, soe1_list = three_state_data
+        sel_occ, sel_virt = select_by_sa_entropy(
+            occ, virt, soe1_list, fraction=0.5, fraction_type="r", ranking="global"
+        )
+        occ_idx = [i for i, _ in sel_occ]
+        virt_idx = [i for i, _ in sel_virt]
+        # Orbital 1 (occ, state 0), 0 (occ, state 1), 2 (occ, state 2)
+        assert 0 in occ_idx
+        assert 1 in occ_idx
+        assert 2 in occ_idx
+        # Orbital 3 (virt, state 0), 4 (virt, state 1)
+        assert 3 in virt_idx
+        assert 4 in virt_idx
+
+    def test_entropy_value_is_max_across_states(self, three_state_data) -> None:
+        occ, virt, soe1_list = three_state_data
+        sel_occ, _ = select_by_sa_entropy(
+            occ, virt, soe1_list, fraction=0.0, fraction_type="a", ranking="global"
+        )
+        # Orbital 1: max normalised entropy is from state 0 (0.9/0.9 = 1.0 relative)
+        orb1_vals = [s1 for i, s1 in sel_occ if i == 1]
+        assert len(orb1_vals) == 1
+        assert orb1_vals[0] > 0.0
+
+    def test_single_state_equals_select_by_entropy(self) -> None:
+        occ = np.array([0, 1, 2, 3])
+        virt = np.array([4, 5, 6])
+        soe1 = np.array([0.1, 0.9, 0.5, 0.3, 0.8, 0.2, 0.05])
+        sel_occ_sa, sel_virt_sa = select_by_sa_entropy(
+            occ, virt, [soe1], fraction=0.5, fraction_type="r", ranking="global"
+        )
+        sel_occ, sel_virt = select_by_entropy(
+            occ, virt, soe1, fraction=0.5, fraction_type="r", ranking="global"
+        )
+        assert {i for i, _ in sel_occ_sa} == {i for i, _ in sel_occ}
+        assert {i for i, _ in sel_virt_sa} == {i for i, _ in sel_virt}
+
+    def test_occ_indices_in_occ_space(self, three_state_data) -> None:
+        occ, virt, soe1_list = three_state_data
+        sel_occ, _ = select_by_sa_entropy(occ, virt, soe1_list, fraction=0.1)
+        for idx, _ in sel_occ:
+            assert idx in occ
+
+    def test_virt_indices_in_virt_space(self, three_state_data) -> None:
+        occ, virt, soe1_list = three_state_data
+        _, sel_virt = select_by_sa_entropy(occ, virt, soe1_list, fraction=0.1)
+        for idx, _ in sel_virt:
+            assert idx in virt
+
+    def test_sorted_descending(self, three_state_data) -> None:
+        occ, virt, soe1_list = three_state_data
+        sel_occ, sel_virt = select_by_sa_entropy(
+            occ, virt, soe1_list, fraction=0.0, fraction_type="a"
+        )
+        occ_vals = [s for _, s in sel_occ]
+        virt_vals = [s for _, s in sel_virt]
+        assert occ_vals == sorted(occ_vals, reverse=True)
+        assert virt_vals == sorted(virt_vals, reverse=True)
+
+    def test_empty_list_returns_empty(self) -> None:
+        occ = np.array([0, 1])
+        virt = np.array([2, 3])
+        sel_occ, sel_virt = select_by_sa_entropy(occ, virt, [], fraction=0.1)
+        assert sel_occ == []
+        assert sel_virt == []
