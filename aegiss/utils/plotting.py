@@ -379,6 +379,7 @@ def soe_heatmap(
     ax.set_title(f"Max SOE: {max_so1:.5f}", fontsize=16)
     fig.tight_layout()
     fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf", bbox_inches="tight")
+    logger.info("Saved SOE heatmap to %s.pdf", filename)
     plt.close(fig)
 
 
@@ -585,4 +586,5 @@ def th_plots(
 
     fig.tight_layout()
     fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf")
+    logger.info("Saved TH plot to %s.pdf", filename)
     plt.close(fig)

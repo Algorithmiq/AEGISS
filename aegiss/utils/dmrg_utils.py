@@ -101,7 +101,7 @@ def _refinement_schedule(
         raise ValueError("n_sweeps must be a positive integer")
     if bond_dim <= 0:
         raise ValueError("bond_dim must be a positive integer")
-    noises = [1e-5] * (n_sweeps - 4) + [0.0]
+    noises = [1e-5] * (4) + [0.0] * (n_sweeps - 4)
     return [bond_dim] * n_sweeps, noises, [1e-10] * n_sweeps
 
 
