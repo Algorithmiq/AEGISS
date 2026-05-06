@@ -14,6 +14,7 @@ from aegiss.utils.dump_info import save_orbitals, save_orbitals_from_entropies
 from aegiss.utils.orbital_indices import get_subspaces_from_cas
 from aegiss.utils.plotting import (
     entanglement_diagrams,
+    mi_plot,
     plot_pie_contribution,
     soe_heatmap,
     th_plots,
@@ -78,6 +79,13 @@ def _make_soe_plots(
         minfo=minfo,
         folder=saving_folder,
         filename=saving_prefix + "_entanglement_diagram",
+    )
+
+    mi_plot(
+        minfo=minfo,
+        soe1=tagged,
+        folder=saving_folder,
+        filename=saving_prefix + "_MI_heatmap",
     )
 
 

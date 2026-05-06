@@ -588,6 +588,65 @@ def th_plots(
     plt.close(fig)
 
 
+def _ticks_helper(soe1: list[tuple[int, float]], ax: plt.Axes) -> None:
+    """Helper function to set x and y ticks for the MI plot.
+
+    Parameters
+    ----------
+    soe1:
+        List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
+    ax:
+        Matplotlib Axes object on which to set the ticks.
+    """
+    N = len(soe1)
+    orbital_indices = np.array([x[0] for x in soe1])
+    x = np.arange(N)
+    y = np.arange(N)
+    ax.set_xticks(x)
+    ax.set_yticks(y)
+    ax.set_xticklabels(orbital_indices, fontsize=10, rotation=90)
+    ax.set_yticklabels(orbital_indices, fontsize=10)
+
+
+def mi_plot(
+    minfo: np.ndarray,
+    soe1: list[tuple[int, float]],
+    folder: str = "./",
+    filename: str = "MI_plot",
+) -> None:
+    """Plot an entanglement diagram based on mutual information (MI) and single-orbital entropy (SOE).
+
+    Parameters
+    ----------
+    minfo:
+        Mutual Information matrix between orbitals.
+    soe1:
+        List of (orbital_index, single_orbital_entropy) tuples for all orbitals
+    folder:
+        Directory where the PDF is saved.
+    filename:
+        Base name of the output file (without extension).
+    """
+    fig, ax = plt.subplots(figsize=(8, 8))
+    ax.matshow(minfo, cmap="magma", vmin=0, vmax=np.max(minfo))
+    plt.colorbar(
+        ax.imshow(minfo, cmap="magma", vmin=0, vmax=np.max(minfo)),
+        ax=ax,
+        fraction=0.02,
+        pad=0.04,
+        label="Mutual Information (MI)",
+    )
+
+    _ticks_helper(soe1, ax)
+    ax.set_xlabel("Orbital Index", fontsize=12)
+    ax.set_ylabel("Orbital Index", fontsize=12)
+
+    fig.tight_layout()
+    fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf", bbox_inches="tight")
+    logger.info("Entanglement diagram saved as %s.pdf", filename)
+    plt.close(fig)
+
+
 def _helper_mi(
     minfo: np.ndarray, x: np.ndarray, y: np.ndarray, ax: plt.Axes
 ) -> list[plt.Line2D]:
@@ -611,31 +670,32 @@ def _helper_mi(
     """
     # Set up line styles and alpha values for different MI thresholds
     N = minfo.shape[0]
-    mi_thresholds = [1e-1, 1e-2, 1e-3]
-    mi_linestyles = ["-", "--", ":"]
-    alphas = [0.9, 0.6, 0.3]
+    minfo = minfo / np.max(minfo)  # Normalize MI values to [0, 1]
+    mi_thresholds = [1, 1e-1, 1e-2, 1e-3]
+    mi_linestyles = ["-", "--", ":", (0, (1, 2))]
+    mi_linewidths = [2, 1.5, 1.3, 0.8]
+    alphas = sns.color_palette("magma", n_colors=4)
 
     # Draw lines between orbitals based on MI values and thresholds
     for i in range(N):
         for j in range(i + 1, N):
             mi_value = minfo[i, j]
-            for thresh, ls, a in zip(
-                mi_thresholds, mi_linestyles, alphas, strict=False
+            for thresh, ls, c, lw in zip(
+                mi_thresholds, mi_linestyles, alphas, mi_linewidths, strict=False
             ):
                 if mi_value >= thresh:
                     ax.plot(
                         [x[i], x[j]],
                         [y[i], y[j]],
-                        color="grey",
-                        linewidth=2,
+                        color=c,
+                        linewidth=lw,
                         linestyle=ls,
-                        alpha=a,
                     )
                     break
 
     return [
-        plt.Line2D([0], [0], color="grey", linestyle=ls, label=f"MI ≥ {thresh}")
-        for thresh, ls in zip(mi_thresholds, mi_linestyles, strict=False)
+        plt.Line2D([0], [0], color=c, linestyle=ls, label=f"MI ≥ {thresh}")
+        for thresh, ls, c in zip(mi_thresholds, mi_linestyles, alphas, strict=False)
     ]
 
 
