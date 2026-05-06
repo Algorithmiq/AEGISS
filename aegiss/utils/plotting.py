@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     import pyscf
 
 logger = logging.getLogger(__name__)
+_MARKERS = ["o", "s", "D", "^", "v", "<", ">", "P", "X"]
 
 
 def _draw_pie_subplot(
@@ -468,6 +469,73 @@ def _define_cas_size(selected_ones: np.ndarray, occ_index: int) -> tuple[int, in
         orbitals and *n_elec* is twice the number of selected occupied orbitals.
     """
     return (len(selected_ones), 2 * int(np.sum(selected_ones < occ_index)))
+
+
+def sa_th_plot(
+    so1_list: list[list[tuple[Any, Any]]],
+    folder: str = "./",
+    filename: str = "SA_TH_plot",
+) -> None:
+    """Plot the threshold for each root single-orbutal entropy in an unique plot.
+
+    For each threshold value τ ∈ [0, 1] (as a fraction of S(1)_max), computes
+    the number of orbitals whose relative entropy exceeds τ and plots the
+    resulting staircase curve.
+    Then, combines all the curves for each root in `nroots`.
+    Saves the figure as a PDF.
+
+    Parameters:
+    ----------
+    so1_list:
+        List of lists of (orbital_index, relative_entropy) tuples, where the entropy
+        is already normalised by ``max_so1``. Each inner list corresponds to a root.
+    folder:
+        Directory where the PDF is saved.
+    filename:
+        Base name of the output file (without extension).
+    """
+    above_by_root: dict[int, np.ndarray] = {}
+    x_values = np.arange(0, 1.01, 0.01)
+    for r, so1_entropies in enumerate(so1_list):
+        so1_abs = np.array([x[1] for x in so1_entropies])
+        max_so1 = max(so1_abs)
+        so1_rel = so1_abs / max_so1
+        orbitals_index = np.array([x[0] for x in so1_entropies])
+
+        indices_above: dict[int, np.ndarray] = {}
+        y_values = np.zeros(101, dtype=int)
+        for i, x_value in enumerate(x_values):
+            mask = so1_rel > x_value
+            indices_above[i] = orbitals_index[mask]
+            y_values[i] = int(np.sum(mask))
+        above_by_root[r] = y_values
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+    c = sns.color_palette("magma", n_colors=len(so1_list))
+    for r, y_values in list(above_by_root.items())[::-1]:
+        ax.plot(
+            x_values,
+            y_values,
+            marker=_MARKERS[r],
+            markersize=6,
+            ls="",
+            color=c[r],
+            label=f"Root {r}",
+            alpha=0.8,
+        )
+    ax.set_ylabel("# Selected MOs", fontsize=20)
+    ax.set_xlabel(r"Threshold as % of largest $S(1)_\mathrm{max}$", fontsize=18)
+    ax.grid(visible=True, alpha=0.3)
+    ax.set_yticks(np.arange(0, int(max(y_values)) + 1, 2))
+    ax.tick_params(axis="y", labelsize=12)
+    ax.set_xticks(np.arange(0, 1.1, 0.1))
+    ax.tick_params(axis="x", labelsize=18)
+    ax.set_xlim(-0.05, 1.05)
+    ax.legend(fontsize=14)
+    fig.tight_layout()
+    fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf", bbox_inches="tight")
+    logger.info("Saved SA TH plot to %s.pdf", filename)
+    plt.close(fig)
 
 
 def th_plots(

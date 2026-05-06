@@ -15,7 +15,12 @@ from aegiss.active_space.entropy_screening import (
 )
 from aegiss.utils.dump_info import save_orbitals, save_orbitals_from_entropies
 from aegiss.utils.orbital_indices import get_subspaces_from_cas
-from aegiss.utils.plotting import plot_pie_contribution, soe_heatmap, th_plots
+from aegiss.utils.plotting import (
+    plot_pie_contribution,
+    sa_th_plot,
+    soe_heatmap,
+    th_plots,
+)
 from aegiss.wavefunction.dmrg import run_dmrg, run_sa_dmrg
 
 if TYPE_CHECKING:
@@ -61,6 +66,13 @@ def _run_entropy_screening(
                     output_config.saving_folder,
                     f"{output_config.saving_prefix}_root{idx}",
                 )
+        _make_sa_th_plot(
+            active_orbs,
+            virt_orbs,
+            valid_soe1,
+            output_config.saving_folder,
+            output_config.saving_prefix + "_SA_TH_plot",
+        )
         return select_by_sa_entropy(
             occ_orbs=active_orbs,
             virt_orbs=virt_orbs,
@@ -93,6 +105,45 @@ def _run_entropy_screening(
         ranking=entropy_config.ranking,
         fraction=entropy_config.fraction,
         fraction_type=entropy_config.fraction_type,
+    )
+
+
+def _make_sa_th_plot(
+    active_orbs: np.ndarray,
+    virt_orbs: np.ndarray,
+    soe1_per_state: list[np.ndarray],
+    saving_folder: str,
+    filename: str,
+) -> None:
+    """Generate and save a SA threshold plot (TH plot) to *saving_folder*.
+
+    Parameters
+    ----------
+    active_orbs : np.ndarray
+        Indices of the occupied (active) orbitals in the CAS.
+    virt_orbs : np.ndarray
+        Indices of the virtual orbitals in the CAS.
+    soe1_per_state : list[np.ndarray]
+        List of single-orbital entropies for each state, ordered as
+        ``[active_orbs..., virt_orbs...]``.
+    saving_folder : str
+        Directory where the PDF file is written.
+    filename : str
+        Filename without extension; ``_SA_TH_plot.pdf`` is appended.
+    """
+    tagger_per_state = []
+    for soe1 in soe1_per_state:
+        tagged = [(orb_id, soe1[idx]) for idx, orb_id in enumerate(active_orbs)]
+        tagged += [
+            (orb_id, soe1[len(active_orbs) + idx])
+            for idx, orb_id in enumerate(virt_orbs)
+        ]
+        tagger_per_state.append(tagged)
+
+    sa_th_plot(
+        so1_list=tagger_per_state,
+        folder=saving_folder,
+        filename=filename,
     )
 
 
