@@ -743,8 +743,10 @@ def entanglement_diagrams(
     ax.set_aspect("equal")
     ax.axis("off")
 
-    circle = plt.Circle((0, 0), 1, color="black", fill=False, linewidth=4)
-    ax.add_patch(circle)
+    circle1 = plt.Circle((0, 0), 1.25, color="black", fill=False, linewidth=1)
+    circle2 = plt.Circle((0, 0), 1, color="black", fill=False, linewidth=2)
+    ax.add_patch(circle1)
+    ax.add_patch(circle2)
 
     # mi thresholds
 
