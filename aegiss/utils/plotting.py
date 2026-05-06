@@ -591,7 +591,6 @@ def th_plots(
 def entanglement_diagrams(
     soe1: list[tuple[Any, Any]],
     minfo: np.ndarray,
-    irreps: dict[int, str] | None = None,
     folder: str = "./",
     filename: str = "entanglement_diagrams",
 ) -> None:
@@ -608,9 +607,6 @@ def entanglement_diagrams(
         List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
     minfo: np.ndarray
         Mutual Information matrix between orbitals.
-    irreps: dict[int, str] | None, default None
-        Optional mapping from orbital index to its irreducible representation (irrep) label.
-        If None, all orbitals are treated as belonging to the same irrep.
     folder: str, default "./"
         Directory where the PDF file will be saved.
     filename: str, default "entanglement_diagrams"
@@ -624,11 +620,7 @@ def entanglement_diagrams(
     x = np.cos(angles)
     y = np.sin(angles)
 
-    if irreps is not None:
-        c = sns.color_palette("magma", n_colors=len(set(irreps.values())))
-    else:
-        irreps = {0: "-"}
-        c = sns.color_palette("magma", n_colors=1)
+    c = sns.color_palette("magma", n_colors=1)
 
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.set_aspect("equal")
@@ -658,7 +650,7 @@ def entanglement_diagrams(
         x,
         y,
         s=sizes,
-        c=[c[irreps.get(idx, 0)] for idx in orb_indices],
+        c=c[0],
         edgecolors="black",
         zorder=3,
         label="SOE",
@@ -677,18 +669,17 @@ def entanglement_diagrams(
         plt.Line2D([0], [0], color="grey", linestyle=ls, label=f"MI ≥ {thresh}")
         for thresh, ls in zip(mi_thresholds, mi_linestyles, strict=False)
     ]
-    for irrep, color in zip(set(irreps.values()), c, strict=False):
-        handles.append(
-            plt.Line2D(
-                [0],
-                [0],
-                marker="o",
-                color="w",
-                label=f"SOE ({irrep})",
-                markerfacecolor=color,
-                markersize=10,
-            )
+    handles.append(
+        plt.Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="w",
+            label="SOE",
+            markerfacecolor=c[0],
+            markersize=10,
         )
+    )
     plt.legend(handles=handles, loc="upper right")
     fig.tight_layout()
     fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf", bbox_inches="tight")
