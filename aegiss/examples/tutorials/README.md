@@ -28,16 +28,16 @@
 
 ## 1. Atom Labeling and AO Group Definition
 
-- Partition the molecule into chemically meaningful clusters $\mathcal{C}_i$  
+- Partition the molecule into chemically meaningful clusters $\mathcal{C}_i$
   (e.g. metal centre, ligand π system, σ framework)
-- For each cluster define an AO group $D_i \in \mathcal{D}$ as a set of PySCF `ao_labels`  
+- For each cluster define an AO group $D_i \in \mathcal{D}$ as a set of PySCF `ao_labels`
   strings (e.g. `"Ru 4d"`, `"C 2pz"`, `["Ce 4f", "Ce 5d"]`)
 - The union of all groups spans the chemical character space used for projection
-- The active region $\mathbf{A}$ is defined by the CAS window (`ncas`, `nelecas`) and  
+- The active region $\mathbf{A}$ is defined by the CAS window (`ncas`, `nelecas`) and
   determines which orbitals enter the DMRG step
 
-> **MolTagger** (`aegiss.utils.mol_tagger`) provides an interactive 3D viewer for  
-> selecting atoms and auto-generating `ao_labels` strings ready to paste into  
+> **MolTagger** (`aegiss.utils.mol_tagger`) provides an interactive 3D viewer for
+> selecting atoms and auto-generating `ao_labels` strings ready to paste into
 > `ProjectionConfig`.
 
 ---
@@ -84,8 +84,8 @@ the physical interpretability of the entropy screening.  Available methods:
   \wedge
   \ket{\Phi_{\text{virt}}}
   $$
-  where $\ket{\Phi_{\text{occ}}}$ and $\ket{\Phi_{\text{virt}}}$ are the frozen core  
-  and virtual determinants, and $\ket{\psi^{\mathbf{A}}_{\mathcal{W}}}$ is the DMRG  
+  where $\ket{\Phi_{\text{occ}}}$ and $\ket{\Phi_{\text{virt}}}$ are the frozen core
+  and virtual determinants, and $\ket{\psi^{\mathbf{A}}_{\mathcal{W}}}$ is the DMRG
   MPS restricted to $\mathbf{A}$.
 
 - Construct the one-orbital reduced density matrix by tracing over all other sites:
@@ -139,7 +139,7 @@ $$
 ## 4. AO Projection for Each Group $D \in \mathcal{D}$
 
 - Construct a minimal AO basis (MinAO, default `minao`) on a copy of the molecule
-- Compute the cross-overlap matrix between MinAO functions ($\nu$) and original  
+- Compute the cross-overlap matrix between MinAO functions ($\nu$) and original
   molecular AOs ($\mu$):
   $$
   [\mathbf{S}]_{\nu\mu} = \langle \nu^{\text{MinAO}} | \mu^{\text{mol}} \rangle
@@ -147,7 +147,7 @@ $$
 
 For each AO group $D$:
 
-1. Extract the rows of $\mathbf{S}$ corresponding to the AOs in $D$ (via  
+1. Extract the rows of $\mathbf{S}$ corresponding to the AOs in $D$ (via
    `mol.search_ao_label`):
    $$
    [\mathbf{S}^D]_{\eta\mu}, \quad \eta \in D
@@ -173,14 +173,14 @@ For each AO group $D$:
      $$
      \{\psi_r^D\} = \{\psi_p^{\mathbf{A}}_E \mid w_p^D \geq \epsilon_D\}
      $$
-     where $\epsilon_D$ is absolute (`contribution_type='a'`) or relative to  
+     where $\epsilon_D$ is absolute (`contribution_type='a'`) or relative to
      $\max_p w_p^D$ (`contribution_type='r'`).
 
-   - **Top-N ranking** (`top_n`): select the $n_D$ orbitals with the largest $w_p^D$,  
+   - **Top-N ranking** (`top_n`): select the $n_D$ orbitals with the largest $w_p^D$,
      regardless of their absolute value.
 
-   As with entropy screening, AO projection can run independently per subspace  
-   (`ranking='subset'`, default) or on the combined entropy-screened set  
+   As with entropy screening, AO projection can run independently per subspace
+   (`ranking='subset'`, default) or on the combined entropy-screened set
    (`ranking='global'`).
 
 ---
