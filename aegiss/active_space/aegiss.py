@@ -51,14 +51,16 @@ def _run_entropy_screening(
             verbosity=dmrg_config.verbosity,
         )
         valid_soe1 = [s for s in soe1_list if s is not None]
-        if output_config.save_plots and valid_soe1:
-            _make_soe_plots(
-                active_orbs,
-                virt_orbs,
-                np.max(np.stack(valid_soe1), axis=0),
-                output_config.saving_folder,
-                output_config.saving_prefix,
-            )
+        if output_config.save_plots:
+            logger.info("Saving orbitals from SA-DMRG for each root.")
+            for idx, soe1_root in enumerate(valid_soe1):
+                _make_soe_plots(
+                    active_orbs,
+                    virt_orbs,
+                    soe1_root,
+                    output_config.saving_folder,
+                    f"{output_config.saving_prefix}_root{idx}",
+                )
         return select_by_sa_entropy(
             occ_orbs=active_orbs,
             virt_orbs=virt_orbs,

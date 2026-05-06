@@ -318,23 +318,24 @@ def run_sa_dmrg(
 
     ss_energies: list[float] = []
     ket_roots: list[Any] = []
+    ket_roots = [driver.split_mps(ket, k, f"SS_KET_{k}") for k in range(nroots)]
     for k in range(nroots):
-        ket_k = driver.split_mps(ket, k, f"SS_KET_{k}")
         if n_refinement_sweeps > 0:
             logger.info("SS refinement: root %d / %d", k, nroots - 1)
             t = time.time()
             ss_result = driver.dmrg(
                 mpo,
-                ket_k,
+                ket_roots[k],
                 n_sweeps=n_refinement_sweeps,
                 bond_dims=ref_bond_dims,
                 noises=ref_noises,
                 thrds=ref_thrds,
                 iprint=verbosity,
+                proj_weights=[5.0] * k,
+                proj_mpss=ket_roots[:k],
             )
             logger.info("  Root %d SS completed in %.3f [s]", k, time.time() - t)
             ss_energies.append(float(ss_result))
-        ket_roots.append(ket_k)
 
     energies = ss_energies if n_refinement_sweeps > 0 else sa_energies
     for k, e in enumerate(energies):

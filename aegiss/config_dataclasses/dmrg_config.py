@@ -47,7 +47,7 @@ class DMRGConfig:
     verbosity: int = 0
     nroots: int = 1
     weights: tuple[float, ...] | None = None
-    n_refinement_sweeps: int = 4
+    n_refinement_sweeps: int = 8
 
     def __post_init__(self) -> None:
         """Validate the configuration parameters.
