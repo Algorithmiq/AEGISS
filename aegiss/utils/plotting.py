@@ -677,17 +677,18 @@ def entanglement_diagrams(
         plt.Line2D([0], [0], color="grey", linestyle=ls, label=f"MI ≥ {thresh}")
         for thresh, ls in zip(mi_thresholds, mi_linestyles, strict=False)
     ]
-    handles.append(
-        plt.Line2D(
-            [0],
-            [0],
-            marker="o",
-            color="w",
-            label="SOE",
-            markerfacecolor="black",
-            markersize=10,
+    for irrep, color in zip(set(irreps.values()), c, strict=False):
+        handles.append(
+            plt.Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                label=f"Irrep {irrep}",
+                markerfacecolor=color,
+                markersize=10,
+            )
         )
-    )
     plt.legend(handles=handles, loc="upper right")
     fig.tight_layout()
     fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf", bbox_inches="tight")
