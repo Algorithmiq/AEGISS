@@ -9,6 +9,8 @@ import pytest
 
 from aegiss.active_space.ao_projection import (
     _compute_contribution,
+    _resolve_contribution,
+    _resolve_top_n,
     select_by_ao_projection,
     select_by_label,
 )
@@ -177,6 +179,76 @@ class TestSelectByLabel:
         assert direct == via_label
 
 
+class TestResolveContribution:
+    def test_scalar_broadcast(self) -> None:
+        result = _resolve_contribution(0.4, 3)
+        assert result == [0.4, 0.4, 0.4]
+
+    def test_scalar_single_label(self) -> None:
+        assert _resolve_contribution(0.7, 1) == [0.7]
+
+    def test_list_exact_length_returned_as_is(self) -> None:
+        thresholds = [0.1, 0.5, 0.9]
+        assert _resolve_contribution(thresholds, 3) == thresholds
+
+    def test_list_wrong_length_broadcasts_first(self) -> None:
+        result = _resolve_contribution([0.3, 0.6], 4)
+        assert result == [0.3, 0.3, 0.3, 0.3]
+
+    def test_list_too_short_by_one_broadcasts_first(self) -> None:
+        result = _resolve_contribution([0.2, 0.8], 3)
+        assert result == [0.2, 0.2, 0.2]
+
+    def test_list_too_long_broadcasts_first(self) -> None:
+        result = _resolve_contribution([0.5, 0.6, 0.7], 2)
+        assert result == [0.5, 0.5]
+
+    def test_zero_threshold_broadcast(self) -> None:
+        assert _resolve_contribution(0.0, 2) == [0.0, 0.0]
+
+    def test_output_length_matches_n_labels(self) -> None:
+        for n in (1, 2, 5):
+            assert len(_resolve_contribution(0.5, n)) == n
+            assert len(_resolve_contribution([0.1, 0.2], n)) == n
+
+
+class TestResolveTopN:
+    def test_scalar_broadcast(self) -> None:
+        result = _resolve_top_n(3, 4)
+        assert result == [3, 3, 3, 3]
+
+    def test_scalar_single_label(self) -> None:
+        assert _resolve_top_n(5, 1) == [5]
+
+    def test_list_exact_length_returned_as_is(self) -> None:
+        counts = [2, 4, 6]
+        assert _resolve_top_n(counts, 3) == counts
+
+    def test_list_wrong_length_broadcasts_first(self) -> None:
+        result = _resolve_top_n([3, 7], 4)
+        assert result == [3, 3, 3, 3]
+
+    def test_list_too_short_by_one_broadcasts_first(self) -> None:
+        result = _resolve_top_n([6, 3], 3)
+        assert result == [6, 6, 6]
+
+    def test_list_too_long_broadcasts_first(self) -> None:
+        result = _resolve_top_n([2, 4, 8], 2)
+        assert result == [2, 2]
+
+    def test_output_length_matches_n_labels(self) -> None:
+        for n in (1, 2, 5):
+            assert len(_resolve_top_n(1, n)) == n
+            assert len(_resolve_top_n([1, 2], n)) == n
+
+    def test_output_values_are_ints(self) -> None:
+        for v in _resolve_top_n(4, 3):
+            assert isinstance(v, int)
+
+        for v in _resolve_top_n([2, 6], 2):
+            assert isinstance(v, int)
+
+
 class TestSelectByAoProjection:
     def test_returns_ndarray(self, h2_rhf) -> None:
         result = select_by_ao_projection(
@@ -236,7 +308,7 @@ class TestSelectByAoProjection:
         )
         assert len(high) <= len(low)
 
-    def test_top_n_limits_selection(self, h2_rhf) -> None:
+    def test_top_n_int_limits_selection(self, h2_rhf) -> None:
         result = select_by_ao_projection(
             mf=h2_rhf,
             ao_labels=["H 1s"],
@@ -244,6 +316,28 @@ class TestSelectByAoProjection:
             top_n=1,
         )
         assert len(result) <= 1
+
+    def test_top_n_list_limits_per_group(self, h2_rhf) -> None:
+        """top_n as a list must apply per-group caps — regression test for list bug."""
+        result = select_by_ao_projection(
+            mf=h2_rhf,
+            ao_labels=["H 1s", "H 1s"],
+            projected_basis="minao",
+            top_n=[1, 1],
+        )
+        # Each group picks at most 1 orbital; union is at most 2
+        assert len(result) <= 2
+
+    def test_top_n_list_does_not_return_all_orbitals(self, h2_rhf) -> None:
+        """Ensure the list-top_n bug (returning all MOs) does not regress."""
+        n_mo = h2_rhf.mo_coeff.shape[1]
+        result = select_by_ao_projection(
+            mf=h2_rhf,
+            ao_labels=["H 1s", "H 1s"],
+            projected_basis="minao",
+            top_n=[1, 1],
+        )
+        assert len(result) < n_mo
 
     def test_restricted_space_tuple(self, h2_rhf) -> None:
         """Tuple restricted_space (occ, virt) is combined internally."""
