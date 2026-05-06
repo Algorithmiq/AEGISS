@@ -587,12 +587,14 @@ def th_plots(
     fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf")
     plt.close(fig)
 
-def entanglement_diagrams(soe1: list[tuple[Any, Any]],
-                            minfo: np.ndarray,
-                            irreps: dict[int, str] = {0:'A'},
-                            folder: str = "./",
-                            filename: str = "entanglement_diagrams"
-                          )-> None:
+
+def entanglement_diagrams(
+    soe1: list[tuple[Any, Any]],
+    minfo: np.ndarray,
+    irreps: dict[int, str] | None = None,
+    folder: str = "./",
+    filename: str = "entanglement_diagrams",
+) -> None:
     """Plot entanglement diagrams for active and virtual orbitals.
 
     Each orbital is represented by an individual marker (different colors for different irreps).
@@ -614,7 +616,6 @@ def entanglement_diagrams(soe1: list[tuple[Any, Any]],
     filename: str, default "entanglement_diagrams"
         Base name of the output PDF file (without extension).
     """
-
     N = len(soe1)
     orb_indices = np.array([orb[0] for orb in soe1])
     soe_values = np.array([orb[1] for orb in soe1])
@@ -623,37 +624,71 @@ def entanglement_diagrams(soe1: list[tuple[Any, Any]],
     x = np.cos(angles)
     y = np.sin(angles)
 
-    if irreps != {}:
+    if irreps is not None:
         c = sns.color_palette("magma", n_colors=len(set(irreps.values())))
     else:
+        irreps = {0: "A"}
         c = sns.color_palette("magma", n_colors=1)
 
-    fig, ax  = plt.subplots(figsize=(6, 6))
-    ax.set_aspect('equal')
-    ax.axis('off')
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.set_aspect("equal")
+    ax.axis("off")
 
-    circle = plt.Circle((0, 0), 1, color='black', fill=False)
+    circle = plt.Circle((0, 0), 1, color="black", fill=False)
     ax.add_patch(circle)
 
     # mi thresholds
     mi_thresholds = [1e-1, 1e-2, 1e-3]
-    mi_linestyles = ['-', '--', ':']
+    mi_linestyles = ["-", "--", ":"]
     alphas = [0.9, 0.6, 0.3]
 
     for i in range(N):
         for j in range(i + 1, N):
             mi_value = minfo[i, j]
-            for thresh, ls, a in zip(mi_thresholds, mi_linestyles, alphas):
+            for thresh, ls, a in zip(
+                mi_thresholds, mi_linestyles, alphas, strict=False
+            ):
                 if mi_value >= thresh:
-                    ax.plot([x[i], x[j]], [y[i], y[j]], color='grey', linestyle=ls, alpha=a)
+                    ax.plot(
+                        [x[i], x[j]], [y[i], y[j]], color="grey", linestyle=ls, alpha=a
+                    )
                     break
     sizes = 300 * soe_values / np.max(soe_values)
-    ax.scatter(x, y, s=sizes, c=[c[irreps.get(idx, 0)] for idx in orb_indices], edgecolors='black', zorder=3, label='SOE')
+    ax.scatter(
+        x,
+        y,
+        s=sizes,
+        c=[c[irreps.get(idx, 0)] for idx in orb_indices],
+        edgecolors="black",
+        zorder=3,
+        label="SOE",
+    )
     for i in range(N):
-        ax.text(1.15*x[i], 1.15*y[i], str(orb_indices[i]), ha='center', va='center', fontsize=12, zorder=4)
-    handles=[plt.Line2D([0], [0], color='grey', linestyle=ls, label=f'MI ≥ {thresh}') for thresh, ls in zip(mi_thresholds, mi_linestyles)]
-    handles.append(plt.Line2D([0], [0], marker='o', color='w', label='SOE', markerfacecolor='black', markersize=10))
-    plt.legend(handles=handles, loc='upper right')
+        ax.text(
+            1.15 * x[i],
+            1.15 * y[i],
+            str(orb_indices[i]),
+            ha="center",
+            va="center",
+            fontsize=12,
+            zorder=4,
+        )
+    handles = [
+        plt.Line2D([0], [0], color="grey", linestyle=ls, label=f"MI ≥ {thresh}")
+        for thresh, ls in zip(mi_thresholds, mi_linestyles, strict=False)
+    ]
+    handles.append(
+        plt.Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="w",
+            label="SOE",
+            markerfacecolor="black",
+            markersize=10,
+        )
+    )
+    plt.legend(handles=handles, loc="upper right")
     fig.tight_layout()
     fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf", bbox_inches="tight")
     plt.close(fig)

@@ -12,7 +12,12 @@ from aegiss.active_space.ao_projection import select_by_ao_projection
 from aegiss.active_space.entropy_screening import select_by_entropy
 from aegiss.utils.dump_info import save_orbitals, save_orbitals_from_entropies
 from aegiss.utils.orbital_indices import get_subspaces_from_cas
-from aegiss.utils.plotting import plot_pie_contribution, soe_heatmap, th_plots
+from aegiss.utils.plotting import (
+    entanglement_diagrams,
+    plot_pie_contribution,
+    soe_heatmap,
+    th_plots,
+)
 from aegiss.wavefunction.dmrg import run_dmrg
 
 if TYPE_CHECKING:
@@ -30,6 +35,7 @@ def _make_soe_plots(
     active_orbs: np.ndarray,
     virt_orbs: np.ndarray,
     soe1: np.ndarray,
+    minfo: np.ndarray,
     saving_folder: str,
     saving_prefix: str,
 ) -> None:
@@ -66,6 +72,12 @@ def _make_soe_plots(
         occ_index=max(active_orbs) + 1,
         folder=saving_folder,
         filename=saving_prefix + "_TH_plot",
+    )
+    entanglement_diagrams(
+        soe1=tagged,
+        minfo=minfo,
+        folder=saving_folder,
+        filename=saving_prefix + "_entanglement_diagram",
     )
 
 
@@ -108,7 +120,7 @@ def select_aegiss(
     active_orbs, virt_orbs = get_subspaces_from_cas(
         mf, ncas=dmrg_config.ncas, nelecas=dmrg_config.nelecas
     )
-    _energy, soe1, _soe2, _minfo = run_dmrg(
+    _energy, soe1, _soe2, minfo = run_dmrg(
         mf,
         ncas=dmrg_config.ncas,
         nelecas=dmrg_config.nelecas,
@@ -116,12 +128,12 @@ def select_aegiss(
         init_bond_dim=dmrg_config.init_bond_dim,
         verbosity=dmrg_config.verbosity,
     )
-
-    if output_config.save_plots and soe1 is not None:
+    if output_config.save_plots and (soe1 is not None and minfo is not None):
         _make_soe_plots(
             active_orbs,
             virt_orbs,
             soe1,
+            minfo,
             output_config.saving_folder,
             output_config.saving_prefix,
         )
