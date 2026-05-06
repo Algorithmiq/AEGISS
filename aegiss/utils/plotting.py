@@ -627,7 +627,7 @@ def entanglement_diagrams(
     if irreps is not None:
         c = sns.color_palette("magma", n_colors=len(set(irreps.values())))
     else:
-        irreps = {0: "A"}
+        irreps = {0: "-"}
         c = sns.color_palette("magma", n_colors=1)
 
     fig, ax = plt.subplots(figsize=(6, 6))
@@ -653,7 +653,7 @@ def entanglement_diagrams(
                         [x[i], x[j]], [y[i], y[j]], color="grey", linestyle=ls, alpha=a
                     )
                     break
-    sizes = 300 * soe_values / np.max(soe_values)
+    sizes = 300 * (soe_values / np.max(soe_values))
     ax.scatter(
         x,
         y,
@@ -684,7 +684,7 @@ def entanglement_diagrams(
                 [0],
                 marker="o",
                 color="w",
-                label=f"Irrep {irrep}",
+                label=f"SOE ({irrep})",
                 markerfacecolor=color,
                 markersize=10,
             )
@@ -692,4 +692,5 @@ def entanglement_diagrams(
     plt.legend(handles=handles, loc="upper right")
     fig.tight_layout()
     fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf", bbox_inches="tight")
+    logger.info("Entanglement diagram saved as %s.pdf", filename)
     plt.close(fig)
