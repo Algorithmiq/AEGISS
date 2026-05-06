@@ -124,7 +124,7 @@ class TestRefinementSchedule:
         assert isinstance(th, list)
 
     def test_lengths_match_n_sweeps(self) -> None:
-        for n in (1, 4, 10):
+        for n in (4, 10, 20):
             bd, ns, th = _refinement_schedule(n, 50)
             assert len(bd) == n
             assert len(ns) == n
@@ -134,9 +134,11 @@ class TestRefinementSchedule:
         bd, _, _ = _refinement_schedule(4, 200)
         assert all(d == 200 for d in bd)
 
-    def test_noises_all_zero(self) -> None:
+    def test_noises_all_min(self) -> None:
         _, ns, _ = _refinement_schedule(4, 100)
-        assert all(n == 0.0 for n in ns)
+        assert ns[:4] == [1e-5] * 4
+        for n in ns[4:]:
+            assert n == 0.0
 
     def test_thrds_all_tight(self) -> None:
         _, _, th = _refinement_schedule(4, 100)

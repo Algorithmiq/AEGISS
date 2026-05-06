@@ -115,7 +115,7 @@ class TestDMRGConfig:
 
     def test_n_refinement_sweeps_default(self) -> None:
         cfg = DMRGConfig(ncas=4, nelecas=4)
-        assert cfg.n_refinement_sweeps == 4
+        assert cfg.n_refinement_sweeps == 8
 
     def test_n_refinement_sweeps_zero_valid(self) -> None:
         cfg = DMRGConfig(ncas=4, nelecas=4, n_refinement_sweeps=0)
