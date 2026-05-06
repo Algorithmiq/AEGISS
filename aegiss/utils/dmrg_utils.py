@@ -78,6 +78,33 @@ def _default_dmrg_schedule(
     return bond_dims, noises, thrds
 
 
+def _refinement_schedule(
+    n_sweeps: int,
+    bond_dim: int,
+) -> tuple[list[int], list[float], list[float]]:
+    """Build a fixed-bond-dim, zero-noise schedule for state-specific refinement.
+
+    Parameters
+    ----------
+    n_sweeps : int
+        Number of refinement sweeps (must be positive).
+    bond_dim : int
+        Bond dimension to hold constant throughout (typically the final SA bond dim).
+
+    Returns:
+    -------
+    bond_dims : list of int
+    noises : list of float
+    thrds : list of float
+    """
+    if n_sweeps <= 0:
+        raise ValueError("n_sweeps must be a positive integer")
+    if bond_dim <= 0:
+        raise ValueError("bond_dim must be a positive integer")
+    noises = [1e-5] * (4) + [0.0] * (n_sweeps - 4)
+    return [bond_dim] * n_sweeps, noises, [1e-10] * n_sweeps
+
+
 def compute_qmi(
     driver: DMRGDriver,
     ket: Any,
@@ -89,7 +116,8 @@ def compute_qmi(
     driver : DMRGDriver
         Block2 DMRG driver after a completed calculation.
     ket : MPS
-        Many-particle state (MPS) from which entropies are extracted.
+        Single-root MPS from which entropies are extracted.  For multi-root
+        MPS, split individual roots first via ``driver.split_mps``.
 
     Returns:
     -------
