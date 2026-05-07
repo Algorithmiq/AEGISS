@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, assert_never
+from typing import Literal
 
 
 def _helper_contributions(
@@ -91,7 +91,7 @@ def _valid_ao_label(label: str | list[str]) -> bool:
     if isinstance(label, list):
         return bool(label) and all(isinstance(s, str) and s for s in label)
 
-    assert_never(label)  # This should never be reached if type checking is correct
+    return False
 
 
 @dataclass(frozen=True)
