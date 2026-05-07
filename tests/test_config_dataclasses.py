@@ -105,9 +105,21 @@ class TestEntropyConfig:
         with pytest.raises(ValueError, match="fraction_type"):
             EntropyConfig(fraction_type="x")  # type: ignore[arg-type]
 
+    def test_invalid_empty_fraction_raises(self) -> None:
+        with pytest.raises(ValueError, match="fraction"):
+            EntropyConfig(fraction="")  # type: ignore[arg-type]
+
+    def test_invalid_fraction_type_empty_raises(self) -> None:
+        with pytest.raises(ValueError, match="fraction_type"):
+            EntropyConfig(fraction_type="")  # type: ignore[arg-type]
+
     def test_invalid_ranking_raises(self) -> None:
         with pytest.raises(ValueError, match="ranking"):
             EntropyConfig(ranking="invalid")  # type: ignore[arg-type]
+
+    def test_invalid_empty_ranking_raises(self) -> None:
+        with pytest.raises(ValueError, match="ranking"):
+            EntropyConfig(ranking="")  # type: ignore[arg-type]
 
     def test_global_ranking_valid(self) -> None:
         cfg = EntropyConfig(ranking="global")
@@ -115,7 +127,7 @@ class TestEntropyConfig:
 
 
 class TestProjectionConfig:
-    def test_valid_config(self) -> None:
+    def test_valid_config_defaults(self) -> None:
         cfg = ProjectionConfig(ao_labels=["C 2pz"])
         assert cfg.ao_labels == ["C 2pz"]
         assert cfg.basis == "minao"
@@ -123,6 +135,54 @@ class TestProjectionConfig:
         assert cfg.contribution_type == "a"
         assert cfg.top_n is None
         assert cfg.ranking == "subset"
+
+    def test_valid_config_all_fields(self) -> None:
+        cfg = ProjectionConfig(
+            ao_labels=["C 2pz", "Fe 3d"],
+            basis="ccpvdz",
+            contribution=[0.3, 0.5],
+            contribution_type="r",
+            top_n=5,
+            ranking="global",
+        )
+        assert cfg.ao_labels == ["C 2pz", "Fe 3d"]
+        assert cfg.basis == "ccpvdz"
+        assert cfg.contribution == [0.3, 0.5]
+        assert cfg.contribution_type == "r"
+        assert cfg.top_n == 5
+        assert cfg.ranking == "global"
+
+    def test_ao_labels_non_string_raises(self) -> None:
+        with pytest.raises(ValueError, match="ao_labels"):
+            ProjectionConfig(ao_labels=["C 2pz", 123])  # type: ignore[list-item]
+
+    def test_ao_labels_empty_string_raises(self) -> None:
+        with pytest.raises(ValueError, match="ao_labels"):
+            ProjectionConfig(ao_labels=["C 2pz", ""])  # type: ignore[list-item]
+
+    def test_ao_labels_non_string_inner_list_raises(self) -> None:
+        with pytest.raises(ValueError, match="ao_labels"):
+            ProjectionConfig(ao_labels=[["C 2pz", 123]])  # type: ignore[list-item]
+
+    def test_ao_labels_empty_inner_list_raises(self) -> None:
+        with pytest.raises(ValueError, match="ao_labels"):
+            ProjectionConfig(ao_labels=[[]])  # type: ignore[list-item]
+
+    def test_ao_labels_non_string_grouped_entry_raises(self) -> None:
+        with pytest.raises(ValueError, match="ao_labels"):
+            ProjectionConfig(ao_labels=["C 2pz", ["C 2px", 123]])  # type: ignore[list-item]
+
+    def test_ao_labels_empty_grouped_entry_raises(self) -> None:
+        with pytest.raises(ValueError, match="ao_labels"):
+            ProjectionConfig(ao_labels=["C 2pz", []])  # type: ignore[list-item]
+
+    def test_ao_labels_empty_inner_grouped_entry_raises(self) -> None:
+        with pytest.raises(ValueError, match="ao_labels"):
+            ProjectionConfig(ao_labels=["C 2pz", ["C 2px", []]])  # type: ignore[list-item]
+
+    def test_ao_labels_non_list_raises(self) -> None:
+        with pytest.raises(ValueError, match="ao_labels"):
+            ProjectionConfig(ao_labels="C 2pz")  # type: ignore[arg-type]
 
     def test_empty_ao_labels_raises(self) -> None:
         with pytest.raises(ValueError, match="ao_labels"):
@@ -207,14 +267,6 @@ class TestProjectionConfig:
     def test_all_grouped_ao_labels_valid(self) -> None:
         cfg = ProjectionConfig(ao_labels=[["C 2pz", "C 2px"], ["Fe 3d", "Fe 4d"]])
         assert len(cfg.ao_labels) == 2
-
-    def test_empty_inner_list_raises(self) -> None:
-        with pytest.raises(ValueError, match="ao_labels"):
-            ProjectionConfig(ao_labels=[[]])  # type: ignore[list-item]
-
-    def test_non_string_inner_list_raises(self) -> None:
-        with pytest.raises(ValueError, match="ao_labels"):
-            ProjectionConfig(ao_labels=[["C 2pz", 123]])  # type: ignore[list-item]
 
 
 class TestOutputConfig:
