@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
 from unittest.mock import patch
 
 import numpy as np
@@ -14,6 +15,87 @@ from aegiss.active_space.ao_projection import (
     select_by_ao_projection,
     select_by_label,
 )
+
+
+class TestComputeContributionValues:
+    """Pin AO-projection weights against reference values to catch pyscf version regressions.
+
+    Each case: (fixture_name, label, sec_basis, expected_weights_by_mo_index)
+    expected_weights are sorted by MO index (ascending) and represent absolute contributions.
+    Tolerance is 1e-6; values were generated with the project's pinned pyscf version.
+    """
+
+    _CASES: ClassVar = [
+        # He atom — single 1s MO, minao projection
+        ("he_rhf", "He 1s", "minao", [0.99832646]),
+        # Be atom — 5 MOs (1s, 2s, 2px, 2py, 2pz), minao projection
+        ("be_rhf", "Be 1s", "minao", [0.99968735, 0.00548893, 0.0, 0.0, 0.0]),
+        ("be_rhf", "Be 2s", "minao", [0.00760731, 0.98117295, 0.0, 0.0, 0.0]),
+        # Ne atom — 5 MOs, minao projection
+        ("ne_rhf", "Ne 2s", "minao", [0.00229484, 0.99861592, 0.0, 0.0, 0.0]),
+        ("ne_rhf", "Ne 2p", "minao", [0.0, 0.0, 0.98561349, 0.98561349, 0.98561349]),
+        # C atom sto-3g (triplet UHF, alpha MOs), minao projection
+        ("c_sto3g_uhf", "C 2s", "minao", [0.00785568, 0.99672716, 0.0, 0.0, 0.0]),
+        (
+            "c_sto3g_uhf",
+            "C 2p",
+            "minao",
+            [0.0, 0.0, 0.98159831, 0.98159831, 0.98159831],
+        ),
+        # O atom sto-3g (triplet UHF, alpha MOs), minao projection
+        (
+            "o_sto3g_uhf",
+            "O 2p",
+            "minao",
+            [0.0, 0.0, 0.98750841, 0.98750841, 0.98750841],
+        ),
+        # C atom 6-31g (triplet UHF, alpha MOs), minao projection — tests larger basis
+        (
+            "c_631g_uhf",
+            "C 2s",
+            "minao",
+            [0.00227608, 0.99950094, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02449524, 0.0],
+        ),
+        (
+            "c_631g_uhf",
+            "C 2p",
+            "minao",
+            [
+                0.0,
+                0.0,
+                1.14329538,
+                1.5059982,
+                1.48543425,
+                0.02403327,
+                0.01814655,
+                0.0,
+                0.23160597,
+            ],
+        ),
+        # No secondary basis (projection onto molecule's own AOs)
+        ("he_rhf", "He 1s", None, [1.0]),
+        ("be_rhf", "Be 2s", None, [0.28381188, 0.95887998, 0.0, 0.0, 0.0]),
+    ]
+
+    @pytest.mark.parametrize(("fixture_name", "label", "sec_basis", "expected"), _CASES)
+    def test_weight_values(
+        self, request, fixture_name, label, sec_basis, expected
+    ) -> None:
+        mf = request.getfixturevalue(fixture_name)
+        mo = mf.mo_coeff if mf.mo_coeff.ndim == 2 else mf.mo_coeff[0]
+        n_mo = mo.shape[1]
+        space = [(i, 0.0) for i in range(n_mo)]
+        _, all_weights = _compute_contribution(
+            mf=mf,
+            label=label,
+            full_mo_coeff=mo,
+            reduced_space_indices=space,
+            contribution=0.0,
+            contribution_type="a",
+            secondary_basis=sec_basis,
+        )
+        weights = [w for _, w in sorted(all_weights, key=lambda x: x[0])]
+        assert weights == pytest.approx(expected, abs=1e-6)
 
 
 class TestComputeContribution:

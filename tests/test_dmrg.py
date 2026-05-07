@@ -32,7 +32,9 @@ def mocked_run_dmrg():
         patch(
             "aegiss.wavefunction.dmrg.DMRGDriver", return_value=mock_driver
         ) as MockDriver,
-        patch("aegiss.wavefunction.dmrg.mcscf.CASCI", return_value=mock_casci),
+        patch(
+            "aegiss.wavefunction.dmrg.mcscf.CASCI", return_value=mock_casci
+        ) as MockCASCI,
         patch(
             "aegiss.wavefunction.dmrg.ao2mo.restore",
             return_value=np.zeros((2, 2, 2, 2)),
@@ -46,12 +48,57 @@ def mocked_run_dmrg():
         yield {
             "driver": mock_driver,
             "MockDriver": MockDriver,
+            "MockCASCI": MockCASCI,
+            "casci": mock_casci,
             "compute_qmi": mock_qmi,
             "energy": fake_energy,
             "soe1": soe1,
             "soe2": soe2,
             "minfo": minfo,
         }
+
+
+class TestRunDmrgSetup:
+    """Tests for the integral-fetching setup that runs before the DMRG sweep."""
+
+    def test_casci_called_with_mf_ncas_nelecas(self, h2_rhf, mocked_run_dmrg) -> None:
+        run_dmrg(mf=h2_rhf, ncas=2, nelecas=2, symm_type="SZ", get_qmi=False)
+        mocked_run_dmrg["MockCASCI"].assert_called_once_with(h2_rhf, 2, 2)
+
+    def test_h1eff_fetched_from_casci(self, mocked_run_dmrg) -> None:
+        run_dmrg(mf=None, ncas=2, nelecas=2, symm_type="SZ", get_qmi=False)
+        mocked_run_dmrg["casci"].get_h1eff.assert_called_once()
+
+    def test_h2eff_fetched_from_casci(self, mocked_run_dmrg) -> None:
+        run_dmrg(mf=None, ncas=2, nelecas=2, symm_type="SZ", get_qmi=False)
+        mocked_run_dmrg["casci"].get_h2eff.assert_called_once()
+
+    def test_initialize_system_n_sites_matches_ncas(self, mocked_run_dmrg) -> None:
+        run_dmrg(mf=None, ncas=3, nelecas=2, symm_type="SZ", get_qmi=False)
+        call_kwargs = (
+            mocked_run_dmrg["driver"].initialize_system.call_args_list[0].kwargs
+        )
+        assert call_kwargs["n_sites"] == 3
+
+    def test_initialize_system_nelec_derived_from_resolve_nelecas(
+        self, mocked_run_dmrg
+    ) -> None:
+        # resolve_nelecas is mocked to return (1, 1) → n_elec = 1 + 1 = 2
+        run_dmrg(mf=None, ncas=2, nelecas=2, symm_type="SZ", get_qmi=False)
+        call_kwargs = (
+            mocked_run_dmrg["driver"].initialize_system.call_args_list[0].kwargs
+        )
+        assert call_kwargs["n_elec"] == 2
+
+    def test_initialize_system_spin_derived_from_resolve_nelecas(
+        self, mocked_run_dmrg
+    ) -> None:
+        # resolve_nelecas is mocked to return (1, 1) → spin = 1 - 1 = 0
+        run_dmrg(mf=None, ncas=2, nelecas=2, symm_type="SZ", get_qmi=False)
+        call_kwargs = (
+            mocked_run_dmrg["driver"].initialize_system.call_args_list[0].kwargs
+        )
+        assert call_kwargs["spin"] == 0
 
 
 class TestRunDmrgSymmTypeValidation:
@@ -73,6 +120,7 @@ class TestRunDmrgBehavior:
         e, *_ = run_dmrg(mf=None, ncas=2, nelecas=2, symm_type="SZ", get_qmi=False)
         assert e == mocked_run_dmrg["energy"]
 
+    @pytest.mark.usefixtures("mocked_run_dmrg")
     def test_sz_get_qmi_false_returns_nones(self) -> None:
         _, s1, s2, mi = run_dmrg(
             mf=None, ncas=2, nelecas=2, symm_type="SZ", get_qmi=False
@@ -97,6 +145,7 @@ class TestRunDmrgBehavior:
         run_dmrg(mf=None, ncas=2, nelecas=2, symm_type="SZ", get_qmi=False)
         mocked_run_dmrg["compute_qmi"].assert_not_called()
 
+    @pytest.mark.usefixtures("mocked_run_dmrg")
     def test_su2_get_qmi_false_returns_nones(self) -> None:
         _, s1, s2, mi = run_dmrg(
             mf=None, ncas=2, nelecas=2, symm_type="SU2", get_qmi=False
