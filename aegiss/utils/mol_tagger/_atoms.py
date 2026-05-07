@@ -157,6 +157,47 @@ def detect_bonds(atoms: ase.atoms.Atoms) -> list[tuple[int, int]]:
     return bonds
 
 
+def align_selection_to_xy(
+    pos: np.ndarray, indices: list[int]
+) -> tuple[np.ndarray, bool]:
+    """Rotate all positions so the best-fit plane of *indices* lies in the XY plane.
+
+    Uses SVD to find the plane normal of the selected atoms, then builds a
+    rotation matrix (Rodrigues formula) mapping that normal to Z.  The whole
+    molecule is rotated about its centroid so the overall position is stable.
+
+    Args:
+        pos: All atomic positions, shape ``(n, 3)``.
+        indices: Atom indices whose best-fit plane to align.
+
+    Returns:
+        new_pos: Rotated positions, shape ``(n, 3)``.
+        ok: ``False`` if *indices* has fewer than 3 atoms or they are collinear.
+    """
+    if len(indices) < 3:
+        return pos, False
+    sel = pos[indices]
+    centered = sel - sel.mean(axis=0)
+    _, s, vt = np.linalg.svd(centered, full_matrices=False)
+    if s[1] < 1e-10:
+        return pos, False
+    normal = vt[2] / np.linalg.norm(vt[2])
+    z = np.array([0.0, 0.0, 1.0])
+    dot = float(np.clip(np.dot(normal, z), -1.0, 1.0))
+    if abs(dot - 1.0) < 1e-9:
+        return pos.copy(), True
+    if abs(dot + 1.0) < 1e-9:
+        R: np.ndarray = np.diag([1.0, -1.0, -1.0])
+    else:
+        ax = np.cross(normal, z)
+        ax = ax / np.linalg.norm(ax)
+        sin_a = float(np.sqrt(max(0.0, 1.0 - dot * dot)))
+        K = np.array([[0.0, -ax[2], ax[1]], [ax[2], 0.0, -ax[0]], [-ax[1], ax[0], 0.0]])
+        R = np.eye(3) + sin_a * K + (1.0 - dot) * (K @ K)
+    centroid = pos.mean(axis=0)
+    return (pos - centroid) @ R.T + centroid, True
+
+
 def load_xyz(filepath: str | Path) -> tuple[Atoms, dict[int, str]]:
     """Read an XYZ file and recover any embedded ``Element.N`` tags.
 

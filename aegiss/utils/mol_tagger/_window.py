@@ -9,6 +9,7 @@ from typing import Any
 import numpy as np
 from pyvistaqt import QtInteractor
 from qtpy.QtCore import QEvent, QObject, Qt
+from qtpy.QtGui import QKeySequence
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -22,6 +23,7 @@ from qtpy.QtWidgets import (
     QListWidgetItem,
     QMainWindow,
     QPushButton,
+    QShortcut,
     QSplitter,
     QTextEdit,
     QVBoxLayout,
@@ -30,7 +32,12 @@ from qtpy.QtWidgets import (
 from vtkmodules.vtkRenderingCore import vtkPropPicker
 
 from aegiss.utils.mol_tagger._ao_suggest import suggest_ao_labels
-from aegiss.utils.mol_tagger._atoms import detect_bonds, get_basis, load_xyz
+from aegiss.utils.mol_tagger._atoms import (
+    align_selection_to_xy,
+    detect_bonds,
+    get_basis,
+    load_xyz,
+)
 from aegiss.utils.mol_tagger._constants import DARK_STYLE, DRAG_THRESHOLD_SQ
 from aegiss.utils.mol_tagger._renderer import MolRenderer
 
@@ -86,6 +93,7 @@ class MolViewWindow(QMainWindow):
         self.nums: np.ndarray = self.atoms.get_atomic_numbers()
         self.pos: np.ndarray = self.atoms.get_positions()
         self.selected: set[int] = set()
+        self._pos_history: list[np.ndarray] = []
 
         self.setWindowTitle(f"AEGISS > MolTagger — {Path(xyz_path).name}")
         self.resize(1100, 700)
@@ -122,6 +130,8 @@ class MolViewWindow(QMainWindow):
         splitter.addWidget(self._make_sidebar())
         splitter.setSizes([800, 290])
 
+        QShortcut(QKeySequence("Ctrl+Z"), self).activated.connect(self._undo_geometry)
+
     def _make_header(self) -> QWidget:
         """Build the top header bar."""
         header = QWidget()
@@ -152,6 +162,7 @@ class MolViewWindow(QMainWindow):
         sl.addWidget(self._make_tag_panel())
         sl.addWidget(self._make_orbital_panel())
         sl.addWidget(self._make_ao_label_panel())
+        sl.addWidget(self._make_geometry_panel())
         sl.addWidget(self._make_export_panel())
         sl.addStretch()
         return sidebar
@@ -444,6 +455,64 @@ class MolViewWindow(QMainWindow):
         if text and text != "[]":
             QApplication.clipboard().setText(text)
             self.ao_info_label.setText("copied!")
+
+    # ------------------------------------------------------------------
+    # Geometry
+    # ------------------------------------------------------------------
+
+    def _make_geometry_panel(self) -> QGroupBox:
+        """Build the geometry-transformation panel."""
+        grp = QGroupBox("Geometry")
+        layout = QVBoxLayout(grp)
+        btn_align = QPushButton("Align Selection Plane → XY")
+        btn_align.setToolTip(
+            "Rotate the entire molecule so the best-fit plane of\n"
+            "the selected atoms lies in the XY plane (normal → Z).\n"
+            "Requires ≥ 3 selected atoms.  Ctrl+Z to undo."
+        )
+        btn_align.clicked.connect(self._align_to_plane)
+        layout.addWidget(btn_align)
+        self.geom_status = QLabel("")
+        self.geom_status.setObjectName("status")
+        self.geom_status.setWordWrap(True)
+        layout.addWidget(self.geom_status)
+        return grp
+
+    def _align_to_plane(self) -> None:
+        """Rotate the molecule so the best-fit plane of the selection is the XY plane."""
+        if len(self.selected) < 3:
+            self.geom_status.setText("Select ≥ 3 atoms to define a plane.")
+            return
+        indices = sorted(self.selected)
+        new_pos, ok = align_selection_to_xy(self.pos, indices)
+        if not ok:
+            self.geom_status.setText(
+                "Selected atoms are collinear; cannot define a plane."
+            )
+            return
+        self._pos_history.append(self.pos.copy())
+        self.pos = new_pos
+        self._renderer.pos = new_pos
+        self._renderer.render_all(self.selected)
+        self._refresh_list_labels()
+        n = len(self._pos_history)
+        self.geom_status.setText(f"Aligned. Ctrl+Z to undo ({n} step(s) in history).")
+        logger.info("Aligned %d selected atoms to XY plane", len(indices))
+
+    def _undo_geometry(self) -> None:
+        """Restore the previous geometry from the undo history."""
+        if not self._pos_history:
+            self.geom_status.setText("Nothing to undo.")
+            return
+        self.pos = self._pos_history.pop()
+        self._renderer.pos = self.pos
+        self._renderer.render_all(self.selected)
+        self._refresh_list_labels()
+        n = len(self._pos_history)
+        self.geom_status.setText(
+            f"Undone. {n} step(s) remaining." if n else "Geometry restored to original."
+        )
+        logger.info("Undo geometry alignment: %d steps remaining", n)
 
     # ------------------------------------------------------------------
     # Export
