@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, assert_never
 
 
 def _helper_contributions(
@@ -72,6 +72,28 @@ def _helper_top_n(top_n: int | list[int]) -> None:
         )
 
 
+def _valid_ao_label(label: str | list[str]) -> bool:
+    """Helper function to validate AO labels.
+
+    Parameters:
+    ----------
+    label : str or list[str]
+        The AO label to validate, which can be a single string or a list of strings.
+
+    Returns:
+    -------
+    bool
+        True if the label is valid (non-empty string or non-empty list of non-empty strings), False otherwise.
+    """
+    if isinstance(label, str):
+        return bool(label)
+
+    if isinstance(label, list):
+        return bool(label) and all(isinstance(s, str) and s for s in label)
+
+    assert_never(label)  # This should never be reached if type checking is correct
+
+
 @dataclass(frozen=True)
 class ProjectionConfig:
     """Configuration dataclass for orbital selection based on atomic orbital projection.
@@ -116,14 +138,15 @@ class ProjectionConfig:
         ValueError
             If any of the parameters are out of their expected ranges or have invalid values.
         """
-        if not self.ao_labels or not all(
-            isinstance(label, str)
-            or (
-                isinstance(label, list)
-                and label
-                and all(isinstance(s, str) for s in label)
-            )
-            for label in self.ao_labels
+        if not isinstance(self.ao_labels, list):
+            raise ValueError("ProjectionConfig: `ao_labels` must be a non-empty list.")
+        if len(self.ao_labels) == 0:
+            raise ValueError("ProjectionConfig: `ao_labels` must be a non-empty list.")
+
+        if not (
+            isinstance(self.ao_labels, list)
+            and self.ao_labels
+            and all(_valid_ao_label(label) for label in self.ao_labels)
         ):
             raise ValueError(
                 "ProjectionConfig: `ao_labels` must be a non-empty list where each "
