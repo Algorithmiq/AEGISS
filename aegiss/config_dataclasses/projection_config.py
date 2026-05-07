@@ -88,10 +88,7 @@ def _valid_ao_label(label: str | list[str]) -> bool:
     if isinstance(label, str):
         return bool(label)
 
-    if isinstance(label, list):
-        return bool(label) and all(isinstance(s, str) and s for s in label)
-
-    return False
+    return bool(label) and all(label)
 
 
 @dataclass(frozen=True)
