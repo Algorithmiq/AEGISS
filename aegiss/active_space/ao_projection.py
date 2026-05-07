@@ -197,7 +197,6 @@ def _resolve_space(
 def _resolve_contribution(
     contribution: float | list[float],
     n_labels: int,
-    top_n: int | list[int] | None,
 ) -> list[float]:
     """Helper function to resolve contribution thresholds for AO projection selection.
 
@@ -208,28 +207,12 @@ def _resolve_contribution(
         A single float applies to all labels; a list specifies per-label thresholds.
     n_labels : int
         Number of AO labels being considered for selection.
-    top_n : int or list of int or None
-        If specified, selects the top N orbitals per label instead of using contribution thresholds.
-        A single int applies to all labels; a list specifies per-label counts.
-        If None, uses contribution thresholds for selection.
 
     Returns:
     -------
     resolved_contribution : list of float
         List of contribution thresholds for each AO label, resolved based on the input parameters.
     """
-    if top_n is not None:
-        logger.info(
-            "Selecting top orbitals based on contribution. Ignoring contribution threshold."
-        )
-        if isinstance(contribution, list):
-            logger.info(
-                "Warning: contribution is a list but top_n is specified."
-                " Ignoring contribution thresholds and using top_n for selection."
-            )
-            return [0.0] * n_labels
-        return [0.0] * n_labels
-
     if isinstance(contribution, list):
         logger.info(
             "\nSelecting orbitals based on contribution thresholds per AO label: %s",
@@ -247,6 +230,44 @@ def _resolve_contribution(
         contribution,
     )
     return [contribution] * n_labels
+
+
+def _resolve_top_n(
+    top_n: int | list[int],
+    n_labels: int,
+) -> list[int]:
+    """Helper function to resolve the number of top orbitals to select per AO label.
+
+    Parameters:
+    ----------
+    top_n : int, list of int
+        Number of top orbitals to select per AO label. A single int applies to all labels;
+        a list specifies per-label counts.
+    n_labels : int
+        Number of AO labels being considered for selection.
+
+    Returns:
+    -------
+    resolved_top_n : list of int
+        List of top-N counts for each AO label, one entry per label.
+    """
+    if isinstance(top_n, list):
+        logger.info(
+            "\nSelecting orbitals based on top-N counts per AO label: %s",
+            top_n,
+        )
+        if len(top_n) != n_labels:
+            logger.info(
+                "Warning: Length of top-N list does not match number of AO labels. "
+                "Using the first top-N value for all labels."
+            )
+            return [top_n[0]] * n_labels
+        return top_n
+    logger.info(
+        "\nSelecting orbitals based on a single top-N count for all AO labels: %s",
+        top_n,
+    )
+    return [top_n] * n_labels
 
 
 def select_by_ao_projection(
@@ -299,14 +320,20 @@ def select_by_ao_projection(
     """
     logger.info("----------------AO Projection Screening for AEGISS----------------\n")
     logger.info("AO labels for projection: %s", ao_labels)
-    if contribution is not None:
-        logger.info("Contribution threshold: %s", contribution)
-        logger.info("Contribution type: %s", contribution_type)
+
+    logger.info("Contribution threshold: %s", contribution)
+    logger.info("Contribution type: %s", contribution_type)
+
     if top_n is not None:
         logger.info("Top N orbitals to select: %s", top_n)
 
     space = _resolve_space(mf, restricted_space)
-    resolved_contribution = _resolve_contribution(contribution, len(ao_labels), top_n)
+    resolved_contribution = _resolve_contribution(contribution, len(ao_labels))
+    if top_n is not None:
+        resolved_top_n = _resolve_top_n(top_n, len(ao_labels))
+        resolved_contribution = [0.0] * len(
+            ao_labels
+        )  # Override contribution thresholds if top-N is specified
 
     if projected_basis is not None:
         logger.info("Using projected basis for AO projection: %s", projected_basis)
@@ -326,8 +353,10 @@ def select_by_ao_projection(
             contribution=resolved_contribution[loop_idx],
             contribution_type=contribution_type,
         )
-        if top_n is not None and isinstance(top_n, int):
-            selected_indices_for_label = selected_indices_for_label[:top_n]
+        if top_n is not None:
+            selected_indices_for_label = selected_indices_for_label[
+                : resolved_top_n[loop_idx]
+            ]
         selected_indices.update(orb_idx for orb_idx, _ in selected_indices_for_label)
         if save_path is not None:
             projected_total_weights[loop_idx] = projected_weights
