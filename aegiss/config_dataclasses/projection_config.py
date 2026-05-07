@@ -72,7 +72,7 @@ def _helper_top_n(top_n: int | list[int]) -> None:
         )
 
 
-def _valid_ao_label(label: str | list[str]) -> bool:
+def _valid_ao_label(label: object) -> bool:
     """Helper function to validate AO labels.
 
     Parameters:
@@ -88,7 +88,10 @@ def _valid_ao_label(label: str | list[str]) -> bool:
     if isinstance(label, str):
         return bool(label)
 
-    return bool(label) and all(label)
+    if isinstance(label, list):
+        return bool(label) and all(isinstance(s, str) and bool(s) for s in label)
+
+    return False
 
 
 @dataclass(frozen=True)
