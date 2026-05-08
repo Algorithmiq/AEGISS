@@ -33,6 +33,12 @@ _Z_P3: int = 18  # Ar  — last period-3 element
 _Z_P4: int = 36  # Kr  — last period-4 element
 _Z_P5: int = 54  # Xe  — last period-5 element
 
+# Internal atom record: (atom_index, atomic_number, base_symbol, label_prefix)
+# label_prefix is the tag string (e.g. "C.1") when the atom is tagged, else the
+# bare symbol (e.g. "C").  base_symbol is always the chemical element and is
+# used for valence-number look-ups.
+_Atom = tuple[int, int, str, str]
+
 
 def _valence_n(sym: str) -> int:
     """Return the principal quantum number of the valence p/s shell for *sym*.
@@ -80,18 +86,42 @@ def _pi_axis(org_pos: np.ndarray) -> tuple[str, float]:
     return ["x", "y", "z"][int(np.argmax(np.abs(normal)))], score
 
 
+def _unique_pairs(atoms: list[_Atom]) -> list[tuple[str, str]]:
+    """Return sorted unique (label_prefix, base_symbol) pairs from *atoms*.
+
+    Deduplication is by label_prefix; alphabetical sort ensures a stable,
+    consistent ordering regardless of atom-index order in the selection.
+
+    Args:
+        atoms: List of ``(atom_index, Z, base_symbol, label_prefix)`` records.
+
+    Returns:
+        Sorted list of ``(label_prefix, base_symbol)`` pairs.
+    """
+    seen: dict[str, str] = {}
+    for _, _, sym, label in atoms:
+        if label not in seen:
+            seen[label] = sym
+    return sorted(seen.items())
+
+
 def suggest_ao_labels(
     nums: np.ndarray,
     syms: list[str],
     pos: np.ndarray,
     selected: set[int],
     character: str,
+    tags: dict[int, str] | None = None,
 ) -> tuple[list[str], str | None, str]:
     """Suggest PySCF-compatible ``ao_labels`` strings for the selected atoms.
 
     Classifies each selected atom as a transition metal or a main-group element
     and applies the appropriate orbital selection rule for the requested
     *character* mode.
+
+    When *tags* is provided, tagged atoms use their tag string (e.g. ``"C.1"``)
+    as the label prefix instead of the bare element symbol, so the output
+    distinguishes symmetry-inequivalent atoms that carry different tags.
 
     Args:
         nums: Atomic numbers, shape ``(n_atoms,)``.
@@ -100,6 +130,8 @@ def suggest_ao_labels(
         selected: Indices of currently selected atoms.
         character: One of ``"auto"`` (pi + d-shell auto), ``"d-shell"``,
             ``"sigma"``, or ``"custom"``.
+        tags: Optional mapping from atom index to tag string (e.g. ``"C.1"``).
+            Untagged atoms fall back to their bare chemical symbol.
 
     Returns:
         labels: Ready-to-use ``ao_labels`` strings for ``ProjectionConfig``.
@@ -111,15 +143,21 @@ def suggest_ao_labels(
     if character == "custom":
         return [], None, "Enter labels manually."
 
+    _tags: dict[int, str] = tags or {}
     sel = sorted(selected)
     sel_nums = [int(nums[i]) for i in sel]
     sel_syms = [syms[i] for i in sel]
+    sel_labels = [_tags.get(i, syms[i]) for i in sel]
 
-    metals: list[tuple[int, int, str]] = [
-        (sel[k], Z, sel_syms[k]) for k, Z in enumerate(sel_nums) if Z in _D_SHELL
+    metals: list[_Atom] = [
+        (sel[k], Z, sel_syms[k], sel_labels[k])
+        for k, Z in enumerate(sel_nums)
+        if Z in _D_SHELL
     ]
-    organics: list[tuple[int, int, str]] = [
-        (sel[k], Z, sel_syms[k]) for k, Z in enumerate(sel_nums) if Z not in _D_SHELL
+    organics: list[_Atom] = [
+        (sel[k], Z, sel_syms[k], sel_labels[k])
+        for k, Z in enumerate(sel_nums)
+        if Z not in _D_SHELL
     ]
 
     if character == "d-shell":
@@ -129,15 +167,60 @@ def suggest_ao_labels(
     return _pi_labels(metals, organics, pos)
 
 
+def _collect_s_labels(pairs: list[tuple[str, str]], seen: set[str]) -> list[str]:
+    """Collect ``ns`` labels for *pairs*, skipping duplicates already in *seen*.
+
+    Args:
+        pairs: ``(label_prefix, base_symbol)`` pairs for unique atom identifiers.
+        seen: Already-used label set; updated in place to avoid duplicates.
+
+    Returns:
+        New ``"prefix ns"`` labels added.
+    """
+    labels: list[str] = []
+    for label, sym in pairs:
+        lbl = f"{label} {_valence_n(sym)}s"
+        if lbl not in seen:
+            labels.append(lbl)
+            seen.add(lbl)
+    return labels
+
+
+def _collect_p_labels(
+    pairs: list[tuple[str, str]], suffix: str, seen: set[str]
+) -> list[str]:
+    """Collect p-orbital labels for *pairs*, appending *suffix* to the angular part.
+
+    Args:
+        pairs: ``(label_prefix, base_symbol)`` pairs for unique atom identifiers.
+        suffix: Axis qualifier appended to ``p``, e.g. ``"z"`` → ``"2pz"``,
+            or ``""`` for all-p (``"2p"``).
+        seen: Already-used label set; updated in place to avoid duplicates.
+
+    Returns:
+        New labels added; H/He (n=1) are silently skipped — they have no p orbitals.
+    """
+    labels: list[str] = []
+    for label, sym in pairs:
+        n = _valence_n(sym)
+        if n < 2:
+            continue
+        lbl = f"{label} {n}p{suffix}"
+        if lbl not in seen:
+            labels.append(lbl)
+            seen.add(lbl)
+    return labels
+
+
 def _d_shell_labels(
-    metals: list[tuple[int, int, str]],
-    organics: list[tuple[int, int, str]],
+    metals: list[_Atom],
+    organics: list[_Atom],
 ) -> tuple[list[str], str | None, str]:
     """Suggest d/f-shell labels for transition metals only.
 
     Args:
-        metals: ``(atom_index, Z, symbol)`` triples for metal atoms.
-        organics: ``(atom_index, Z, symbol)`` triples for non-metal atoms.
+        metals: Atom records for metal atoms.
+        organics: Atom records for non-metal atoms.
 
     Returns:
         labels, warning, info — see :func:`suggest_ao_labels`.
@@ -146,30 +229,30 @@ def _d_shell_labels(
         return [], "No transition metals in selection.", "d-shell: no metals found."
     seen: set[str] = set()
     labels: list[str] = []
-    for _, Z, sym in metals:
+    for _, Z, _, label in metals:
         for shell_dict in (_D_SHELL, _D_SHELL_SECONDARY):
             if Z in shell_dict:
-                lbl = f"{sym} {shell_dict[Z]}"
+                lbl = f"{label} {shell_dict[Z]}"
                 if lbl not in seen:
                     labels.append(lbl)
                     seen.add(lbl)
     warning: str | None = None
     if organics:
-        lig_syms = sorted({s for _, _, s in organics})
-        warning = f"Ligand atoms ({', '.join(lig_syms)}) ignored in d-shell mode."
+        lig_labels = sorted({label for _, _, _, label in organics})
+        warning = f"Ligand atoms ({', '.join(lig_labels)}) ignored in d-shell mode."
     return labels, warning, f"d-shell: {', '.join(labels)}"
 
 
 def _pi_labels(
-    metals: list[tuple[int, int, str]],
-    organics: list[tuple[int, int, str]],
+    metals: list[_Atom],
+    organics: list[_Atom],
     pos: np.ndarray,
 ) -> tuple[list[str], str | None, str]:
     """Suggest pi-system labels: d-shell for metals, p{axis} for planar organics.
 
     Args:
-        metals: ``(atom_index, Z, symbol)`` triples for metal atoms.
-        organics: ``(atom_index, Z, symbol)`` triples for non-metal atoms.
+        metals: Atom records for metal atoms.
+        organics: Atom records for non-metal atoms.
         pos: Full position array for all atoms (indexed by atom index).
 
     Returns:
@@ -181,10 +264,10 @@ def _pi_labels(
     warning: str | None = None
 
     metal_label_set: set[str] = set()
-    for _, Z, sym in metals:
+    for _, Z, _, label in metals:
         for shell_dict in (_D_SHELL, _D_SHELL_SECONDARY):
             if Z in shell_dict:
-                lbl = f"{sym} {shell_dict[Z]}"
+                lbl = f"{label} {shell_dict[Z]}"
                 if lbl not in seen:
                     labels.append(lbl)
                     seen.add(lbl)
@@ -200,70 +283,28 @@ def _pi_labels(
     return labels, warning, " | ".join(info_parts) or "No atoms classified."
 
 
-def _collect_s_labels(org_syms: list[str], seen: set[str]) -> list[str]:
-    """Collect ns labels for *org_syms*, skipping duplicates already in *seen*.
-
-    Args:
-        org_syms: Sorted list of unique chemical symbols.
-        seen: Already-used label set; updated in place to avoid duplicates.
-
-    Returns:
-        New ``"El ns"`` labels added.
-    """
-    labels: list[str] = []
-    for sym in org_syms:
-        lbl = f"{sym} {_valence_n(sym)}s"
-        if lbl not in seen:
-            labels.append(lbl)
-            seen.add(lbl)
-    return labels
-
-
-def _collect_p_labels(org_syms: list[str], suffix: str, seen: set[str]) -> list[str]:
-    """Collect p-orbital labels for *org_syms*, appending *suffix* to the angular part.
-
-    Args:
-        org_syms: Sorted list of unique chemical symbols.
-        suffix: Axis qualifier appended to ``p``, e.g. ``"z"`` → ``"2pz"``,
-            or ``""`` for all-p (``"2p"``).
-        seen: Already-used label set; updated in place to avoid duplicates.
-
-    Returns:
-        New labels added; H/He (n=1) are silently skipped — they have no p orbitals.
-    """
-    labels: list[str] = []
-    for sym in org_syms:
-        n = _valence_n(sym)
-        if n < 2:
-            continue
-        lbl = f"{sym} {n}p{suffix}"
-        if lbl not in seen:
-            labels.append(lbl)
-            seen.add(lbl)
-    return labels
-
-
 def _organic_pi_labels(
-    organics: list[tuple[int, int, str]],
+    organics: list[_Atom],
     pos: np.ndarray,
     seen: set[str],
 ) -> tuple[list[str], str | None, str]:
     """Determine pi-orbital labels for main-group atoms using planarity detection.
 
     Args:
-        organics: ``(atom_index, Z, symbol)`` triples for non-metal atoms.
+        organics: Atom records for non-metal atoms.
         pos: Full position array for all atoms (indexed by atom index).
         seen: Already-used label set; updated in place to avoid duplicates.
 
     Returns:
         labels, warning, info — see :func:`suggest_ao_labels`.
     """
-    org_pos = pos[[i for i, _, _ in organics]]
-    org_syms = sorted({s for _, _, s in organics})
+    org_pos = pos[[i for i, _, _, _ in organics]]
+    pairs = _unique_pairs(organics)
+    pair_labels = [lbl for lbl, _ in pairs]
 
     if len(organics) < _MIN_PLANE_ATOMS:
         return (
-            _collect_p_labels(org_syms, "", seen),
+            _collect_p_labels(pairs, "", seen),
             "Fewer than 3 organic atoms; pi axis undetermined - using all p.",
             "organics: all p",
         )
@@ -271,26 +312,26 @@ def _organic_pi_labels(
     axis, score = _pi_axis(org_pos)
     if score < _PLANARITY_THRESHOLD:
         return (
-            _collect_p_labels(org_syms, axis, seen),
+            _collect_p_labels(pairs, axis, seen),
             None,
             f"pi-normal ~ {axis.upper()} (score {score:.2f})",
         )
 
     return (
-        _collect_p_labels(org_syms, "", seen),
+        _collect_p_labels(pairs, "", seen),
         f"Atoms not coplanar (score {score:.2f} >= {_PLANARITY_THRESHOLD}); using all p.",
-        f"non-planar ({', '.join(org_syms)})",
+        f"non-planar ({', '.join(pair_labels)})",
     )
 
 
 def _sigma_labels(
-    organics: list[tuple[int, int, str]],
+    organics: list[_Atom],
     pos: np.ndarray,
 ) -> tuple[list[str], str | None, str]:
     """Suggest sigma-framework labels: ns + in-plane np for main-group atoms.
 
     Args:
-        organics: ``(atom_index, Z, symbol)`` triples for non-metal atoms.
+        organics: Atom records for non-metal atoms.
         pos: Full position array for all atoms.
 
     Returns:
@@ -299,15 +340,15 @@ def _sigma_labels(
     if not organics:
         return [], "No main-group atoms in selection.", ""
 
-    org_pos = pos[[i for i, _, _ in organics]]
-    org_syms = sorted({s for _, _, s in organics})
+    org_pos = pos[[i for i, _, _, _ in organics]]
+    pairs = _unique_pairs(organics)
 
     if len(organics) < _MIN_PLANE_ATOMS:
         seen: set[str] = set()
         labels = (
-            _collect_s_labels(org_syms, seen)
-            + _collect_p_labels(org_syms, "x", seen)
-            + _collect_p_labels(org_syms, "y", seen)
+            _collect_s_labels(pairs, seen)
+            + _collect_p_labels(pairs, "x", seen)
+            + _collect_p_labels(pairs, "y", seen)
         )
         return (
             labels,
@@ -319,9 +360,9 @@ def _sigma_labels(
     in_plane = [a for a in ("x", "y", "z") if a != axis]
     seen = set()
     labels = (
-        _collect_s_labels(org_syms, seen)
-        + _collect_p_labels(org_syms, in_plane[0], seen)
-        + _collect_p_labels(org_syms, in_plane[1], seen)
+        _collect_s_labels(pairs, seen)
+        + _collect_p_labels(pairs, in_plane[0], seen)
+        + _collect_p_labels(pairs, in_plane[1], seen)
     )
     warning = (
         None

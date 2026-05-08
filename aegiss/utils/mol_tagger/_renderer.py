@@ -12,6 +12,7 @@ from ase.data.colors import jmol_colors
 from aegiss.utils.mol_tagger._constants import (
     ATOM_RADIUS_SCALE,
     BOND_RADIUS,
+    COMPASS_VIEWPORT,
     HIGHLIGHT_COLOR,
     HIGHLIGHT_OPACITY,
     HIGHLIGHT_SCALE,
@@ -71,6 +72,15 @@ class MolRenderer:
         for i in range(len(self.pos)):
             self.draw_atom(i, selected=i in selected)
         self.plotter.reset_camera()
+        self.plotter.add_axes(
+            interactive=False,
+            line_width=2,
+            color="white",
+            xlabel="x",
+            ylabel="y",
+            zlabel="z",
+            viewport=COMPASS_VIEWPORT,
+        )
 
     def draw_atom(self, i: int, *, selected: bool = False) -> None:
         """(Re)draw a single atom, replacing any existing actors.

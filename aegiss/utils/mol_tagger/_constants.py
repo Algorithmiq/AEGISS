@@ -15,6 +15,11 @@ DRAG_THRESHOLD_SQ: int = (
     25  # 5-pixel radius; clicks within this distance trigger atom pick
 )
 
+# VTK normalised viewport (x0, y0, x1, y1) for the orientation-axes compass.
+# y0=0.13 raises the compass so the view-snap buttons fit below it.
+# _window.py uses y0 to calculate the Qt y-position of the buttons overlay.
+COMPASS_VIEWPORT: tuple[float, float, float, float] = (0.0, 0.13, 0.20, 0.37)
+
 DARK_STYLE: str = """
 QMainWindow, QWidget {
     background-color: #1a1a2e;

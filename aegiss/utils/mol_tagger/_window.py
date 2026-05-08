@@ -8,13 +8,14 @@ from typing import Any
 
 import numpy as np
 from pyvistaqt import QtInteractor
-from qtpy.QtCore import QEvent, QObject, Qt
+from qtpy.QtCore import QEvent, QObject, Qt, QTimer
 from qtpy.QtGui import QKeySequence
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QApplication,
     QComboBox,
     QFileDialog,
+    QGridLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -67,6 +68,19 @@ class _RightClickPickFilter(QObject):
             if dx * dx + dy * dy <= DRAG_THRESHOLD_SQ:
                 self._win._pick_at_qt(int(event.x()), int(event.y()))
         return False  # let Qt and VTK handle the event normally
+
+
+class _ViewportResizeFilter(QObject):
+    """Qt event filter: reposition the view-snap overlay when the viewport is resized."""
+
+    def __init__(self, window: MolViewWindow) -> None:
+        super().__init__(window)
+        self._win = window
+
+    def eventFilter(self, _obj: Any, event: Any) -> bool:  # noqa: N802
+        if event.type() == QEvent.Resize:
+            self._win._position_view_overlay()
+        return False
 
 
 class MolViewWindow(QMainWindow):
@@ -131,6 +145,70 @@ class MolViewWindow(QMainWindow):
         splitter.setSizes([800, 290])
 
         QShortcut(QKeySequence("Ctrl+Z"), self).activated.connect(self._undo_geometry)
+
+        self._view_overlay = self._make_view_overlay()
+        self._resize_filter = _ViewportResizeFilter(self)
+        self.plotter.interactor.installEventFilter(self._resize_filter)
+        QTimer.singleShot(0, self._position_view_overlay)
+
+    def _make_view_overlay(self) -> QWidget:
+        """Create the semi-transparent 2x3 camera-snap button grid."""
+        overlay = QWidget(self.plotter.interactor)
+        overlay.setAttribute(Qt.WA_TranslucentBackground)
+        overlay.setStyleSheet("""
+            QPushButton {
+                background: rgba(15, 15, 40, 155);
+                color: #9999cc;
+                border: 1px solid rgba(70, 70, 140, 110);
+                border-radius: 3px;
+                font-size: 9px;
+                font-family: monospace;
+                padding: 0px 3px;
+            }
+            QPushButton:hover {
+                background: rgba(45, 45, 100, 210);
+                color: #ffffff;
+                border-color: rgba(120, 120, 200, 180);
+            }
+            QPushButton:pressed {
+                background: rgba(70, 70, 150, 230);
+            }
+        """)
+        grid = QGridLayout(overlay)
+        grid.setContentsMargins(2, 2, 2, 2)
+        grid.setSpacing(2)
+        views = [
+            ("XY", self.plotter.view_xy, False),
+            ("XZ", self.plotter.view_xz, False),
+            ("YZ", self.plotter.view_yz, False),
+            ("XY*", self.plotter.view_xy, True),
+            ("XZ*", self.plotter.view_xz, True),
+            ("YZ*", self.plotter.view_yz, True),
+        ]
+        for k, (label, fn, neg) in enumerate(views):
+            row, col = divmod(k, 3)
+            btn = QPushButton(label, overlay)
+            btn.setFixedSize(36, 18)
+            btn.clicked.connect(lambda _checked=False, f=fn, n=neg: f(negative=n))
+            grid.addWidget(btn, row, col)
+        overlay.adjustSize()
+        overlay.show()
+        return overlay
+
+    def _position_view_overlay(self) -> None:
+        """Place the view-snap overlay in the bottom-right corner of the viewport."""
+        w = self.plotter.interactor.width()
+        h = self.plotter.interactor.height()
+        if w <= 0 or h <= 0:
+            return
+        ow = self._view_overlay.width()
+        oh = self._view_overlay.height()
+        self._view_overlay.move(w - ow - 6, h - oh - 6)
+
+    def showEvent(self, event: Any) -> None:  # noqa: N802
+        """Position the view overlay once the window has its real dimensions."""
+        super().showEvent(event)
+        self._position_view_overlay()
 
     def _make_header(self) -> QWidget:
         """Build the top header bar."""
@@ -442,7 +520,7 @@ class MolViewWindow(QMainWindow):
 
         self.ao_label_text.setReadOnly(True)
         labels, warning, info = suggest_ao_labels(
-            self.nums, self.syms, self.pos, self.selected, character
+            self.nums, self.syms, self.pos, self.selected, character, tags=self.tags
         )
         display = '["' + '", "'.join(labels) + '"]' if labels else "[]"
         self.ao_label_text.setPlainText(display)
