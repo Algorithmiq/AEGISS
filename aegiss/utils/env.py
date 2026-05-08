@@ -17,7 +17,13 @@ def scratch_dir() -> str:
 
 def pyscf_max_memory() -> int:
     """Return the PySCF max memory in MB (``PYSCF_MAX_MEMORY``, default: 4000)."""
-    return int(os.environ.get("PYSCF_MAX_MEMORY", "4000"))
+    value = os.environ.get("PYSCF_MAX_MEMORY", "4000")
+    try:
+        return int(value)
+    except ValueError as exc:
+        raise ValueError(
+            f"Invalid value for PYSCF_MAX_MEMORY: {value!r}. Expected an integer number of MB."
+        ) from exc
 
 
 def pyscf_scratch_dir() -> str | None:
