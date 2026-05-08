@@ -41,6 +41,7 @@ interactive = [
     { name = "matplotlib" },
 ]
 test = [
+    { name = "ase" },
     { name = "pytest" },
     { name = "pytest-cov" },
 ]
@@ -70,6 +71,7 @@ interactive = [
     { name = "matplotlib" },
 ]
 test = [
+    { name = "ase", specifier = ">=3" },
     { name = "pytest", specifier = ">=8.2.2,<10.0" },
     { name = "pytest-cov", specifier = ">=4.0" },
 ]
