@@ -51,9 +51,11 @@ class MolTagger:
             ImportError: If the ``viz`` extras are not installed.
         """
         try:
-            from qtpy.QtWidgets import QApplication
+            from qtpy.QtWidgets import QApplication  # noqa: PLC0415
 
-            from aegiss.utils.mol_tagger._window import MolViewWindow as _MolViewWindow
+            from aegiss.utils.mol_tagger._window import (  # noqa: PLC0415
+                MolViewWindow as _MolViewWindow,
+            )
         except ImportError as exc:
             raise ImportError(
                 "MolTagger requires the 'viz' extras: pip install aegiss[viz]"
