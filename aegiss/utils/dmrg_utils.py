@@ -82,7 +82,10 @@ def _refinement_schedule(
     n_sweeps: int,
     bond_dim: int,
 ) -> tuple[list[int], list[float], list[float]]:
-    """Build a fixed-bond-dim, zero-noise schedule for state-specific refinement.
+    """Build a fixed-bond-dim schedule for state-specific refinement.
+
+    Injects a small noise (1e-5) for the first min(4, n_sweeps) sweeps to
+    avoid local minima, then runs zero-noise sweeps for the remainder.
 
     Parameters
     ----------
