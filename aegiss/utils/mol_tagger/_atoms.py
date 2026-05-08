@@ -184,18 +184,20 @@ def align_selection_to_xy(
     normal = vt[2] / np.linalg.norm(vt[2])
     z = np.array([0.0, 0.0, 1.0])
     dot = float(np.clip(np.dot(normal, z), -1.0, 1.0))
+    centroid = pos.mean(axis=0)
     if abs(dot - 1.0) < 1e-9:
-        return pos.copy(), True
-    if abs(dot + 1.0) < 1e-9:
-        R: np.ndarray = np.diag([1.0, -1.0, -1.0])
+        new_pos = pos.copy()
+    elif abs(dot + 1.0) < 1e-9:
+        new_pos = (pos - centroid) @ np.diag([1.0, -1.0, -1.0]) + centroid
     else:
         ax = np.cross(normal, z)
         ax = ax / np.linalg.norm(ax)
         sin_a = float(np.sqrt(max(0.0, 1.0 - dot * dot)))
         K = np.array([[0.0, -ax[2], ax[1]], [ax[2], 0.0, -ax[0]], [-ax[1], ax[0], 0.0]])
         R = np.eye(3) + sin_a * K + (1.0 - dot) * (K @ K)
-    centroid = pos.mean(axis=0)
-    return (pos - centroid) @ R.T + centroid, True
+        new_pos = (pos - centroid) @ R.T + centroid
+    new_pos[:, 2] -= new_pos[indices, 2].mean()
+    return new_pos, True
 
 
 def load_xyz(filepath: str | Path) -> tuple[Atoms, dict[int, str]]:
