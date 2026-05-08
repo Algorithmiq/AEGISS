@@ -49,9 +49,9 @@ class TestPyscfMaxMemory:
 
 
 class TestPyscfScratchDir:
-    def test_default(self, monkeypatch) -> None:
+    def test_default_is_none(self, monkeypatch) -> None:
         monkeypatch.delenv("PYSCF_SCRATCH_DIR", raising=False)
-        assert pyscf_scratch_dir() == "./tmp"
+        assert pyscf_scratch_dir() is None
 
     def test_env_var(self, monkeypatch) -> None:
         monkeypatch.setenv("PYSCF_SCRATCH_DIR", "/pyscf/tmp")

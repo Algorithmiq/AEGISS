@@ -20,6 +20,6 @@ def pyscf_max_memory() -> int:
     return int(os.environ.get("PYSCF_MAX_MEMORY", "4000"))
 
 
-def pyscf_scratch_dir() -> str:
-    """Return the PySCF scratch directory (``PYSCF_SCRATCH_DIR``, default: ``'./tmp'``)."""
-    return os.environ.get("PYSCF_SCRATCH_DIR", "./tmp")
+def pyscf_scratch_dir() -> str | None:
+    """Return the PySCF scratch directory (``PYSCF_SCRATCH_DIR``), or ``None`` if unset."""
+    return os.environ.get("PYSCF_SCRATCH_DIR")

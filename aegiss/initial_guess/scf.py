@@ -30,7 +30,8 @@ def build_mol(atom: Any, **kwargs: Any) -> Any:
         Molecule object with specified geometry and basis set.
     """
     logger.info("----------Building Molecule----------")
-    lib.param.TMPDIR = pyscf_scratch_dir()
+    if (pyscf_tmp := pyscf_scratch_dir()) is not None:
+        lib.param.TMPDIR = pyscf_tmp
     mol = scf.gto.Mole()
     mol.atom = atom
     if "max_memory" not in kwargs:

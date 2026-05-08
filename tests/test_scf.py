@@ -85,6 +85,7 @@ class TestBuildMol:
         assert mol.max_memory == 2000
 
     def test_pyscf_scratch_dir_env_var(self, monkeypatch) -> None:
+        monkeypatch.setattr(lib.param, "TMPDIR", lib.param.TMPDIR)
         monkeypatch.setenv("PYSCF_SCRATCH_DIR", "/my/pyscf/scratch")
         build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
         assert lib.param.TMPDIR == "/my/pyscf/scratch"
