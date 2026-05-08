@@ -66,13 +66,13 @@ def _run_entropy_screening(
                     output_config.saving_folder,
                     f"{output_config.saving_prefix}_root{idx}",
                 )
-        _make_sa_th_plot(
-            active_orbs,
-            virt_orbs,
-            valid_soe1,
-            output_config.saving_folder,
-            output_config.saving_prefix + "_SA_TH_plot",
-        )
+            _make_sa_th_plot(
+                active_orbs,
+                virt_orbs,
+                valid_soe1,
+                output_config.saving_folder,
+                output_config.saving_prefix + "_SA_TH_plot",
+            )
         return select_by_sa_entropy(
             occ_orbs=active_orbs,
             virt_orbs=virt_orbs,
