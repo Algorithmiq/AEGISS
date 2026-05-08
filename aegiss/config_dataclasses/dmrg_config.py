@@ -34,7 +34,7 @@ class DMRGConfig:
         Per-state weights for the state-averaged DMRG objective.  Must have
         ``len(weights) == nroots`` when provided.  ``None`` uses uniform weights
         ``1 / nroots`` for each state.  Ignored when ``nroots == 1``.
-    n_refinement_sweeps : int, default 4
+    n_refinement_sweeps : int, default 8
         Number of state-specific refinement sweeps to run after SA-DMRG
         convergence.  ``0`` skips refinement and computes entropies directly from
         the SA-MPS.  Ignored when ``nroots == 1``.

@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+from pyscf import ao2mo, mcscf
 
 if TYPE_CHECKING:
     from pyblock2.driver.core import DMRGDriver
+
+logger = logging.getLogger(__name__)
 
 
 def _default_dmrg_schedule(
@@ -139,3 +143,34 @@ def compute_qmi(
     )
 
     return ordm1, ordm2, minfo
+
+
+def _casci_integrals(
+    mf: Any, ncas: int, nelecas: int | tuple[int, int]
+) -> tuple[float, np.ndarray, np.ndarray]:
+    """Compute CASCI integrals (core energy, 1-electron, 2-electron) from a mean-field object.
+
+    Parameters:
+    ----------
+    mf : Any
+        Converged mean-field object (e.g. from ``run_scf``).
+    ncas : int
+        Number of active orbitals in the CAS.
+    nelecas : int or tuple[int, int]
+        Number of active electrons in the CAS (either total or as a tuple of alpha and beta electrons).
+
+    Returns:
+    -------
+    ecore : float
+        Core energy contribution from frozen orbitals.
+    h1e : np.ndarray
+        Effective 1-electron integrals in the CAS.
+    g2e : np.ndarray
+        Effective 2-electron integrals in the CAS, in chemist's notation and restored to 1-fold symmetry.
+    """
+    mycas = mcscf.CASCI(mf, ncas, nelecas)
+    logger.info("Using pyscf.CASCI to obtain integrals for DMRG...")
+    logger.info("CAS (ncas=%d, nelecas=%s)", ncas, nelecas)
+    h1e, ecore = mycas.get_h1eff()
+    g2e = ao2mo.restore(1, mycas.get_h2eff(), ncas)
+    return ecore, h1e, g2e

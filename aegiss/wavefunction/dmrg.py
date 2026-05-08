@@ -11,6 +11,7 @@ from pyblock2.driver.core import DMRGDriver, SymmetryTypes
 from pyscf import ao2mo, mcscf
 
 from aegiss.utils.dmrg_utils import (
+    _casci_integrals,
     _default_dmrg_schedule,
     _refinement_schedule,
     compute_qmi,
@@ -261,11 +262,7 @@ def run_sa_dmrg(
         scratch=scratch_dir, symm_type=symm, n_threads=n_threads, n_mkl_threads=1
     )
 
-    mycas = mcscf.CASCI(mf, ncas, nelecas)
-    logger.info("Using pyscf.CASCI to obtain integrals for DMRG...")
-    logger.info("CAS (ncas=%d, nelecas=%s)", ncas, nelecas)
-    h1e, ecore = mycas.get_h1eff()
-    g2e = ao2mo.restore(1, mycas.get_h2eff(), ncas)
+    ecore, h1e, g2e = _casci_integrals(mf, ncas, nelecas)
 
     nalpha, nbeta = resolve_nelecas(nelecas)
     n_elec = nalpha + nbeta
