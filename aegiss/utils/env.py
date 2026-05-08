@@ -12,7 +12,8 @@ def omp_num_threads() -> int:
 
 def scratch_dir() -> str:
     """Return the DMRG scratch directory (``SCRATCH_DIR``, default: ``'./tmp'``)."""
-    return os.environ.get("SCRATCH_DIR", "./tmp")
+    value = os.environ.get("SCRATCH_DIR", "").strip()
+    return value or "./tmp"
 
 
 def pyscf_max_memory() -> int:
