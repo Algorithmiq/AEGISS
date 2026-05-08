@@ -420,10 +420,10 @@ class TestSuggestAoLabels:
         assert labels == []
 
     def test_pi_metal_plus_organic(self) -> None:
-        syms = ["Fe", "C", "C", "C", "C", "C", "C"]
-        pos = np.vstack([[0, 0, 0], _BENZENE_XZ])
-        nums, syms, pos = _make_inputs(syms, pos)
-        labels, _, _ = suggest_ao_labels(nums, syms, pos, set(range(7)), "auto")
+        atom_syms = ["Fe", "C", "C", "C", "C", "C", "C"]
+        atom_pos = np.vstack([[0, 0, 0], _BENZENE_XZ])
+        nums, _, _ = _make_inputs(atom_syms, atom_pos)
+        labels, _, _ = suggest_ao_labels(nums, atom_syms, atom_pos, set(range(7)), "auto")
         assert any("3d" in lbl for lbl in labels)
         assert any("2p" in lbl for lbl in labels)
 
@@ -459,10 +459,11 @@ class TestSuggestAoLabels:
         )
         # d-shell for C → no metal warning, but we're testing that the labels
         # (even if empty for non-metals) don't crash; also test via auto mode
-        syms2 = ["Fe", "Fe"]
-        nums2, syms2, pos2 = _make_inputs(syms2, np.zeros((2, 3)))
+        fe_syms = ["Fe", "Fe"]
+        fe_pos = np.zeros((2, 3))
+        nums2, _, _ = _make_inputs(fe_syms, fe_pos)
         tags2 = {0: "Fe.0", 1: "Fe.1"}
-        labels2, _, _ = suggest_ao_labels(nums2, syms2, pos2, {0, 1}, "d-shell", tags=tags2)
+        labels2, _, _ = suggest_ao_labels(nums2, fe_syms, fe_pos, {0, 1}, "d-shell", tags=tags2)
         assert "Fe.0 3d" in labels2
         assert "Fe.1 3d" in labels2
 
