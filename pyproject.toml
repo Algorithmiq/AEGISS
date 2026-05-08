@@ -159,7 +159,6 @@ flake8-annotations.allow-star-arg-any = true
 "tests/*" = ["S101", "D", "C901", "INP001", "E721", "T20"]
 "mol_tagger.py" = ["INP001"]
 "main.py" = ["INP001"]
-"plot.py" = ["INP001"]
 "tests/**/test_*.py" = ["ANN", "I002"]
 "aegiss/**/__init__.py" = ["I002"]
 "*.ipynb" = ["I002"]
