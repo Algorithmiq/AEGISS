@@ -5,7 +5,9 @@ from __future__ import annotations
 import logging
 from typing import Any, Literal, overload
 
-from pyscf import dft, scf
+from pyscf import dft, lib, scf
+
+from aegiss.utils.env import pyscf_max_memory, pyscf_scratch_dir
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +30,11 @@ def build_mol(atom: Any, **kwargs: Any) -> Any:
         Molecule object with specified geometry and basis set.
     """
     logger.info("----------Building Molecule----------")
+    lib.param.TMPDIR = pyscf_scratch_dir()
     mol = scf.gto.Mole()
     mol.atom = atom
+    if "max_memory" not in kwargs:
+        mol.max_memory = pyscf_max_memory()
     logger.info("Molecular geometry:")
     logger.info("%s", mol.atom)
     for key, val in kwargs.items():

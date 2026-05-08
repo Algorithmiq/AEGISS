@@ -1,0 +1,25 @@
+"""Centralized environment variable configuration for AEGISS resource management."""
+
+from __future__ import annotations
+
+import os
+
+
+def omp_num_threads() -> int:
+    """Return the number of OpenMP threads (``OMP_NUM_THREADS``, default: 4)."""
+    return int(os.environ.get("OMP_NUM_THREADS", "4"))
+
+
+def scratch_dir() -> str:
+    """Return the DMRG scratch directory (``SCRATCH_DIR``, default: ``'./tmp'``)."""
+    return os.environ.get("SCRATCH_DIR", "./tmp")
+
+
+def pyscf_max_memory() -> int:
+    """Return the PySCF max memory in MB (``PYSCF_MAX_MEMORY``, default: 4000)."""
+    return int(os.environ.get("PYSCF_MAX_MEMORY", "4000"))
+
+
+def pyscf_scratch_dir() -> str:
+    """Return the PySCF scratch directory (``PYSCF_SCRATCH_DIR``, default: ``'./tmp'``)."""
+    return os.environ.get("PYSCF_SCRATCH_DIR", "./tmp")

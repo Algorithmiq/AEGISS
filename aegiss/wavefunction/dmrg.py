@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -15,6 +14,8 @@ from aegiss.utils.dmrg_utils import (
     _validate_mem_env,
     compute_qmi,
 )
+from aegiss.utils.env import omp_num_threads
+from aegiss.utils.env import scratch_dir as get_scratch_dir
 from aegiss.utils.orbital_indices import resolve_nelecas
 
 if TYPE_CHECKING:
@@ -76,10 +77,9 @@ def run_dmrg(
       free RAM available to the process; block2 will raise an error at startup
       if the requested stack cannot be allocated.
     """
-    n_threads = int(os.environ.get("OMP_NUM_THREADS", "4"))
+    n_threads = omp_num_threads()
     stack_mem = _validate_mem_env()
-
-    scratch_dir = os.environ.get("SCRATCH_DIR", "./tmp")
+    scratch_dir = get_scratch_dir()
     _symm_map = {"SU2": SymmetryTypes.SU2, "SZ": SymmetryTypes.SZ}
     if symm_type not in _symm_map:
         raise ValueError(
