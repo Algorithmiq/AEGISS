@@ -5,9 +5,9 @@ from __future__ import annotations
 import logging
 from typing import Any, Literal, overload
 
-from pyscf import dft, lib, scf
+from pyscf import dft, scf
 
-from aegiss.utils.env import pyscf_max_memory, pyscf_scratch_dir
+from aegiss.utils.env import pyscf_max_memory
 
 logger = logging.getLogger(__name__)
 
@@ -30,16 +30,6 @@ def build_mol(atom: Any, **kwargs: Any) -> Any:
         Molecule object with specified geometry and basis set.
     """
     logger.info("----------Building Molecule----------")
-    if (pyscf_tmp := pyscf_scratch_dir()) is not None:
-        current_tmpdir = getattr(lib.param, "TMPDIR", None)
-        if not current_tmpdir:
-            lib.param.TMPDIR = pyscf_tmp
-        elif current_tmpdir != pyscf_tmp:
-            logger.debug(
-                "Keeping existing PySCF TMPDIR %s; ignoring requested scratch dir %s",
-                current_tmpdir,
-                pyscf_tmp,
-            )
     mol = scf.gto.Mole()
     mol.atom = atom
     if "max_memory" not in kwargs:

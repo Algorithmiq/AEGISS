@@ -27,10 +27,5 @@ def pyscf_max_memory() -> int:
         ) from exc
 
 
-def pyscf_scratch_dir() -> str | None:
-    """Return the PySCF scratch directory (``PYSCF_SCRATCH_DIR``), or ``None`` if unset."""
-    value = os.environ.get("PYSCF_SCRATCH_DIR")
-    if value is None:
-        return None
-    value = value.strip()
-    return value or None
+# PySCF scratch directory: set the PYSCF_TMPDIR environment variable before
+# importing PySCF. PySCF reads it at import time and uses it as its temp dir.

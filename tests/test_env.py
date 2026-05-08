@@ -2,12 +2,7 @@
 
 from __future__ import annotations
 
-from aegiss.utils.env import (
-    omp_num_threads,
-    pyscf_max_memory,
-    pyscf_scratch_dir,
-    scratch_dir,
-)
+from aegiss.utils.env import omp_num_threads, pyscf_max_memory, scratch_dir
 
 
 class TestOmpNumThreads:
@@ -46,13 +41,3 @@ class TestPyscfMaxMemory:
     def test_returns_int(self, monkeypatch) -> None:
         monkeypatch.setenv("PYSCF_MAX_MEMORY", "2000")
         assert isinstance(pyscf_max_memory(), int)
-
-
-class TestPyscfScratchDir:
-    def test_default_is_none(self, monkeypatch) -> None:
-        monkeypatch.delenv("PYSCF_SCRATCH_DIR", raising=False)
-        assert pyscf_scratch_dir() is None
-
-    def test_env_var(self, monkeypatch) -> None:
-        monkeypatch.setenv("PYSCF_SCRATCH_DIR", "/pyscf/tmp")
-        assert pyscf_scratch_dir() == "/pyscf/tmp"
