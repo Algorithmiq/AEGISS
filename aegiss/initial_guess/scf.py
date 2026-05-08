@@ -31,7 +31,15 @@ def build_mol(atom: Any, **kwargs: Any) -> Any:
     """
     logger.info("----------Building Molecule----------")
     if (pyscf_tmp := pyscf_scratch_dir()) is not None:
-        lib.param.TMPDIR = pyscf_tmp
+        current_tmpdir = getattr(lib.param, "TMPDIR", None)
+        if not current_tmpdir:
+            lib.param.TMPDIR = pyscf_tmp
+        elif current_tmpdir != pyscf_tmp:
+            logger.debug(
+                "Keeping existing PySCF TMPDIR %s; ignoring requested scratch dir %s",
+                current_tmpdir,
+                pyscf_tmp,
+            )
     mol = scf.gto.Mole()
     mol.atom = atom
     if "max_memory" not in kwargs:
