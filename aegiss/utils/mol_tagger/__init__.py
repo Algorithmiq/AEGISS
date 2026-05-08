@@ -23,8 +23,12 @@ except ImportError as exc:
         "MolTagger requires the 'viz' extras: pip install aegiss[viz]"
     ) from exc
 
-
-from aegiss.utils.mol_tagger._window import MolViewWindow
+try:
+    from aegiss.utils.mol_tagger._window import MolViewWindow
+except ImportError as exc:
+    raise ImportError(
+        "MolTagger requires the 'viz' extras: pip install aegiss[viz]"
+    ) from exc
 
 logger = logging.getLogger(__name__)
 
