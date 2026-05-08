@@ -7,7 +7,13 @@ import os
 
 def omp_num_threads() -> int:
     """Return the number of OpenMP threads (``OMP_NUM_THREADS``, default: 4)."""
-    return int(os.environ.get("OMP_NUM_THREADS", "4"))
+    value = os.environ.get("OMP_NUM_THREADS", "4").strip() or "4"
+    try:
+        return int(value)
+    except ValueError as exc:
+        raise ValueError(
+            f"Invalid value for OMP_NUM_THREADS: {value!r}. Expected an integer."
+        ) from exc
 
 
 def scratch_dir() -> str:
