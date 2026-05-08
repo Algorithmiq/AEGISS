@@ -358,8 +358,8 @@ class MolViewWindow(QMainWindow):
         widget = self.plotter.interactor
         dpr_getter = getattr(widget, "devicePixelRatioF", widget.devicePixelRatio)
         dpr = float(dpr_getter())
-        vtk_x = int(round(qx * dpr))
-        vtk_y = int(round((widget.height() - qy - 1) * dpr))
+        vtk_x = round(qx * dpr)
+        vtk_y = round((widget.height() - qy - 1) * dpr)
         picker = vtkPropPicker()
         if picker.Pick(vtk_x, vtk_y, 0, self.plotter.renderer):
             self._on_pick(picker.GetPickPosition())
@@ -451,6 +451,7 @@ class MolViewWindow(QMainWindow):
         self.status_label.setText(
             f"Tagged {len(self.selected)} atom(s) with label {raw}"
         )
+        self._update_ao_suggestions()
 
     def _remove_tags(self) -> None:
         """Remove all tags from the selected atoms."""
@@ -461,6 +462,7 @@ class MolViewWindow(QMainWindow):
         self._refresh_list_labels()
         self._update_orbital_info()
         self.status_label.setText(f"Cleared tags on {len(self.selected)} atom(s)")
+        self._update_ao_suggestions()
 
     def _refresh_list_labels(self) -> None:
         """Redraw atom list labels to reflect current tag state."""
