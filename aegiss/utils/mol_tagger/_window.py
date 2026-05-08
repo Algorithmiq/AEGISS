@@ -600,14 +600,28 @@ class MolViewWindow(QMainWindow):
     # ------------------------------------------------------------------
 
     def _save_xyz(self) -> None:
-        """Open a save dialog and write a tagged XYZ file."""
+        """Open a save dialog and write a tagged XYZ file.
+
+        Keep original header line.
+        For the comment line, if there was one, keep it,
+        otherwise write a blank line to preserve XYZ format.
+        """
         default = Path(self.xyz_path).stem + "_tagged.xyz"
         path, _ = QFileDialog.getSaveFileName(
             self, "Save Tagged XYZ", default, "XYZ files (*.xyz);;All files (*)"
         )
         if not path:
             return
-        lines: list[str] = [f"{self.n}\n", "\n"]
+
+        lines: list[str] = []
+        with Path.open(Path(self.xyz_path), "r") as f:
+            original_lines = f.readlines()
+            if len(original_lines) >= 2:
+                lines.extend(original_lines[:2])
+            else:
+                lines.append(f"{self.n}\n")
+                lines.append("\n")
+
         for i in range(self.n):
             x, y, z = self.pos[i]
             label = self.tags.get(i, self.syms[i])
