@@ -73,7 +73,7 @@ class MolTagger:
         app = QApplication.instance() or QApplication(sys.argv)
         self._window = MolViewWindow(str(self.filepath))
         self._window.show()
-        app.exec_()
+        getattr(app, "exec", app.exec_)()
 
     def export_tags(self) -> dict[int, str]:
         """Return the current atom-tag mapping.
