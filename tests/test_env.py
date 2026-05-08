@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
-
-from aegiss.utils.env import omp_num_threads, pyscf_max_memory, pyscf_scratch_dir, scratch_dir
+from aegiss.utils.env import (
+    omp_num_threads,
+    pyscf_max_memory,
+    pyscf_scratch_dir,
+    scratch_dir,
+)
 
 
 class TestOmpNumThreads:
