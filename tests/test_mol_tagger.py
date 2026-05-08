@@ -7,11 +7,15 @@ touching any Qt/PyVista code.
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
 from ase import Atoms
+from ase.data import atomic_numbers
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 from aegiss.utils.mol_tagger._ao_suggest import (
     _pi_axis,
@@ -48,22 +52,22 @@ H     0.000 -0.757 -0.477
 # Benzene-like ring flat in XZ plane (y≈0, x/z vary)
 _BENZENE_XZ = np.array(
     [
-        [1.4,  0.0,  0.0],
-        [0.7,  0.0,  1.21],
-        [-0.7, 0.0,  1.21],
-        [-1.4, 0.0,  0.0],
+        [1.4, 0.0, 0.0],
+        [0.7, 0.0, 1.21],
+        [-0.7, 0.0, 1.21],
+        [-1.4, 0.0, 0.0],
         [-0.7, 0.0, -1.21],
-        [0.7,  0.0, -1.21],
+        [0.7, 0.0, -1.21],
     ]
 )
 
 # Regular tetrahedral vertices — score ≈ 1.0 (perfectly non-planar)
 _TETRAHEDRAL = np.array(
     [
-        [1.0,  1.0,  1.0],
-        [1.0,  -1.0, -1.0],
-        [-1.0,  1.0, -1.0],
-        [-1.0, -1.0,  1.0],
+        [1.0, 1.0, 1.0],
+        [1.0, -1.0, -1.0],
+        [-1.0, 1.0, -1.0],
+        [-1.0, -1.0, 1.0],
     ],
     dtype=float,
 )
@@ -134,7 +138,7 @@ class TestLoadXyz:
 
     def test_tagged_xyz_recovers_tags(self, tmp_path: Path) -> None:
         p = _write_xyz(tmp_path, _XYZ_TAGGED)
-        atoms, tags = load_xyz(p)
+        _, tags = load_xyz(p)
         assert tags[0] == "O.0"
         assert tags[1] == "H.1"
         assert 2 not in tags  # untagged H has no entry
@@ -155,7 +159,7 @@ class TestLoadXyz:
 
     def test_string_path_accepted(self, tmp_path: Path) -> None:
         p = _write_xyz(tmp_path, _XYZ_H2O)
-        atoms, tags = load_xyz(str(p))
+        atoms, _ = load_xyz(str(p))
         assert len(atoms) == 3
 
 
@@ -195,7 +199,9 @@ class TestDetectBonds:
 
     def test_bonds_are_ordered_pairs(self) -> None:
         """Each bond (i, j) must satisfy i < j."""
-        atoms = Atoms("CH4", positions=[[0, 0, 0]] + [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0]])
+        atoms = Atoms(
+            "CH4", positions=[[0, 0, 0], *[[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0]]]
+        )
         bonds = detect_bonds(atoms)
         for i, j in bonds:
             assert i < j
@@ -220,7 +226,9 @@ class TestAlignSelectionToXy:
         np.testing.assert_array_equal(new_pos, pos)
 
     def test_collinear_atoms_returns_false(self) -> None:
-        pos = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0], [3.0, 0.0, 0.0]])
+        pos = np.array(
+            [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0], [3.0, 0.0, 0.0]]
+        )
         _, ok = align_selection_to_xy(pos, [0, 1, 2, 3])
         assert ok is False
 
@@ -290,7 +298,7 @@ class TestAlignSelectionToXy:
 
 class TestValenceN:
     @pytest.mark.parametrize(
-        "sym,expected",
+        ("sym", "expected"),
         [
             ("H", 1),
             ("He", 1),
@@ -344,8 +352,6 @@ def _make_inputs(
     pos: np.ndarray,
 ) -> tuple[np.ndarray, list[str], np.ndarray]:
     """Return (nums, syms, pos) from a list of chemical symbols and positions."""
-    from ase.data import atomic_numbers
-
     nums = np.array([atomic_numbers[s] for s in syms])
     return nums, syms, pos
 
@@ -355,7 +361,7 @@ class TestSuggestAoLabels:
 
     def test_empty_selection_returns_empty(self) -> None:
         nums, syms, pos = _make_inputs(["C", "C"], np.zeros((2, 3)))
-        labels, warning, info = suggest_ao_labels(nums, syms, pos, set(), "auto")
+        labels, _, info = suggest_ao_labels(nums, syms, pos, set(), "auto")
         assert labels == []
         assert "No atoms selected" in info
 
@@ -399,7 +405,7 @@ class TestSuggestAoLabels:
         """6 C atoms in XZ plane → normal Y → labels should be 'C 2py'."""
         syms = ["C"] * 6
         nums, syms, pos = _make_inputs(syms, _BENZENE_XZ)
-        labels, warning, info = suggest_ao_labels(nums, syms, pos, set(range(6)), "auto")
+        labels, warning, _ = suggest_ao_labels(nums, syms, pos, set(range(6)), "auto")
         assert warning is None
         # Exactly one unique label since all atoms share the same bare symbol
         assert labels == ["C 2py"]
@@ -414,7 +420,9 @@ class TestSuggestAoLabels:
     def test_pi_hydrogen_skipped_no_p(self) -> None:
         """H has no p orbitals; suggest_ao_labels should not include them."""
         syms = ["H"] * 3
-        nums, syms, pos = _make_inputs(syms, np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]], float))
+        nums, syms, pos = _make_inputs(
+            syms, np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]], float)
+        )
         labels, _, _ = suggest_ao_labels(nums, syms, pos, {0, 1, 2}, "auto")
         # H (n=1) has no p → no labels in pi mode
         assert labels == []
@@ -423,7 +431,9 @@ class TestSuggestAoLabels:
         atom_syms = ["Fe", "C", "C", "C", "C", "C", "C"]
         atom_pos = np.vstack([[0, 0, 0], _BENZENE_XZ])
         nums, _, _ = _make_inputs(atom_syms, atom_pos)
-        labels, _, _ = suggest_ao_labels(nums, atom_syms, atom_pos, set(range(7)), "auto")
+        labels, _, _ = suggest_ao_labels(
+            nums, atom_syms, atom_pos, set(range(7)), "auto"
+        )
         assert any("3d" in lbl for lbl in labels)
         assert any("2p" in lbl for lbl in labels)
 
@@ -432,7 +442,9 @@ class TestSuggestAoLabels:
     def test_sigma_planar_has_s_and_inplane_p(self) -> None:
         syms = ["C"] * 6
         nums, syms, pos = _make_inputs(syms, _BENZENE_XZ)
-        labels, warning, info = suggest_ao_labels(nums, syms, pos, set(range(6)), "sigma")
+        labels, warning, _info = suggest_ao_labels(
+            nums, syms, pos, set(range(6)), "sigma"
+        )
         assert warning is None
         # Normal is Y, so in-plane axes are X and Z
         assert "C 2s" in labels
@@ -454,16 +466,16 @@ class TestSuggestAoLabels:
         syms = ["C", "C"]
         nums, syms, pos = _make_inputs(syms, np.array([[0, 0, 0], [1, 0, 0]], float))
         tags = {0: "C.0", 1: "C.1"}
-        labels, _, _ = suggest_ao_labels(
-            nums, syms, pos, {0, 1}, "d-shell", tags=tags
-        )
+        _, _, _ = suggest_ao_labels(nums, syms, pos, {0, 1}, "d-shell", tags=tags)
         # d-shell for C → no metal warning, but we're testing that the labels
         # (even if empty for non-metals) don't crash; also test via auto mode
         fe_syms = ["Fe", "Fe"]
         fe_pos = np.zeros((2, 3))
         nums2, _, _ = _make_inputs(fe_syms, fe_pos)
         tags2 = {0: "Fe.0", 1: "Fe.1"}
-        labels2, _, _ = suggest_ao_labels(nums2, fe_syms, fe_pos, {0, 1}, "d-shell", tags=tags2)
+        labels2, _, _ = suggest_ao_labels(
+            nums2, fe_syms, fe_pos, {0, 1}, "d-shell", tags=tags2
+        )
         assert "Fe.0 3d" in labels2
         assert "Fe.1 3d" in labels2
 
