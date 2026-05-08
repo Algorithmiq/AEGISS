@@ -238,7 +238,19 @@ def run_sa_dmrg(
         )
     symm = _symm_map[symm_type]
 
-    sa_weights = list(weights) if weights is not None else [1.0 / nroots] * nroots
+    if nroots < 2:
+        raise ValueError(f"nroots must be >= 2 for state-averaged DMRG, got {nroots}.")
+
+    if weights is None:
+        sa_weights = [1.0 / nroots] * nroots
+    else:
+        sa_weights = list(weights)
+        if len(sa_weights) != nroots:
+            raise ValueError(
+                f"weights must have length {nroots}, got {len(sa_weights)}."
+            )
+        if any(w <= 0 for w in sa_weights):
+            raise ValueError("weights must contain only positive values.")
 
     logger.info(
         "----------------SA-DMRG Calculation (symmetry: %s, nroots: %d)----------------\n",
