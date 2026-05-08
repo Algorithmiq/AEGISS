@@ -356,9 +356,10 @@ class MolViewWindow(QMainWindow):
         On HiDPI screens the physical pixel count is scaled by devicePixelRatio.
         """
         widget = self.plotter.interactor
-        dpr = int(widget.devicePixelRatio())
-        vtk_x = qx * dpr
-        vtk_y = (widget.height() - qy - 1) * dpr
+        dpr_getter = getattr(widget, "devicePixelRatioF", widget.devicePixelRatio)
+        dpr = float(dpr_getter())
+        vtk_x = int(round(qx * dpr))
+        vtk_y = int(round((widget.height() - qy - 1) * dpr))
         picker = vtkPropPicker()
         if picker.Pick(vtk_x, vtk_y, 0, self.plotter.renderer):
             self._on_pick(picker.GetPickPosition())
