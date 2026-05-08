@@ -9,26 +9,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from aegiss.utils.mol_tagger._window import MolViewWindow
-try:
-    from qtpy.QtWidgets import QApplication
-except ImportError as exc:
-    raise ImportError(
-        "MolTagger requires the 'viz' extras: pip install aegiss[viz]"
-    ) from exc
-
-try:
-    import ase  # noqa: F401
-except ImportError as exc:
-    raise ImportError(
-        "MolTagger requires the 'viz' extras: pip install aegiss[viz]"
-    ) from exc
-
-try:
-    from aegiss.utils.mol_tagger._window import MolViewWindow
-except ImportError as exc:
-    raise ImportError(
-        "MolTagger requires the 'viz' extras: pip install aegiss[viz]"
-    ) from exc
 
 logger = logging.getLogger(__name__)
 
@@ -70,8 +50,17 @@ class MolTagger:
         Raises:
             ImportError: If the ``viz`` extras are not installed.
         """
+        try:
+            from qtpy.QtWidgets import QApplication
+
+            from aegiss.utils.mol_tagger._window import MolViewWindow as _MolViewWindow
+        except ImportError as exc:
+            raise ImportError(
+                "MolTagger requires the 'viz' extras: pip install aegiss[viz]"
+            ) from exc
+
         app = QApplication.instance() or QApplication(sys.argv)
-        self._window = MolViewWindow(str(self.filepath))
+        self._window = _MolViewWindow(str(self.filepath))
         self._window.show()
         getattr(app, "exec", app.exec_)()
 
