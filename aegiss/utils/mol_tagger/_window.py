@@ -379,7 +379,7 @@ class MolViewWindow(QMainWindow):
         picked = np.array(point)
         dists = np.linalg.norm(self.pos - picked, axis=1)
         nearest = int(np.argmin(dists))
-        threshold = max(float(self.nums[nearest]) * 0.30 * 2.5, 0.5)
+        threshold = 0.75
         if float(dists[nearest]) > threshold:
             return
         if nearest in self.selected:
