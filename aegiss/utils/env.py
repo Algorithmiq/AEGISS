@@ -22,4 +22,8 @@ def pyscf_max_memory() -> int:
 
 def pyscf_scratch_dir() -> str | None:
     """Return the PySCF scratch directory (``PYSCF_SCRATCH_DIR``), or ``None`` if unset."""
-    return os.environ.get("PYSCF_SCRATCH_DIR")
+    value = os.environ.get("PYSCF_SCRATCH_DIR")
+    if value is None:
+        return None
+    value = value.strip()
+    return value or None
