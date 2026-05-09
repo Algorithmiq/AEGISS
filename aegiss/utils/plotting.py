@@ -516,7 +516,7 @@ def sa_th_plot(
         ax.plot(
             x_values,
             y_values,
-            marker=_MARKERS[r],
+            marker=_MARKERS[r % len(_MARKERS)],
             markersize=6,
             ls="",
             color=c[r],
