@@ -523,7 +523,9 @@ def sa_th_plot(
             label=f"Root {r}",
             alpha=0.8,
         )
-    max_y_value = max((int(np.max(values)) for values in above_by_root.values()), default=0)
+    max_y_value = max(
+        (int(np.max(values)) for values in above_by_root.values()), default=0
+    )
     ax.set_ylabel("# Selected MOs", fontsize=20)
     ax.set_xlabel(r"Threshold as % of largest $S(1)_\mathrm{max}$", fontsize=18)
     ax.grid(visible=True, alpha=0.3)
