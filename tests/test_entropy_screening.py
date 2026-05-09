@@ -220,7 +220,7 @@ class TestSelectBySaEntropy:
         sel_occ, _ = select_by_sa_entropy(
             occ, virt, soe1_list, fraction=0.0, fraction_type="a", ranking="global"
         )
-        # Orbital 1: max normalised entropy is from state 0 (0.9/0.9 = 1.0 relative)
+        # Orbital 1: the maximum absolute entropy across states is from state 0 (0.9).
         orb1_vals = [s1 for i, s1 in sel_occ if i == 1]
         assert len(orb1_vals) == 1
         assert orb1_vals[0] > 0.0
