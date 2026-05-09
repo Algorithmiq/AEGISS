@@ -476,7 +476,7 @@ def sa_th_plot(
     folder: str = "./",
     filename: str = "SA_TH_plot",
 ) -> None:
-    """Plot the threshold for each root single-orbutal entropy in an unique plot.
+    """Plot the threshold for each root single-orbital entropy in an unique plot.
 
     For each threshold value τ ∈ [0, 1] (as a fraction of S(1)_max), computes
     the number of orbitals whose relative entropy exceeds τ and plots the
