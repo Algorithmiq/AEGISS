@@ -13,13 +13,10 @@ _DEFAULT_MEM_GIB = 4
 def mem() -> int:
     """Return ``stack_mem`` in bytes from the ``MEM`` environment variable.
 
-    ``MEM`` must be a positive integer number of GiB.  If it is unset, not a
+    ``MEM`` must be a positive integer number of GiB. If it is unset, not a
     valid integer, zero, or negative, the default of ``_DEFAULT_MEM_GIB`` GiB
-    is used and a warning is logged.
-
-    Raises:
-    -------
-        ValueError: If ``MEM`` is set but cannot be parsed as a positive integer.
+    is used instead. Invalid and non-positive values cause a warning to be
+    logged before falling back to the default.
 
     Returns:
     --------
