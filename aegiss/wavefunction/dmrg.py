@@ -10,7 +10,11 @@ from typing import TYPE_CHECKING, Any
 from pyblock2.driver.core import DMRGDriver, SymmetryTypes
 from pyscf import ao2mo, mcscf
 
-from aegiss.utils.dmrg_utils import _default_dmrg_schedule, compute_qmi
+from aegiss.utils.dmrg_utils import (
+    _default_dmrg_schedule,
+    _validate_mem_env,
+    compute_qmi,
+)
 from aegiss.utils.orbital_indices import resolve_nelecas
 
 if TYPE_CHECKING:
@@ -73,7 +77,7 @@ def run_dmrg(
       if the requested stack cannot be allocated.
     """
     n_threads = int(os.environ.get("OMP_NUM_THREADS", "4"))
-    stack_mem = (int(os.environ.get("MEM", "450"))) * (1 << 30)
+    stack_mem = _validate_mem_env()
 
     scratch_dir = os.environ.get("SCRATCH_DIR", "./tmp")
     _symm_map = {"SU2": SymmetryTypes.SU2, "SZ": SymmetryTypes.SZ}
