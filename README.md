@@ -23,6 +23,7 @@ workflows.
 ## Table of contents
 
 - [Installation](#installation)
+  - [MolTagger: Interactive Tagging Tool](#moltagger-interactive-tagging-tool)
 - [Environment variables](#environment-variables)
 - [Logging](#logging)
 - [Tutorial — benzene π system](#tutorial--benzene-π-system)
@@ -55,6 +56,12 @@ source .venv/bin/activate
 
 `block2` is fetched from its own package index and is declared in `pyproject.toml`
 — `uv sync` handles it automatically.
+
+### `MolTagger`: Interactive Tagging Tool
+
+An interactive 3D molecular viewer for selecting atoms and generating
+PySCF-compatible `ao_labels` strings ready to paste into `ProjectionConfig`.
+See the [MolTagger README](aegiss/utils/mol_tagger/README.md) for installation and usage.
 
 ---
 
