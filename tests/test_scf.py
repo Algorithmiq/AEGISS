@@ -71,6 +71,18 @@ class TestBuildMol:
         mol = build_mol("Li 0 0 0", basis="sto-3g", spin=1, verbose=0)
         assert mol.spin == 1
 
+    def test_pyscf_max_memory_env_var(self, monkeypatch) -> None:
+        monkeypatch.setenv("PYSCF_MAX_MEMORY", "8000")
+        mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
+        assert mol.max_memory == 8000
+
+    def test_max_memory_kwarg_overrides_env_var(self, monkeypatch) -> None:
+        monkeypatch.setenv("PYSCF_MAX_MEMORY", "8000")
+        mol = build_mol(
+            "H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0, max_memory=2000
+        )
+        assert mol.max_memory == 2000
+
 
 class TestRunScf:
     def test_h2_rhf_converges(self, h2_rhf) -> None:

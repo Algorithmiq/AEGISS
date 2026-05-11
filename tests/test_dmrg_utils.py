@@ -5,11 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from aegiss.utils.dmrg_utils import (
-    _default_dmrg_schedule,
-    _validate_mem_env,
-    compute_qmi,
-)
+from aegiss.utils.dmrg_utils import _default_dmrg_schedule, compute_qmi
 
 
 class TestDefaultDmrgSchedule:
@@ -176,54 +172,3 @@ class TestComputeQmi:
         _, _, minfo = compute_qmi(driver, ket=None)
         expected = np.array([[0.0, 0.15], [0.15, 0.0]])
         np.testing.assert_allclose(minfo, expected, atol=1e-14)
-
-
-_DEFAULT = 4 * (1 << 30)
-
-
-class TestValidateMemEnv:
-    def test_unset_returns_default(self, monkeypatch) -> None:
-        monkeypatch.delenv("MEM", raising=False)
-        assert _validate_mem_env() == _DEFAULT
-
-    def test_valid_value_returns_bytes(self, monkeypatch) -> None:
-        monkeypatch.setenv("MEM", "16")
-        assert _validate_mem_env() == 16 * (1 << 30)
-
-    def test_valid_value_with_whitespace(self, monkeypatch) -> None:
-        monkeypatch.setenv("MEM", "  8  ")
-        assert _validate_mem_env() == 8 * (1 << 30)
-
-    def test_zero_falls_back_to_default(self, monkeypatch) -> None:
-        monkeypatch.setenv("MEM", "0")
-        assert _validate_mem_env() == _DEFAULT
-
-    def test_zero_with_whitespace_falls_back_to_default(self, monkeypatch) -> None:
-        monkeypatch.setenv("MEM", "  0  ")
-        assert _validate_mem_env() == _DEFAULT
-
-    def test_negative_falls_back_to_default(self, monkeypatch) -> None:
-        monkeypatch.setenv("MEM", "-16")
-        assert _validate_mem_env() == _DEFAULT
-
-    def test_negative_with_whitespace_falls_back_to_default(self, monkeypatch) -> None:
-        monkeypatch.setenv("MEM", "  -8  ")
-        assert _validate_mem_env() == _DEFAULT
-
-    def test_non_integer_falls_back_to_default(self, monkeypatch) -> None:
-        monkeypatch.setenv("MEM", "not_an_int")
-        assert _validate_mem_env() == _DEFAULT
-
-    def test_non_integer_with_whitespace_falls_back_to_default(
-        self, monkeypatch
-    ) -> None:
-        monkeypatch.setenv("MEM", "  not_an_int  ")
-        assert _validate_mem_env() == _DEFAULT
-
-    def test_empty_string_falls_back_to_default(self, monkeypatch) -> None:
-        monkeypatch.setenv("MEM", "")
-        assert _validate_mem_env() == _DEFAULT
-
-    def test_whitespace_only_falls_back_to_default(self, monkeypatch) -> None:
-        monkeypatch.setenv("MEM", "   ")
-        assert _validate_mem_env() == _DEFAULT
