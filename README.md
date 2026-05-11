@@ -69,6 +69,13 @@ uv sync --extra viz
 
 See the [MolTagger README](aegiss/utils/mol_tagger/README.md) for full installation and usage.
 
+### `Extras` and `Groups`
+```bash
+uv sync --all-extras --all-groups
+```
+You'll have:
+- `--all-extras` picks up `viz`
+- `--all-groups` picks up `test`, `docs`,`dev`, and `interactive`.
 ---
 
 ## Environment variables

@@ -21,6 +21,11 @@ viz = [
 ]
 
 [dependency-groups]
+docs = [
+    "mkdocs-material>=9",
+    "mkdocs-jupyter>=0.25",
+    "mkdocstrings[python]>=0.27",
+]
 dev = [
     "mypy==1.15.0",
     "pre-commit>=3",
