@@ -67,7 +67,7 @@ def run_dmrg(
 
     * ``OMP_NUM_THREADS`` (default ``4``) — number of OpenMP threads for block2.
     * ``SCRATCH_DIR`` (default ``"./tmp"``) — directory for DMRG scratch files.
-    * ``MEM`` (default ``450``) — memory budget in **GiB** passed to block2 as
+    * ``MEM`` (default ``4``) — memory budget in **GiB** passed to block2 as
       ``stack_mem``.  The value is converted via ``MEM * 2**30`` bytes, so
       ``MEM=16`` allocates a 16 GiB stack.  Set this to roughly the amount of
       free RAM available to the process; block2 will raise an error at startup

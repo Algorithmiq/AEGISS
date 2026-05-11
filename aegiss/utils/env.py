@@ -16,6 +16,14 @@ def mem() -> int:
     ``MEM`` must be a positive integer number of GiB.  If it is unset, not a
     valid integer, zero, or negative, the default of ``_DEFAULT_MEM_GIB`` GiB
     is used and a warning is logged.
+
+    Raises:
+    -------
+        ValueError: If ``MEM`` is set but cannot be parsed as a positive integer.
+
+    Returns:
+    --------
+        int: The amount of memory in bytes to use for DMRG stack memory.
     """
     raw = os.environ.get("MEM")
     if raw is None:
@@ -44,7 +52,15 @@ def mem() -> int:
 
 
 def omp_num_threads() -> int:
-    """Return the number of OpenMP threads (``OMP_NUM_THREADS``, default: 4)."""
+    """Return the number of OpenMP threads (``OMP_NUM_THREADS``, default: 4).
+
+    Returns the value of the ``OMP_NUM_THREADS`` environment variable, stripped of leading and trailing whitespace.
+    If ``OMP_NUM_THREADS`` is unset or empty after stripping, returns the default value of 4.
+
+    Returns:
+    --------
+        int: The number of OpenMP threads to use.
+    """
     value = os.environ.get("OMP_NUM_THREADS", "4").strip() or "4"
     try:
         return int(value)
@@ -55,13 +71,29 @@ def omp_num_threads() -> int:
 
 
 def scratch_dir() -> str:
-    """Return the DMRG scratch directory (``SCRATCH_DIR``, default: ``'./tmp'``)."""
+    """Return the DMRG scratch directory (``SCRATCH_DIR``, default: ``'./tmp'``).
+
+    Returns the value of the ``SCRATCH_DIR`` environment variable, stripped of leading and trailing whitespace.
+    If ``SCRATCH_DIR`` is unset or empty after stripping, returns the default value of ``'./tmp'``.
+
+    Returns:
+    --------
+        str: The DMRG scratch directory path.
+    """
     value = os.environ.get("SCRATCH_DIR", "").strip()
     return value or "./tmp"
 
 
 def pyscf_max_memory() -> int:
-    """Return the PySCF max memory in MB (``PYSCF_MAX_MEMORY``, default: 4000)."""
+    """Return the PySCF max memory in MB (``PYSCF_MAX_MEMORY``, default: 4000).
+
+    Returns the value of the ``PYSCF_MAX_MEMORY`` environment variable, stripped of leading and trailing whitespace.
+    If ``PYSCF_MAX_MEMORY`` is unset or empty after stripping, returns the default value of 4000 MB.
+
+    Returns:
+    --------
+        int: The PySCF max memory in MB.
+    """
     value = os.environ.get("PYSCF_MAX_MEMORY", "4000").strip() or "4000"
     try:
         return int(value)
