@@ -197,13 +197,14 @@ class TestRunDmrgBehavior:
             1 << 30
         )
 
-    @pytest.mark.usefixtures("mocked_run_dmrg")
-    def test_mem_env_var_zero_raises_value_error(self, monkeypatch) -> None:
+    def test_mem_env_var_zero_falls_back_to_default(
+        self, mocked_run_dmrg, monkeypatch
+    ) -> None:
         monkeypatch.setenv("MEM", "0")
-        with pytest.raises(
-            ValueError, match="MEM environment variable must be a positive integer"
-        ):
-            run_dmrg(mf=None, ncas=2, nelecas=2, symm_type="SZ", get_qmi=False)
+        run_dmrg(mf=None, ncas=2, nelecas=2, symm_type="SZ", get_qmi=False)
+        assert mocked_run_dmrg["MockDriver"].call_args.kwargs["stack_mem"] == 4 * (
+            1 << 30
+        )
 
     def test_mem_env_var_negative_falls_back_to_default(
         self, mocked_run_dmrg, monkeypatch
@@ -232,15 +233,14 @@ class TestRunDmrgBehavior:
             1 << 30
         )
 
-    @pytest.mark.usefixtures("mocked_run_dmrg")
-    def test_mem_env_var_zero_with_whitespace_raises_value_error(
-        self, monkeypatch
+    def test_mem_env_var_zero_with_whitespace_falls_back_to_default(
+        self, mocked_run_dmrg, monkeypatch
     ) -> None:
         monkeypatch.setenv("MEM", "  0  ")
-        with pytest.raises(
-            ValueError, match="MEM environment variable must be a positive integer"
-        ):
-            run_dmrg(mf=None, ncas=2, nelecas=2, symm_type="SZ", get_qmi=False)
+        run_dmrg(mf=None, ncas=2, nelecas=2, symm_type="SZ", get_qmi=False)
+        assert mocked_run_dmrg["MockDriver"].call_args.kwargs["stack_mem"] == 4 * (
+            1 << 30
+        )
 
     def test_mem_env_var_negative_with_whitespace_falls_back_to_default(
         self, mocked_run_dmrg, monkeypatch

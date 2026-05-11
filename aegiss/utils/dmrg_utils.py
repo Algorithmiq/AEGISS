@@ -20,14 +20,8 @@ def _validate_mem_env() -> int:
     """Return ``stack_mem`` in bytes from the ``MEM`` environment variable.
 
     ``MEM`` must be a positive integer number of GiB.  If it is unset, not a
-    valid integer, or negative, the default of ``_DEFAULT_MEM_GIB`` GiB is
-    used and a warning is logged.  Explicitly setting ``MEM=0`` is rejected
-    with ``ValueError`` because zero bytes is never a valid stack size.
-
-    Raises:
-    ------
-    ValueError
-        If ``MEM`` is ``"0"``.
+    valid integer, zero, or negative, the default of ``_DEFAULT_MEM_GIB`` GiB
+    is used and a warning is logged.
     """
     raw = os.environ.get("MEM")
     if raw is None:
@@ -44,14 +38,11 @@ def _validate_mem_env() -> int:
         )
         return _DEFAULT_MEM_GIB * (1 << 30)
 
-    if mem_gib == 0:
-        raise ValueError(
-            f"MEM environment variable must be a positive integer, got {mem_gib}."
-        )
-
-    if mem_gib < 0:
+    if mem_gib <= 0:
         logger.warning(
-            "MEM=%d is negative; using default %d GiB.", mem_gib, _DEFAULT_MEM_GIB
+            "MEM=%d is not a positive integer; using default %d GiB.",
+            mem_gib,
+            _DEFAULT_MEM_GIB,
         )
         return _DEFAULT_MEM_GIB * (1 << 30)
 
