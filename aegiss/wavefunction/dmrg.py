@@ -61,7 +61,8 @@ def run_dmrg(
         Quantum mutual information matrix (``None`` if *get_qmi* is ``False``).
     """
     n_threads = int(os.environ.get("OMP_NUM_THREADS", "4"))
-    stack_mem = int(os.environ.get("STACK_MEM", "200"))
+    stack_mem = (int(os.environ.get("MEM", "450"))) * (1 << 30)
+
     scratch_dir = os.environ.get("SCRATCH_DIR", "./tmp")
     _symm_map = {"SU2": SymmetryTypes.SU2, "SZ": SymmetryTypes.SZ}
     if symm_type not in _symm_map:
