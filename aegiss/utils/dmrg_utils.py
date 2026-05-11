@@ -2,12 +2,51 @@
 
 from __future__ import annotations
 
+import logging
+import os
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 if TYPE_CHECKING:
     from pyblock2.driver.core import DMRGDriver
+
+logger = logging.getLogger(__name__)
+
+_DEFAULT_MEM_GIB = 4
+
+
+def _validate_mem_env() -> int:
+    """Return ``stack_mem`` in bytes from the ``MEM`` environment variable.
+
+    ``MEM`` must be a positive integer number of GiB.  If it is unset, not a
+    valid integer, zero, or negative, the default of ``_DEFAULT_MEM_GIB`` GiB
+    is used and a warning is logged.
+    """
+    raw = os.environ.get("MEM")
+    if raw is None:
+        return _DEFAULT_MEM_GIB * (1 << 30)
+
+    stripped = raw.strip()
+    try:
+        mem_gib = int(stripped)
+    except ValueError:
+        logger.warning(
+            "MEM=%r is not a valid integer; using default %d GiB.",
+            stripped,
+            _DEFAULT_MEM_GIB,
+        )
+        return _DEFAULT_MEM_GIB * (1 << 30)
+
+    if mem_gib <= 0:
+        logger.warning(
+            "MEM=%d is not a positive integer; using default %d GiB.",
+            mem_gib,
+            _DEFAULT_MEM_GIB,
+        )
+        return _DEFAULT_MEM_GIB * (1 << 30)
+
+    return mem_gib * (1 << 30)
 
 
 def _default_dmrg_schedule(

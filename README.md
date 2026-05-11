@@ -64,6 +64,7 @@ source .venv/bin/activate
 |---|---|---|
 | `OMP_NUM_THREADS` | `4` | OpenMP threads used by block2 |
 | `SCRATCH_DIR` | `./tmp` | Directory for DMRG scratch files (MPS/MPO) |
+| `MEM` | `450` | Memory budget in **GiB** for block2's internal stack (`stack_mem = MEM × 2³⁰` bytes). Set to roughly the free RAM available to the process. |
 
 Set them before running any calculation:
 
@@ -71,6 +72,7 @@ Set them before running any calculation:
 import os
 os.environ["OMP_NUM_THREADS"] = "8"
 os.environ["SCRATCH_DIR"] = "/scratch/my_job"
+os.environ["MEM"] = "32"   # 32 GiB stack
 ```
 
 ---
@@ -354,7 +356,7 @@ energy, soe1, soe2, minfo = run_dmrg(
 
 Returns `(energy, soe1, soe2, minfo)`. The last three are `None` when `get_qmi=False`.
 
-`OMP_NUM_THREADS` and `SCRATCH_DIR` environment variables are read at call time.
+`OMP_NUM_THREADS`, `SCRATCH_DIR`, and `MEM` environment variables are read at call time (see [Environment variables](#environment-variables) for details).
 
 ---
 
