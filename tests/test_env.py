@@ -4,7 +4,57 @@ from __future__ import annotations
 
 import pytest
 
-from aegiss.utils.env import omp_num_threads, pyscf_max_memory, scratch_dir
+from aegiss.utils.env import mem, omp_num_threads, pyscf_max_memory, scratch_dir
+
+_DEFAULT_MEM = 4 * (1 << 30)
+
+
+class TestMem:
+    def test_unset_returns_default(self, monkeypatch) -> None:
+        monkeypatch.delenv("MEM", raising=False)
+        assert mem() == _DEFAULT_MEM
+
+    def test_valid_value_returns_bytes(self, monkeypatch) -> None:
+        monkeypatch.setenv("MEM", "16")
+        assert mem() == 16 * (1 << 30)
+
+    def test_valid_value_with_whitespace(self, monkeypatch) -> None:
+        monkeypatch.setenv("MEM", "  8  ")
+        assert mem() == 8 * (1 << 30)
+
+    def test_zero_falls_back_to_default(self, monkeypatch) -> None:
+        monkeypatch.setenv("MEM", "0")
+        assert mem() == _DEFAULT_MEM
+
+    def test_zero_with_whitespace_falls_back_to_default(self, monkeypatch) -> None:
+        monkeypatch.setenv("MEM", "  0  ")
+        assert mem() == _DEFAULT_MEM
+
+    def test_negative_falls_back_to_default(self, monkeypatch) -> None:
+        monkeypatch.setenv("MEM", "-16")
+        assert mem() == _DEFAULT_MEM
+
+    def test_negative_with_whitespace_falls_back_to_default(self, monkeypatch) -> None:
+        monkeypatch.setenv("MEM", "  -8  ")
+        assert mem() == _DEFAULT_MEM
+
+    def test_non_integer_falls_back_to_default(self, monkeypatch) -> None:
+        monkeypatch.setenv("MEM", "not_an_int")
+        assert mem() == _DEFAULT_MEM
+
+    def test_non_integer_with_whitespace_falls_back_to_default(
+        self, monkeypatch
+    ) -> None:
+        monkeypatch.setenv("MEM", "  not_an_int  ")
+        assert mem() == _DEFAULT_MEM
+
+    def test_empty_string_falls_back_to_default(self, monkeypatch) -> None:
+        monkeypatch.setenv("MEM", "")
+        assert mem() == _DEFAULT_MEM
+
+    def test_whitespace_only_falls_back_to_default(self, monkeypatch) -> None:
+        monkeypatch.setenv("MEM", "   ")
+        assert mem() == _DEFAULT_MEM
 
 
 class TestOmpNumThreads:
