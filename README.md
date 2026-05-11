@@ -61,7 +61,13 @@ source .venv/bin/activate
 
 An interactive 3D molecular viewer for selecting atoms and generating
 PySCF-compatible `ao_labels` strings ready to paste into `ProjectionConfig`.
-See the [MolTagger README](aegiss/utils/mol_tagger/README.md) for installation and usage.
+MolTagger requires the `viz` optional extra:
+
+```bash
+uv sync --extra viz
+```
+
+See the [MolTagger README](aegiss/utils/mol_tagger/README.md) for full installation and usage.
 
 ---
 
