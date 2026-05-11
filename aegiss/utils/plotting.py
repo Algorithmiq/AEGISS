@@ -586,3 +586,237 @@ def th_plots(
     fig.tight_layout()
     fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf")
     plt.close(fig)
+
+
+def _ticks_helper(soe1: list[tuple[int, float]], ax: plt.Axes) -> None:
+    """Helper function to set x and y ticks for the MI plot.
+
+    Parameters
+    ----------
+    soe1:
+        List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
+    ax:
+        Matplotlib Axes object on which to set the ticks.
+    """
+    N = len(soe1)
+    orbital_indices = np.array([x[0] for x in soe1])
+    x = np.arange(N)
+    y = np.arange(N)
+    ax.set_xticks(x)
+    ax.set_yticks(y)
+    ax.set_xticklabels(orbital_indices, fontsize=10, rotation=90)
+    ax.set_yticklabels(orbital_indices, fontsize=10)
+
+
+def mi_plot(
+    minfo: np.ndarray,
+    soe1: list[tuple[int, float]],
+    folder: str = "./",
+    filename: str = "MI_plot",
+) -> None:
+    """Plot an entanglement diagram based on mutual information (MI) and single-orbital entropy (SOE).
+
+    Parameters
+    ----------
+    minfo:
+        Mutual Information matrix between orbitals.
+    soe1:
+        List of (orbital_index, single_orbital_entropy) tuples for all orbitals
+    folder:
+        Directory where the PDF is saved.
+    filename:
+        Base name of the output file (without extension).
+    """
+    fig, ax = plt.subplots(figsize=(8, 8))
+    ax.matshow(minfo, cmap="magma", vmin=0, vmax=np.max(minfo))
+    plt.colorbar(
+        ax.imshow(minfo, cmap="magma", vmin=0, vmax=np.max(minfo)),
+        ax=ax,
+        fraction=0.02,
+        pad=0.04,
+        label="Mutual Information (MI)",
+    )
+
+    _ticks_helper(soe1, ax)
+    ax.set_xlabel("Orbital Index", fontsize=12)
+    ax.set_ylabel("Orbital Index", fontsize=12)
+
+    fig.tight_layout()
+    fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf", bbox_inches="tight")
+    logger.info("Entanglement diagram saved as %s.pdf", filename)
+    plt.close(fig)
+
+
+def _helper_mi(
+    minfo: np.ndarray, x: np.ndarray, y: np.ndarray, ax: plt.Axes
+) -> list[plt.Line2D]:
+    """Helper function to plot lines between orbitals based on mutual information (MI) values.
+
+    Parameters:
+    -----------
+    minfo: np.ndarray
+        Mutual Information matrix between orbitals.
+    x: np.ndarray
+        x-coordinates of the orbital positions on the plot.
+    y: np.ndarray
+        y-coordinates of the orbital positions on the plot.
+    ax: plt.Axes
+        Matplotlib Axes object on which to plot the lines.
+
+    Returns:
+    --------
+    list of plt.Line2D
+        Legend handles for the different MI thresholds.
+    """
+    # Set up line styles and alpha values for different MI thresholds
+    N = minfo.shape[0]
+    minfo = minfo / np.max(minfo)  # Normalize MI values to [0, 1]
+    mi_thresholds = [1, 1e-1, 1e-2, 1e-3]
+    mi_linestyles = ["-", "--", ":", (0, (1, 2))]
+    mi_linewidths = [2, 1.5, 1.3, 0.8]
+    alphas = sns.color_palette("magma", n_colors=4)
+
+    # Draw lines between orbitals based on MI values and thresholds
+    for i in range(N):
+        for j in range(i + 1, N):
+            mi_value = minfo[i, j]
+            for thresh, ls, c, lw in zip(
+                mi_thresholds, mi_linestyles, alphas, mi_linewidths, strict=False
+            ):
+                if mi_value >= thresh:
+                    ax.plot(
+                        [x[i], x[j]],
+                        [y[i], y[j]],
+                        color=c,
+                        linewidth=lw,
+                        linestyle=ls,
+                    )
+                    break
+
+    return [
+        plt.Line2D([0], [0], color=c, linestyle=ls, label=f"MI ≥ {thresh}")
+        for thresh, ls, c in zip(mi_thresholds, mi_linestyles, alphas, strict=False)
+    ]
+
+
+def _helper_soe(
+    soe1: list[tuple[int, float]], x: np.ndarray, y: np.ndarray, ax: plt.Axes
+) -> list[plt.Line2D]:
+    """Helper function to plot orbital markers based on single-orbital entropy (SOE) values.
+
+    Parameters:
+    -----------
+    soe1: list of tuples
+        List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
+    x: np.ndarray
+        x-coordinates of the orbital positions on the plot.
+    y: np.ndarray
+        y-coordinates of the orbital positions on the plot.
+    ax: plt.Axes
+        Matplotlib Axes object on which to plot the orbital markers.
+
+    Returns:
+    --------
+    list of plt.Line2D
+        Legend handles for the different SOE thresholds.
+    """
+    # Set up marker sizes and colors for different SOE thresholds
+    N = len(soe1)
+    c = sns.color_palette("magma", n_colors=1)
+    orb_indices = np.array([orb[0] for orb in soe1])
+    soe_values = np.array([orb[1] for orb in soe1])
+    soe_values = soe_values / max(soe_values)  # Normalize SOE values to [0, 1]
+    soe1_thresholds = [x / 20 for x in range(20)][:0:-1]  # 3 thresholds excluding 0
+    soe1_sizes = [x * 10 for x in np.linspace(5, 35, 20)][
+        :0:-1
+    ]  # Fixed marker size for all thresholds
+
+    for xi, yi, soe in zip(x, y, soe_values, strict=False):
+        for thresh, size in zip(soe1_thresholds, soe1_sizes, strict=False):
+            if soe >= thresh:
+                ax.scatter(
+                    xi,
+                    yi,
+                    s=size,
+                    color=c[0],
+                    edgecolors="black",
+                    zorder=3,
+                    linewidths=2,
+                )
+                break
+    for i in range(N):
+        ax.text(
+            1.15 * x[i],
+            1.15 * y[i],
+            str(orb_indices[i]),
+            ha="center",
+            va="center",
+            fontsize=12,
+            zorder=4,
+        )
+    return [
+        plt.Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="w",
+            label="SOE",
+            markerfacecolor=c[0],
+            markeredgecolor="black",
+            markeredgewidth=2,
+            markersize=10,
+        )
+    ]
+
+
+def entanglement_diagrams(
+    soe1: list[tuple[Any, Any]],
+    minfo: np.ndarray,
+    folder: str = "./",
+    filename: str = "entanglement_diagrams",
+) -> None:
+    """Plot entanglement diagrams for active and virtual orbitals.
+
+    Each orbital is represented by an individual marker (different colors for different irreps).
+    The size of the marker is proportional to its single-orbital entropy (SOE).
+    Solid to dotted is the gradient for the Mutual Information (MI) between orbitals.
+    The plot is saved as a PDF file.
+
+    Parameters:
+    -----------
+    soe1: list of tuples
+        List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
+    minfo: np.ndarray
+        Mutual Information matrix between orbitals.
+    folder: str, default "./"
+        Directory where the PDF file will be saved.
+    filename: str, default "entanglement_diagrams"
+        Base name of the output PDF file (without extension).
+    """
+    N = len(soe1)
+
+    angles = np.linspace(0, 2 * np.pi, N, endpoint=False)
+    x = np.cos(angles)
+    y = np.sin(angles)
+
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.set_aspect("equal")
+    ax.axis("off")
+
+    circle1 = plt.Circle((0, 0), 1.25, color="black", fill=False, linewidth=1)
+    circle2 = plt.Circle((0, 0), 1, color="black", fill=False, linewidth=2)
+    ax.add_patch(circle1)
+    ax.add_patch(circle2)
+
+    # mi thresholds
+
+    handles_mi = _helper_mi(minfo, x, y, ax)
+    handler_soe = _helper_soe(soe1, x, y, ax)
+    handles = handles_mi + handler_soe
+
+    leg = plt.legend(handles=handles, loc="center")
+    leg.get_frame().set_alpha(None)
+    fig.tight_layout()
+    fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf", bbox_inches="tight")
+    logger.info("Entanglement diagram saved as %s.pdf", filename)
+    plt.close(fig)

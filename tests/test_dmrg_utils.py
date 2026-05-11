@@ -57,6 +57,30 @@ class TestDefaultDmrgSchedule:
         ):
             _default_dmrg_schedule(init_bond_dim=-5)
 
+    def test_all_lists_same_length(self) -> None:
+        bond_dims, noises, thrds = _default_dmrg_schedule()
+        assert len(bond_dims) == len(noises) == len(thrds)
+
+    def test_bond_dims_first_equals_init(self) -> None:
+        bond_dims, _, _ = _default_dmrg_schedule(init_bond_dim=15)
+        assert bond_dims[0] == 15
+
+    def test_bond_dims_last_is_6x_init(self) -> None:
+        bond_dims, _, _ = _default_dmrg_schedule(init_bond_dim=10)
+        assert bond_dims[-1] == 60
+
+    def test_noises_non_increasing(self) -> None:
+        _, noises, _ = _default_dmrg_schedule()
+        assert all(noises[i] >= noises[i + 1] for i in range(len(noises) - 1))
+
+    def test_thrds_non_increasing(self) -> None:
+        _, _, thrds = _default_dmrg_schedule()
+        assert all(thrds[i] >= thrds[i + 1] for i in range(len(thrds) - 1))
+
+    def test_noises_end_with_zeros(self) -> None:
+        _, noises, _ = _default_dmrg_schedule()
+        np.testing.assert_allclose(noises[-2:], 0.0, atol=1e-15)
+
 
 class TestComputeQmi:
     def test_returns_three_arrays(self) -> None:
@@ -110,3 +134,41 @@ class TestComputeQmi:
 
         _, _, minfo = compute_qmi(driver, ket=None)
         assert np.all(minfo >= -1e-14)
+
+    def test_minfo_symmetric(self) -> None:
+        soe1 = np.array([0.1, 0.5, 0.4, 0.2])
+        soe2 = np.outer(soe1, soe1) * 1.5
+
+        driver = type("FakeDriver", (), {})()
+        driver.get_orbital_entropies = (  # type: ignore[attr-defined]
+            lambda _ket, orb_type: soe1 if orb_type == 1 else soe2
+        )
+
+        _, _, minfo = compute_qmi(driver, ket=None)
+        np.testing.assert_allclose(minfo, minfo.T, atol=1e-14)
+
+    def test_minfo_single_orbital_is_zero(self) -> None:
+        soe1 = np.array([0.5])
+        soe2 = np.array([[0.0]])
+
+        driver = type("FakeDriver", (), {})()
+        driver.get_orbital_entropies = (  # type: ignore[attr-defined]
+            lambda _ket, orb_type: soe1 if orb_type == 1 else soe2
+        )
+
+        _, _, minfo = compute_qmi(driver, ket=None)
+        np.testing.assert_allclose(minfo, [[0.0]], atol=1e-14)
+
+    def test_minfo_exact_values_n2(self) -> None:
+        # minfo[i,j] = 0.5 * (soe1[i] + soe1[j] - soe2[i,j]) for i != j
+        soe1 = np.array([0.2, 0.4])
+        soe2 = np.array([[0.0, 0.3], [0.3, 0.0]])
+
+        driver = type("FakeDriver", (), {})()
+        driver.get_orbital_entropies = (  # type: ignore[attr-defined]
+            lambda _ket, orb_type: soe1 if orb_type == 1 else soe2
+        )
+
+        _, _, minfo = compute_qmi(driver, ket=None)
+        expected = np.array([[0.0, 0.15], [0.15, 0.0]])
+        np.testing.assert_allclose(minfo, expected, atol=1e-14)

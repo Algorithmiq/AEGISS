@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -11,6 +10,8 @@ from pyblock2.driver.core import DMRGDriver, SymmetryTypes
 from pyscf import ao2mo, mcscf
 
 from aegiss.utils.dmrg_utils import _default_dmrg_schedule, compute_qmi
+from aegiss.utils.env import mem, omp_num_threads
+from aegiss.utils.env import scratch_dir as get_scratch_dir
 from aegiss.utils.orbital_indices import resolve_nelecas
 
 if TYPE_CHECKING:
@@ -59,9 +60,22 @@ def run_dmrg(
         Two-orbital entropies (``None`` if *get_qmi* is ``False``).
     minfo : np.ndarray or None
         Quantum mutual information matrix (``None`` if *get_qmi* is ``False``).
+
+    Notes:
+    -----
+    Three environment variables are read at call time:
+
+    * ``OMP_NUM_THREADS`` (default ``4``) — number of OpenMP threads for block2.
+    * ``SCRATCH_DIR`` (default ``"./tmp"``) — directory for DMRG scratch files.
+    * ``MEM`` (default ``4``) — memory budget in **GiB** passed to block2 as
+      ``stack_mem``.  The value is converted via ``MEM * 2**30`` bytes, so
+      ``MEM=16`` allocates a 16 GiB stack.  Set this to roughly the amount of
+      free RAM available to the process; block2 will raise an error at startup
+      if the requested stack cannot be allocated.
     """
-    n_threads = int(os.environ.get("OMP_NUM_THREADS", "4"))
-    scratch_dir = os.environ.get("SCRATCH_DIR", "./tmp")
+    n_threads = omp_num_threads()
+    stack_mem = mem()
+    scratch_dir = get_scratch_dir()
     _symm_map = {"SU2": SymmetryTypes.SU2, "SZ": SymmetryTypes.SZ}
     if symm_type not in _symm_map:
         raise ValueError(
@@ -73,7 +87,11 @@ def run_dmrg(
         "----------------DMRG Calculation (symmetry: %s)----------------\n", symm_type
     )
     driver = DMRGDriver(
-        scratch=scratch_dir, symm_type=symm, n_threads=n_threads, n_mkl_threads=1
+        scratch=scratch_dir,
+        symm_type=symm,
+        n_threads=n_threads,
+        n_mkl_threads=1,
+        stack_mem=stack_mem,
     )
 
     mycas = mcscf.CASCI(mf, ncas, nelecas)
