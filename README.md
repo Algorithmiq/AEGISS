@@ -61,7 +61,13 @@ source .venv/bin/activate
 
 An interactive 3D molecular viewer for selecting atoms and generating
 PySCF-compatible `ao_labels` strings ready to paste into `ProjectionConfig`.
-See the [MolTagger README](aegiss/utils/mol_tagger/README.md) for installation and usage.
+MolTagger requires the `viz` optional extra:
+
+```bash
+uv sync --extra viz
+```
+
+See the [MolTagger README](aegiss/utils/mol_tagger/README.md) for full installation and usage.
 
 ---
 
@@ -71,7 +77,8 @@ See the [MolTagger README](aegiss/utils/mol_tagger/README.md) for installation a
 |---|---|---|
 | `OMP_NUM_THREADS` | `4` | OpenMP threads used by block2 |
 | `SCRATCH_DIR` | `./tmp` | Directory for DMRG scratch files (MPS/MPO) |
-| `MEM` | `450` | Memory budget in **GiB** for block2's internal stack (`stack_mem = MEM × 2³⁰` bytes). Set to roughly the free RAM available to the process. |
+| `MEM` | `4` | Memory budget in **GiB** for block2's internal stack (`stack_mem = MEM × 2³⁰` bytes). Set to roughly the free RAM available to the process. |
+| `PYSCF_MAX_MEMORY` | `4000` | PySCF memory budget in **MB** (`mol.max_memory`). Controls how much RAM PySCF may use for integral storage and intermediates. |
 
 Set them before running any calculation:
 
@@ -79,7 +86,8 @@ Set them before running any calculation:
 import os
 os.environ["OMP_NUM_THREADS"] = "8"
 os.environ["SCRATCH_DIR"] = "/scratch/my_job"
-os.environ["MEM"] = "32"   # 32 GiB stack
+os.environ["MEM"] = "32"            # 32 GiB block2 stack
+os.environ["PYSCF_MAX_MEMORY"] = "16000"  # 16 GB for PySCF
 ```
 
 ---
@@ -293,7 +301,7 @@ OutputConfig(saving_folder="./aegiss_output/", saving_prefix="aegiss_selection",
 | `saving_folder` | `str` | `"./aegiss_output/"` | Directory for output files |
 | `saving_prefix` | `str` | `"aegiss_selection"` | Base prefix for output file names |
 | `save_orb` | `bool` | `True` | Write cube files for entropy-screened and final active orbitals |
-| `save_plots` | `bool` | `False` | Generate and save diagnostic plots (SOE heatmap and threshold analysis) |
+| `save_plots` | `bool` | `False` | Generate and save diagnostic plots: SOE heatmap, threshold analysis, entanglement diagram, and mutual-information heatmap |
 
 `saving_prefix` is expanded with selection-specific suffixes:
 `{saving_prefix}_entropy_{idx}.cube` and `{saving_prefix}_AEGISS_{idx}.cube`.
