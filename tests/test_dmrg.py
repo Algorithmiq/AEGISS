@@ -173,3 +173,17 @@ class TestRunDmrgBehavior:
         assert (
             mocked_run_dmrg["MockDriver"].call_args.kwargs["scratch"] == "/my/scratch"
         )
+
+    def test_mem_default_stack_mem(self, mocked_run_dmrg, monkeypatch) -> None:
+        monkeypatch.delenv("MEM", raising=False)
+        run_dmrg(mf=None, ncas=2, nelecas=2, symm_type="SZ", get_qmi=False)
+        assert mocked_run_dmrg["MockDriver"].call_args.kwargs["stack_mem"] == 450 * (
+            1 << 30
+        )
+
+    def test_mem_env_var_sets_stack_mem(self, mocked_run_dmrg, monkeypatch) -> None:
+        monkeypatch.setenv("MEM", "16")
+        run_dmrg(mf=None, ncas=2, nelecas=2, symm_type="SZ", get_qmi=False)
+        assert mocked_run_dmrg["MockDriver"].call_args.kwargs["stack_mem"] == 16 * (
+            1 << 30
+        )
