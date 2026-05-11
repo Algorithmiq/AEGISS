@@ -27,6 +27,9 @@ _D_SHELL_SECONDARY: dict[int, str] = {
     **dict.fromkeys(range(90, 104), "6d"),  # Th-Lr: 5f primary + 6d secondary
 }
 
+_D_SPHERICAL = ["xz", "yz", "xy", "x2-y2", "z"]  # for Nd, no Cartesian labels
+_F_SPHERICAL = ["-3", "-2", "-1", "0", "1", "2", "3"]  # for 4f/5f, no Cartesian labels
+
 _Z_P1: int = 2  # He  — last period-1 element (H, He have only 1s, no p)
 _Z_P2: int = 10  # Ne  — last period-2 element
 _Z_P3: int = 18  # Ar  — last period-3 element
@@ -141,8 +144,40 @@ def suggest_ao_labels(
     if character == "d-shell":
         return _d_shell_labels(metals, organics)
     if character == "sigma":
-        return _sigma_labels(organics, pos)
+        return _sigma_labels(metals, organics, pos)
     return _pi_labels(metals, organics, pos)
+
+
+def _metal_shell_labels(prefix: str, shell: str, seen: set[str]) -> list[str]:
+    """Return the generic shell label followed by per-component labels.
+
+    Args:
+        prefix: Label prefix — bare symbol or tag string (e.g. ``"Fe"`` / ``"Fe.0"``).
+        shell: Shell string from ``_D_SHELL`` / ``_D_SHELL_SECONDARY`` (e.g. ``"3d"``).
+        seen: Already-used label set; updated in place to avoid duplicates.
+
+    Returns:
+        E.g. for ``"3d"``: ``["Fe 3d", "Fe 3dxz", "Fe 3dyz", "Fe 3dxy",
+        "Fe 3dx2-y2", "Fe 3dz"]``.
+    """
+    labels: list[str] = []
+    lbl = f"{prefix} {shell}"
+    if lbl not in seen:
+        labels.append(lbl)
+        seen.add(lbl)
+    components = (
+        _D_SPHERICAL
+        if shell.endswith("d")
+        else _F_SPHERICAL
+        if shell.endswith("f")
+        else []
+    )
+    for comp in components:
+        lbl = f"{prefix} {shell}{comp}"
+        if lbl not in seen:
+            labels.append(lbl)
+            seen.add(lbl)
+    return labels
 
 
 def _d_shell_labels(
@@ -165,15 +200,17 @@ def _d_shell_labels(
     for _, Z, sym in metals:
         for shell_dict in (_D_SHELL, _D_SHELL_SECONDARY):
             if Z in shell_dict:
-                lbl = f"{sym} {shell_dict[Z]}"
-                if lbl not in seen:
-                    labels.append(lbl)
-                    seen.add(lbl)
+                labels.extend(_metal_shell_labels(sym, shell_dict[Z], seen))
     warning: str | None = None
     if organics:
         lig_syms = sorted({sym for _, _, sym, _ in organics})
         warning = f"Ligand atoms ({', '.join(lig_syms)}) ignored in d-shell mode."
-    return labels, warning, f"d-shell: {', '.join(labels)}"
+    generic = [
+        lbl
+        for lbl in labels
+        if not any(lbl.endswith(c) for c in _D_SPHERICAL + _F_SPHERICAL)
+    ]
+    return labels, warning, f"d-shell: {', '.join(generic)}"
 
 
 def _pi_labels(
@@ -305,45 +342,75 @@ def _organic_pi_labels(
 
 
 def _sigma_labels(
+    metals: list[tuple[int, int, str]],
     organics: list[tuple[int, int, str, str]],
     pos: np.ndarray,
 ) -> tuple[list[str], str | None, str]:
-    """Suggest sigma-framework labels: ns + in-plane np for main-group atoms.
+    """Suggest sigma-framework labels: metal d-shells + ns + in-plane np for main-group atoms.
 
     Args:
+        metals: ``(atom_index, Z, prefix)`` triples for metal atoms.
         organics: ``(atom_index, Z, bare_sym, prefix)`` 4-tuples for non-metal atoms.
         pos: Full position array for all atoms.
 
     Returns:
         labels, warning, info — see :func:`suggest_ao_labels`.
     """
-    if not organics:
+    if not metals and not organics:
         return [], "No main-group atoms in selection.", ""
+
+    seen: set[str] = set()
+    labels: list[str] = []
+    info_parts: list[str] = []
+
+    for _, Z, sym in metals:
+        for shell_dict in (_D_SHELL, _D_SHELL_SECONDARY):
+            if Z in shell_dict:
+                lbl = f"{sym} {shell_dict[Z]}"
+                if lbl not in seen:
+                    labels.append(lbl)
+                    seen.add(lbl)
+
+    if not organics:
+        return labels, None, f"sigma: {', '.join(labels)}"
 
     org_pos = pos[[i for i, _, _, _ in organics]]
     org_atoms = [(prefix, sym) for _, _, sym, prefix in organics]
 
     if len(organics) < _MIN_PLANE_ATOMS:
-        seen: set[str] = set()
-        labels = (
+        labels += (
             _collect_s_labels(org_atoms, seen)
             + _collect_p_labels(org_atoms, "x", seen)
             + _collect_p_labels(org_atoms, "y", seen)
         )
         return (
             labels,
-            "Fewer than 3 atoms; sigma axis undetermined.",
+            "Fewer than 3 organic atoms; sigma axis undetermined.",
             f"sigma: {', '.join(labels)}",
         )
 
     axis, score = _pi_axis(org_pos)
     in_plane = [a for a in ("x", "y", "z") if a != axis]
-    seen = set()
-    labels = (
+    labels += (
         _collect_s_labels(org_atoms, seen)
         + _collect_p_labels(org_atoms, in_plane[0], seen)
         + _collect_p_labels(org_atoms, in_plane[1], seen)
     )
+    if metals:
+        info_parts.append(
+            f"metals: {
+                ', '.join(
+                    sorted(
+                        {
+                            f'{s} {shell_dict[Z]}'
+                            for _, Z, s in metals
+                            for shell_dict in (_D_SHELL, _D_SHELL_SECONDARY)
+                            if Z in shell_dict
+                        }
+                    )
+                )
+            }"
+        )
     warning = (
         None
         if score < _PLANARITY_THRESHOLD
@@ -353,4 +420,6 @@ def _sigma_labels(
         f"sigma: in-plane {in_plane[0].upper()},{in_plane[1].upper()} | "
         f"pi-normal ~ {axis.upper()} (score {score:.2f})"
     )
+    if info_parts:
+        info = " | ".join(info_parts) + " | " + info
     return labels, warning, info

@@ -453,11 +453,16 @@ class TestSuggestAoLabels:
         # Out-of-plane py should NOT appear
         assert "C 2py" not in labels
 
-    def test_sigma_no_organics_emits_warning(self) -> None:
+    def test_sigma_metal_only_returns_d_labels(self) -> None:
         nums, syms, pos = _make_inputs(["Fe"], np.zeros((1, 3)))
         labels, warning, _ = suggest_ao_labels(nums, syms, pos, {0}, "sigma")
+        assert any("3d" in lbl for lbl in labels)
+        assert warning is None
+
+    def test_sigma_no_atoms_returns_empty(self) -> None:
+        nums, syms, pos = _make_inputs(["Fe", "C"], np.zeros((2, 3)))
+        labels, _warning, _ = suggest_ao_labels(nums, syms, pos, set(), "sigma")
         assert labels == []
-        assert warning is not None
 
     # --- tagged atoms use label prefix ---
 
@@ -482,7 +487,8 @@ class TestSuggestAoLabels:
     def test_no_tags_uses_bare_symbol(self) -> None:
         nums, syms, pos = _make_inputs(["Fe"], np.zeros((1, 3)))
         labels, _, _ = suggest_ao_labels(nums, syms, pos, {0}, "d-shell")
-        assert labels == ["Fe 3d"]
+        assert labels[0] == "Fe 3d"
+        assert all(lbl.startswith("Fe 3d") for lbl in labels)
 
     # --- label uniqueness ---
 
