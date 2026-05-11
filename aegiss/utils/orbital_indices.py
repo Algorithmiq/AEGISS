@@ -13,17 +13,13 @@ logger = logging.getLogger(__name__)
 def resolve_nelecas(nelecas: int | tuple[int, int]) -> tuple[int, int]:
     """Normalise *nelecas* to an (nalpha, nbeta) pair.
 
-    Parameters
-    ----------
-    nelecas : int or tuple[int, int]
-        Either a total electron count (PySCF closed-shell convention) or an
-        explicit ``(nalpha, nbeta)`` pair.  Odd integers are treated as
-        high-spin doublets (nalpha = ceil, nbeta = floor).
+    Args:
+        nelecas (int or tuple[int, int]): Either a total electron count (PySCF closed-shell convention) or an
+            explicit ``(nalpha, nbeta)`` pair.  Odd integers are treated as
+            high-spin doublets (nalpha = ceil, nbeta = floor).
 
     Returns:
-    -------
-    nalpha, nbeta : tuple[int, int]
-    """
+        nalpha, nbeta (tuple[int, int]):"""
     if isinstance(nelecas, tuple):
         return nelecas
     return (nelecas + 1) // 2, nelecas // 2
@@ -34,18 +30,12 @@ def combine_candidate_entropies(
 ) -> list[tuple[int, float]]:
     """Merge and sort occupied and virtual orbital candidate lists.
 
-    Parameters
-    ----------
-    occ_orbs : list of tuple[int, float]
-        Occupied orbital index/entropy pairs.
-    virt_orbs : list of tuple[int, float]
-        Virtual orbital index/entropy pairs.
+    Args:
+        occ_orbs (list of tuple[int, float]): Occupied orbital index/entropy pairs.
+        virt_orbs (list of tuple[int, float]): Virtual orbital index/entropy pairs.
 
     Returns:
-    -------
-    combined_space : list of tuple[int, float]
-        Merged list sorted by orbital index.
-    """
+        combined_space (list of tuple[int, float]): Merged list sorted by orbital index."""
     combined_space = occ_orbs + virt_orbs
     combined_space.sort(key=lambda x: x[0])
     return combined_space
@@ -59,33 +49,23 @@ def get_orbital_spaces(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Partition MO indices into four subspaces.
 
-    Parameters
-    ----------
-    mf : PySCF SCF object
-        Converged mean-field object exposing ``mo_occ``.
-    orbital_list : list of int
-        Orbital indices (0-based) that define the active / selected space.
-    unique_virt_space : bool
-        If ``True``, the virtual space is partitioned into active and frozen
-        virtuals based on *orbital_list*. If ``False``, all virtual orbitals
-        are considered active and *orbital_list* only affects the occupied space.
+    Args:
+        mf (PySCF SCF object): Converged mean-field object exposing ``mo_occ``.
+        orbital_list (list of int): Orbital indices (0-based) that define the active / selected space.
+        unique_virt_space (bool): If ``True``, the virtual space is partitioned into active and frozen
+            virtuals based on *orbital_list*. If ``False``, all virtual orbitals
+            are considered active and *orbital_list* only affects the occupied space.
 
     Returns:
-    -------
-    frozen_occ : np.ndarray of int
-        Occupied orbitals **not** in *orbital_list* (core / frozen occupied).
-    active_occ : np.ndarray of int
-        Occupied orbitals that **are** in *orbital_list*.
-    active_virt : np.ndarray of int
-        Virtual orbitals that **are** in *orbital_list* (empty when
-        *unique_virt_space* is ``True``).
-    frozen_virt : np.ndarray of int
-        Virtual orbitals **not** in *orbital_list* (external / frozen virtual).
+        frozen_occ (np.ndarray of int): Occupied orbitals **not** in *orbital_list* (core / frozen occupied).
+        active_occ (np.ndarray of int): Occupied orbitals that **are** in *orbital_list*.
+        active_virt (np.ndarray of int): Virtual orbitals that **are** in *orbital_list* (empty when
+            *unique_virt_space* is ``True``).
+        frozen_virt (np.ndarray of int): Virtual orbitals **not** in *orbital_list* (external / frozen virtual).
 
-    Examples:
-    --------
+    Example:
     >>> frozen_occ, active_occ, active_virt, frozen_virt = get_orbital_spaces(mf, [3, 4, 5, 6])
-    """
+"""
     selected = set(orbital_list)
     if not selected:
         logger.info(
@@ -117,23 +97,15 @@ def get_subspaces_from_cas(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Partition MO indices into active and virtual spaces from a CAS definition.
 
-    Parameters
-    ----------
-    mf : PySCF SCF object
-        Converged mean-field object exposing ``mo_occ``.
-    ncas : int
-        Number of active orbitals in the CAS.
-    nelecas : int or tuple[int, int]
-        Number of active electrons, either as a total count or an explicit
-        ``(nalpha, nbeta)`` pair (same convention as PySCF's CASCI).
+    Args:
+        mf (PySCF SCF object): Converged mean-field object exposing ``mo_occ``.
+        ncas (int): Number of active orbitals in the CAS.
+        nelecas (int or tuple[int, int]): Number of active electrons, either as a total count or an explicit
+            ``(nalpha, nbeta)`` pair (same convention as PySCF's CASCI).
 
     Returns:
-    -------
-    active_orbs : np.ndarray of int
-        Orbital indices (0-based) of the active space.
-    virt_orbs : np.ndarray of int
-        Orbital indices (0-based) of the virtual space (not in the active space).
-    """
+        active_orbs (np.ndarray of int): Orbital indices (0-based) of the active space.
+        virt_orbs (np.ndarray of int): Orbital indices (0-based) of the virtual space (not in the active space)."""
     logger.info(
         "----------DMRG CAS Subspace Selection (ncas=%d, nelecas=%s)----------",
         ncas,

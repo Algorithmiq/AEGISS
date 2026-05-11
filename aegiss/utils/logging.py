@@ -39,7 +39,7 @@ def configure_logging(
         log_file: Destination file; opened in append mode so a pre-written
             banner is preserved.
         timestamp_fmt: ``strftime`` format for the timestamp column.
-    """
+"""
     shared_processors: list[Processor] = [
         structlog.stdlib.add_log_level,
         # structlog.stdlib.add_logger_name,

@@ -32,37 +32,23 @@ def run_dmrg(
 ) -> tuple[float, np.ndarray | None, np.ndarray | None, np.ndarray | None]:
     """Run a DMRG calculation using block2 via a PySCF CASCI integral driver.
 
-    Parameters
-    ----------
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object.
-    ncas : int
-        Number of active orbitals.
-    nelecas : int or tuple[int, int]
-        Number of active electrons, either as a total count or an explicit
-        ``(nalpha, nbeta)`` pair (same convention as PySCF's CASCI).
-    init_bond_dim : int
-        Initial bond dimension for the DMRG schedule.
-    symm_type : {'SU2', 'SZ'}
-        Spin symmetry type for block2.
-    verbosity : int
-        Verbosity level for block2 output.
-    get_qmi : bool
-        If ``True``, compute and return quantum mutual information.
+    Args:
+        mf (pyscf.scf.hf.SCF): Converged mean-field object.
+        ncas (int): Number of active orbitals.
+        nelecas (int or tuple[int, int]): Number of active electrons, either as a total count or an explicit
+            ``(nalpha, nbeta)`` pair (same convention as PySCF's CASCI).
+        init_bond_dim (int): Initial bond dimension for the DMRG schedule.
+        symm_type ({'SU2', 'SZ'}): Spin symmetry type for block2.
+        verbosity (int): Verbosity level for block2 output.
+        get_qmi (bool): If ``True``, compute and return quantum mutual information.
 
     Returns:
-    -------
-    energy : float
-        DMRG ground-state energy.
-    soe1 : np.ndarray or None
-        Single-orbital entropies (``None`` if *get_qmi* is ``False``).
-    soe2 : np.ndarray or None
-        Two-orbital entropies (``None`` if *get_qmi* is ``False``).
-    minfo : np.ndarray or None
-        Quantum mutual information matrix (``None`` if *get_qmi* is ``False``).
+        energy (float): DMRG ground-state energy.
+        soe1 (np.ndarray or None): Single-orbital entropies (``None`` if *get_qmi* is ``False``).
+        soe2 (np.ndarray or None): Two-orbital entropies (``None`` if *get_qmi* is ``False``).
+        minfo (np.ndarray or None): Quantum mutual information matrix (``None`` if *get_qmi* is ``False``).
 
-    Notes:
-    -----
+    Note:
     Three environment variables are read at call time:
 
     * ``OMP_NUM_THREADS`` (default ``4``) — number of OpenMP threads for block2.
@@ -72,7 +58,7 @@ def run_dmrg(
       ``MEM=16`` allocates a 16 GiB stack.  Set this to roughly the amount of
       free RAM available to the process; block2 will raise an error at startup
       if the requested stack cannot be allocated.
-    """
+"""
     n_threads = omp_num_threads()
     stack_mem = mem()
     scratch_dir = get_scratch_dir()

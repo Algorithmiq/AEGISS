@@ -90,14 +90,14 @@ class MolViewWindow(QMainWindow):
         xyz_path: Path to the loaded XYZ file.
         tags: Mapping from atom index to comma-separated tag string.
         selected: Set of currently selected atom indices.
-    """
+"""
 
     def __init__(self, xyz_path: str) -> None:
         """Load a molecule and build the viewer window.
 
         Args:
             xyz_path: Path to the XYZ file to visualise.
-        """
+"""
         super().__init__()
         self.xyz_path = xyz_path
         self.atoms, self.tags = load_xyz(xyz_path)
@@ -173,7 +173,7 @@ class MolViewWindow(QMainWindow):
             QPushButton:pressed {
                 background: rgba(70, 70, 150, 230);
             }
-        """)
+""")
         grid = QGridLayout(overlay)
         grid.setContentsMargins(2, 2, 2, 2)
         grid.setSpacing(2)
@@ -354,7 +354,7 @@ class MolViewWindow(QMainWindow):
 
         Qt origin is top-left; VTK origin is bottom-left, so y must be flipped.
         On HiDPI screens the physical pixel count is scaled by devicePixelRatio.
-        """
+"""
         widget = self.plotter.interactor
         dpr_getter = getattr(widget, "devicePixelRatioF", widget.devicePixelRatio)
         dpr = float(dpr_getter())
@@ -607,7 +607,7 @@ class MolViewWindow(QMainWindow):
         Keep original header line.
         For the comment line, if there was one, keep it,
         otherwise write a blank line to preserve XYZ format.
-        """
+"""
         default = Path(self.xyz_path).stem + "_tagged.xyz"
         path, _ = QFileDialog.getSaveFileName(
             self, "Save Tagged XYZ", default, "XYZ files (*.xyz);;All files (*)"

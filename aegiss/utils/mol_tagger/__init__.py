@@ -20,24 +20,22 @@ class MolTagger:
     only need to know about ``filepath``, ``show()``, and ``export_tags()``.
 
     Example:
-        >>> tagger = MolTagger("ethanol.xyz")
-        >>> tagger.show()
-        >>> print(tagger.export_tags())
+    >>> tagger = MolTagger("ethanol.xyz")
+    >>> tagger.show()
+    >>> print(tagger.export_tags())
 
     Attributes:
-        filepath: Resolved path to the loaded XYZ file.
-    """
+        filepath (Path): Resolved path to the loaded XYZ file."""
 
     def __init__(self, filepath: str | Path) -> None:
         """Load a molecule from an XYZ file.
 
         Args:
-            filepath: Path to the XYZ file to visualise.
+            filepath (str or Path): Path to the XYZ file to visualise.
 
         Raises:
             ImportError: If the ``viz`` extras are not installed.
-            FileNotFoundError: If *filepath* does not exist.
-        """
+            FileNotFoundError: If *filepath* does not exist."""
         self.filepath = Path(filepath).resolve()
         if not self.filepath.exists():
             raise FileNotFoundError(self.filepath)
@@ -48,8 +46,7 @@ class MolTagger:
         """Open the interactive PyVistaQt viewer (blocks until closed).
 
         Raises:
-            ImportError: If the ``viz`` extras are not installed.
-        """
+            ImportError: If the ``viz`` extras are not installed."""
         try:
             from qtpy.QtWidgets import QApplication  # noqa: PLC0415
 
@@ -70,9 +67,8 @@ class MolTagger:
         """Return the current atom-tag mapping.
 
         Returns:
-            Dictionary mapping atom indices to their assigned tag strings.
-            Empty if :meth:`show` has not been called yet.
-        """
+            dict[int, str]: Dictionary mapping atom indices to their assigned tag strings.
+                Empty if :meth:`show` has not been called yet."""
         if self._window is None:
             return {}
         return dict(self._window.tags)

@@ -28,20 +28,13 @@ def _draw_pie_subplot(
 ) -> None:
     """Draw a single pie chart for one orbital's AO composition.
 
-    Parameters
-    ----------
-    ax : matplotlib.axes.Axes
-        Axes on which to draw the pie chart.
-    data : np.ndarray
-        Fractional contributions for each AO group (must sum to ≤ 1).
-    labels_names : list of str
-        Slice labels corresponding to each entry in *data*.
-    orb_id : int
-        Orbital index displayed as the subplot title.
-    min_pct : float
-        Minimum fractional contribution below which the slice label and
-        percentage text are hidden.
-    """
+    Args:
+        ax (matplotlib.axes.Axes): Axes on which to draw the pie chart.
+        data (np.ndarray): Fractional contributions for each AO group (must sum to ≤ 1).
+        labels_names (list of str): Slice labels corresponding to each entry in *data*.
+        orb_id (int): Orbital index displayed as the subplot title.
+        min_pct (float): Minimum fractional contribution below which the slice label and
+            percentage text are hidden."""
     n_labels = len(data)
     explode = np.zeros(n_labels)
     explode[np.argmax(data)] = 0.1
@@ -81,28 +74,17 @@ def _save_contributions(
     Computes the fractional contribution of each AO group to every orbital in
     *orbs*, lays out the charts in a *shape* grid, and writes a single PDF file.
 
-    Parameters
-    ----------
-    shape : tuple[int, int]
-        Grid dimensions ``(n_rows, n_cols)`` for the subplot layout.
-    mol : pyscf.gto.Mole
-        PySCF Mole object used to resolve AO labels.
-    orbs : np.ndarray or list of int
-        Indices of the molecular orbitals to plot.
-    ao_labels : list of str or list of str
-        AO label strings recognised by ``mol.search_ao_label``.
-    labels_names : list of str
-        Human-readable names for each AO group, used as pie slice labels.
-    mo : np.ndarray, shape (n_ao, n_mo)
-        MO coefficient matrix for one spin channel.
-    folder : str
-        Directory where the PDF is saved.
-    filename : str
-        Output filename without extension.
-    min_pct : float
-        Minimum fractional contribution below which the slice label and
-        percentage are hidden.
-    """
+    Args:
+        shape (tuple[int, int]): Grid dimensions ``(n_rows, n_cols)`` for the subplot layout.
+        mol (pyscf.gto.Mole): PySCF Mole object used to resolve AO labels.
+        orbs (np.ndarray or list of int): Indices of the molecular orbitals to plot.
+        ao_labels (list of str or list of str): AO label strings recognised by ``mol.search_ao_label``.
+        labels_names (list of str): Human-readable names for each AO group, used as pie slice labels.
+        mo (np.ndarray, shape (n_ao, n_mo)): MO coefficient matrix for one spin channel.
+        folder (str): Directory where the PDF is saved.
+        filename (str): Output filename without extension.
+        min_pct (float): Minimum fractional contribution below which the slice label and
+            percentage are hidden."""
     n_orbs, n_labels = len(orbs), len(ao_labels)
     total_ao_idx = np.unique(
         np.concatenate([mol.search_ao_label(lbl) for lbl in ao_labels])
@@ -159,8 +141,7 @@ def plot_pie_contribution(
     Saves one PDF per spin channel (``_alpha`` / ``_beta`` for unrestricted,
     ``_alpha`` only for restricted).
 
-    Parameters
-    ----------
+    Args:
     mol:
         PySCF Mole object, used to resolve AO labels.
     mf:
@@ -183,7 +164,7 @@ def plot_pie_contribution(
     min_pct:
         Minimum fractional contribution (0-1) below which the slice label
         and percentage are hidden. Default is 0.01 (1 %).
-    """
+"""
     if isinstance(ao_labels, str):
         ao_labels = [ao_labels]
     if len(ao_labels) != len(labels_names):
@@ -228,8 +209,7 @@ def plot_ao_contribution(
     Each row is the contribution array for one AO group, normalised by its own
     maximum so all rows share the same [0, 1] colour scale.
 
-    Parameters
-    ----------
+    Args:
     ao_contributions:
         Dict mapping integer group index to a list of (orbital_index, weight)
         pairs covering all orbitals in the search space.
@@ -244,7 +224,7 @@ def plot_ao_contribution(
         integers when *None*.
     mos_per_plot:
         Maximum number of MOs shown in each subplot panel.
-    """
+"""
     keys = list(ao_contributions.keys())
 
     def _ytick(group_idx: int, position: int) -> str:
@@ -324,8 +304,7 @@ def soe_heatmap(
     values as a continuous colormap, and the bottom two rows show binary
     threshold indicators. Saves the figure as a PDF.
 
-    Parameters
-    ----------
+    Args:
     so1_entropies:
         List of (orbital_index, relative_entropy) tuples, where the entropy
         is already normalised by ``max_so1``.
@@ -336,7 +315,7 @@ def soe_heatmap(
         Directory where the PDF is saved.
     filename:
         Base name of the output file (without extension).
-    """
+"""
     so1_abs = np.array([x[1] for x in so1_entropies])
     max_so1 = max(so1_abs)
     so1_rel = so1_abs / max_so1
@@ -393,29 +372,19 @@ def _detect_plateaus(
     of length ≥ *plateau_size* as plateaus. Returns the data needed to annotate
     the threshold curve plot.
 
-    Parameters
-    ----------
-    y_values : np.ndarray, shape (n_thresholds,)
-        Number of orbitals above each threshold step.
-    indices_above : dict[int, np.ndarray]
-        Mapping from threshold step index to the array of orbital indices above
-        that threshold.
-    plateau_size : int
-        Minimum run length (in threshold steps) for a flat region to be
-        considered a plateau.
+    Args:
+        y_values (np.ndarray, shape (n_thresholds,)): Number of orbitals above each threshold step.
+        indices_above (dict[int, np.ndarray]): Mapping from threshold step index to the array of orbital indices above
+            that threshold.
+        plateau_size (int): Minimum run length (in threshold steps) for a flat region to be
+            considered a plateau.
 
     Returns:
-    -------
-    plateau_vector : list of float
-        y-values belonging to plateau points.
-    plateau_index : list of float
-        x-coordinates (threshold fractions) of plateau points.
-    starting_plateaus_indices : list of int
-        Index into *y_values* at which each plateau begins.
-    rect_size : list of list of float
-        For each plateau: ``[x_start, x_end, n_orbs]``, used to draw bounding
-        rectangles on the plot.
-    """
+        plateau_vector (list of float): y-values belonging to plateau points.
+        plateau_index (list of float): x-coordinates (threshold fractions) of plateau points.
+        starting_plateaus_indices (list of int): Index into *y_values* at which each plateau begins.
+        rect_size (list of list of float): For each plateau: ``[x_start, x_end, n_orbs]``, used to draw bounding
+            rectangles on the plot."""
     tmp_val = y_values[0]
     plateau_vector: list[float] = []
     plateau_index: list[float] = []
@@ -452,20 +421,14 @@ def _detect_plateaus(
 def _define_cas_size(selected_ones: np.ndarray, occ_index: int) -> tuple[int, int]:
     """Return ``(n_orbs, n_elec)`` for a CAS defined by a set of orbital indices.
 
-    Parameters
-    ----------
-    selected_ones : np.ndarray
-        Orbital indices in the candidate active space.
-    occ_index : int
-        Index of HOMO + 1 (first virtual orbital). Orbitals with index strictly
-        below this value are treated as occupied.
+    Args:
+        selected_ones (np.ndarray): Orbital indices in the candidate active space.
+        occ_index (int): Index of HOMO + 1 (first virtual orbital). Orbitals with index strictly
+            below this value are treated as occupied.
 
     Returns:
-    -------
-    cas_size : tuple[int, int]
-        ``(n_orbs, n_elec)`` where *n_orbs* is the total number of selected
-        orbitals and *n_elec* is twice the number of selected occupied orbitals.
-    """
+        cas_size (tuple[int, int]): ``(n_orbs, n_elec)`` where *n_orbs* is the total number of selected
+            orbitals and *n_elec* is twice the number of selected occupied orbitals."""
     return (len(selected_ones), 2 * int(np.sum(selected_ones < occ_index)))
 
 
@@ -484,8 +447,7 @@ def th_plots(
     stable across a range of thresholds — are highlighted and annotated with
     the implied CAS(n_elec, n_orbs) sizes. Saves the figure as a PDF.
 
-    Parameters
-    ----------
+    Args:
     so1_entropies:
         List of (orbital_index, relative_entropy) tuples, where the entropy
         is already normalised by ``max_so1``.
@@ -496,7 +458,7 @@ def th_plots(
         flat region to be considered a plateau and annotated on the plot.
     filename:
         Base name of the output file (without extension).
-    """
+"""
     so1_abs = np.array([x[1] for x in so1_entropies])
     max_so1 = max(so1_abs)
     so1_rel = so1_abs / max_so1
@@ -591,13 +553,12 @@ def th_plots(
 def _ticks_helper(soe1: list[tuple[int, float]], ax: plt.Axes) -> None:
     """Helper function to set x and y ticks for the MI plot.
 
-    Parameters
-    ----------
+    Args:
     soe1:
         List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
     ax:
         Matplotlib Axes object on which to set the ticks.
-    """
+"""
     N = len(soe1)
     orbital_indices = np.array([x[0] for x in soe1])
     x = np.arange(N)
@@ -616,8 +577,7 @@ def mi_plot(
 ) -> None:
     """Plot an entanglement diagram based on mutual information (MI) and single-orbital entropy (SOE).
 
-    Parameters
-    ----------
+    Args:
     minfo:
         Mutual Information matrix between orbitals.
     soe1:
@@ -626,7 +586,7 @@ def mi_plot(
         Directory where the PDF is saved.
     filename:
         Base name of the output file (without extension).
-    """
+"""
     fig, ax = plt.subplots(figsize=(8, 8))
     ax.matshow(minfo, cmap="magma", vmin=0, vmax=np.max(minfo))
     plt.colorbar(
@@ -652,22 +612,14 @@ def _helper_mi(
 ) -> list[plt.Line2D]:
     """Helper function to plot lines between orbitals based on mutual information (MI) values.
 
-    Parameters:
-    -----------
-    minfo: np.ndarray
-        Mutual Information matrix between orbitals.
-    x: np.ndarray
-        x-coordinates of the orbital positions on the plot.
-    y: np.ndarray
-        y-coordinates of the orbital positions on the plot.
-    ax: plt.Axes
-        Matplotlib Axes object on which to plot the lines.
+    Args:
+        minfo (np.ndarray): Mutual Information matrix between orbitals.
+        x (np.ndarray): x-coordinates of the orbital positions on the plot.
+        y (np.ndarray): y-coordinates of the orbital positions on the plot.
+        ax (plt.Axes): Matplotlib Axes object on which to plot the lines.
 
     Returns:
-    --------
-    list of plt.Line2D
-        Legend handles for the different MI thresholds.
-    """
+        list of plt.Line2D: Legend handles for the different MI thresholds."""
     # Set up line styles and alpha values for different MI thresholds
     N = minfo.shape[0]
     minfo = minfo / np.max(minfo)  # Normalize MI values to [0, 1]
@@ -704,22 +656,14 @@ def _helper_soe(
 ) -> list[plt.Line2D]:
     """Helper function to plot orbital markers based on single-orbital entropy (SOE) values.
 
-    Parameters:
-    -----------
-    soe1: list of tuples
-        List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
-    x: np.ndarray
-        x-coordinates of the orbital positions on the plot.
-    y: np.ndarray
-        y-coordinates of the orbital positions on the plot.
-    ax: plt.Axes
-        Matplotlib Axes object on which to plot the orbital markers.
+    Args:
+        soe1 (list of tuples): List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
+        x (np.ndarray): x-coordinates of the orbital positions on the plot.
+        y (np.ndarray): y-coordinates of the orbital positions on the plot.
+        ax (plt.Axes): Matplotlib Axes object on which to plot the orbital markers.
 
     Returns:
-    --------
-    list of plt.Line2D
-        Legend handles for the different SOE thresholds.
-    """
+        list of plt.Line2D: Legend handles for the different SOE thresholds."""
     # Set up marker sizes and colors for different SOE thresholds
     N = len(soe1)
     c = sns.color_palette("magma", n_colors=1)
@@ -782,17 +726,11 @@ def entanglement_diagrams(
     Solid to dotted is the gradient for the Mutual Information (MI) between orbitals.
     The plot is saved as a PDF file.
 
-    Parameters:
-    -----------
-    soe1: list of tuples
-        List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
-    minfo: np.ndarray
-        Mutual Information matrix between orbitals.
-    folder: str, default "./"
-        Directory where the PDF file will be saved.
-    filename: str, default "entanglement_diagrams"
-        Base name of the output PDF file (without extension).
-    """
+    Args:
+        soe1 (list of tuples): List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
+        minfo (np.ndarray): Mutual Information matrix between orbitals.
+        folder (str, default "./"): Directory where the PDF file will be saved.
+        filename (str, default "entanglement_diagrams"): Base name of the output PDF file (without extension)."""
     N = len(soe1)
 
     angles = np.linspace(0, 2 * np.pi, N, endpoint=False)

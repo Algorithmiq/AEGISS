@@ -27,22 +27,14 @@ def localize_boys(
 ) -> np.ndarray:
     """Boys (Foster-Boys) localization — minimises the spatial spread of each orbital.
 
-    Parameters
-    ----------
-    mol : pyscf.gto.Mole
-        Molecular geometry and basis set.
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
-    n_occ : int, optional
-        Number of occupied orbitals. Inferred from *mf* if not given.
-    on_virtual : bool
-        Whether to also localize the virtual space.
+    Args:
+        mol (pyscf.gto.Mole): Molecular geometry and basis set.
+        mf (pyscf.scf.hf.SCF): Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
+        n_occ (int, optional): Number of occupied orbitals. Inferred from *mf* if not given.
+        on_virtual (bool): Whether to also localize the virtual space.
 
     Returns:
-    -------
-    new_mos : np.ndarray, shape (nao, nmo)
-        Localized MO coefficients.
-    """
+        new_mos (np.ndarray, shape (nao, nmo)): Localized MO coefficients."""
     if n_occ is None:
         n_occ = int(np.count_nonzero(mf.mo_occ > 0))
     loc_occ = lo.Boys(mol, mf.mo_coeff[:, :n_occ]).kernel()
@@ -63,22 +55,14 @@ def localize_edmiston(
 ) -> np.ndarray:
     """Edmiston-Ruedenberg localization — maximises orbital self-repulsion energy.
 
-    Parameters
-    ----------
-    mol : pyscf.gto.Mole
-        Molecular geometry and basis set.
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
-    n_occ : int, optional
-        Number of occupied orbitals. Inferred from *mf* if not given.
-    on_virtual : bool
-        Whether to also localize the virtual space.
+    Args:
+        mol (pyscf.gto.Mole): Molecular geometry and basis set.
+        mf (pyscf.scf.hf.SCF): Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
+        n_occ (int, optional): Number of occupied orbitals. Inferred from *mf* if not given.
+        on_virtual (bool): Whether to also localize the virtual space.
 
     Returns:
-    -------
-    new_mos : np.ndarray, shape (nao, nmo)
-        Localized MO coefficients.
-    """
+        new_mos (np.ndarray, shape (nao, nmo)): Localized MO coefficients."""
     if n_occ is None:
         n_occ = int(np.count_nonzero(mf.mo_occ > 0))
     loc_occ = lo.ER(mol, mf.mo_coeff[:, :n_occ]).kernel()
@@ -100,24 +84,15 @@ def localize_pipek_mezey(
 ) -> np.ndarray:
     """Pipek-Mezey localization — maximises orbital partial charges on atoms.
 
-    Parameters
-    ----------
-    mol : pyscf.gto.Mole
-        Molecular geometry and basis set.
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
-    n_occ : int, optional
-        Number of occupied orbitals. Inferred from *mf* if not given.
-    on_virtual : bool
-        Whether to also localize the virtual space.
-    pop_method : str
-        Population analysis scheme used for the virtual block (default ``"becke"``).
+    Args:
+        mol (pyscf.gto.Mole): Molecular geometry and basis set.
+        mf (pyscf.scf.hf.SCF): Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
+        n_occ (int, optional): Number of occupied orbitals. Inferred from *mf* if not given.
+        on_virtual (bool): Whether to also localize the virtual space.
+        pop_method (str): Population analysis scheme used for the virtual block (default ``"becke"``).
 
     Returns:
-    -------
-    new_mos : np.ndarray, shape (nao, nmo)
-        Localized MO coefficients.
-    """
+        new_mos (np.ndarray, shape (nao, nmo)): Localized MO coefficients."""
     if n_occ is None:
         n_occ = int(np.count_nonzero(mf.mo_occ > 0))
     loc_occ = lo.PM(mol, mf.mo_coeff[:, :n_occ]).kernel()
@@ -139,23 +114,16 @@ def localize_fnos(
     Builds a correlated wavefunction, partitions orbitals into a frozen core and
     an active set, and returns the FNO coefficient matrix.
 
-    Parameters
-    ----------
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object.
-    correlated_method : {'mp2', 'cisd', 'ccsd'}
-        Correlated method used to build the 1-RDM for the NO transformation.
-    active : bool or list of int
-        Controls which occupied orbitals enter the correlated calculation.
-        ``True`` uses all occupied orbitals (no freezing). A list of integers
-        specifies the indices of orbitals to freeze; all other occupied orbitals
-        are treated as active.
+    Args:
+        mf (pyscf.scf.hf.SCF): Converged mean-field object.
+        correlated_method ({'mp2', 'cisd', 'ccsd'}): Correlated method used to build the 1-RDM for the NO transformation.
+        active (bool or list of int): Controls which occupied orbitals enter the correlated calculation.
+            ``True`` uses all occupied orbitals (no freezing). A list of integers
+            specifies the indices of orbitals to freeze; all other occupied orbitals
+            are treated as active.
 
     Returns:
-    -------
-    mo_coeff : np.ndarray, shape (nao, nmo)
-        FNO coefficients in the AO basis.
-    """
+        mo_coeff (np.ndarray, shape (nao, nmo)): FNO coefficients in the AO basis."""
     from aegiss.localization.fnos import compute_fnos  # noqa: PLC0415
 
     logger.info("Computing FNOs using %s", correlated_method.upper())
@@ -185,21 +153,14 @@ def localize_nos(
 ) -> np.ndarray:
     """Natural orbital (NO) transformation from a correlated 1-RDM.
 
-    Parameters
-    ----------
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object.
-    correlated_method : {'mp2', 'cisd', 'ccsd'}
-        Correlated method used to build the 1-RDM for the NO transformation.
-    split : bool
-        If ``True``, diagonalise the occupied and virtual blocks of the 1-RDM
-        separately instead of the full matrix.
+    Args:
+        mf (pyscf.scf.hf.SCF): Converged mean-field object.
+        correlated_method ({'mp2', 'cisd', 'ccsd'}): Correlated method used to build the 1-RDM for the NO transformation.
+        split (bool): If ``True``, diagonalise the occupied and virtual blocks of the 1-RDM
+            separately instead of the full matrix.
 
     Returns:
-    -------
-    nos : np.ndarray, shape (nao, nmo)
-        Natural orbital coefficients in the AO basis.
-    """
+        nos (np.ndarray, shape (nao, nmo)): Natural orbital coefficients in the AO basis."""
     from aegiss.localization.nos import compute_nos  # noqa: PLC0415
 
     logger.info("Computing NOs using %s", correlated_method.upper())
@@ -226,22 +187,17 @@ _METHODS: dict[str, Any] = {
 def localize(method: str, *args: Any, **kwargs: Any) -> Any:
     """Dispatch to a localization method by name.
 
-    Parameters
-    ----------
-    method : str
-        One of ``'boys'``, ``'edmiston'`` / ``'er'``, ``'pm'`` / ``'pipek'``,
-        ``'nos'``, ``'fnos'``.
-    *args
-        Positional arguments forwarded to the selected method.
-    **kwargs
-        Keyword arguments forwarded to the selected method.
+    Args:
+        method (str): One of ``'boys'``, ``'edmiston'`` / ``'er'``, ``'pm'`` / ``'pipek'``,
+            ``'nos'``, ``'fnos'``.
+        *args: Positional arguments forwarded to the selected method.
+        **kwargs: Keyword arguments forwarded to the selected method.
 
-    Examples:
-    --------
+    Example:
     >>> localize('pm', mol, mf, on_virtual=True)
     >>> localize('nos', wfn, frozen=True)
     >>> localize('boys', mol, mf, n_occ=5, on_virtual=False)
-    """
+"""
     if method not in _METHODS:
         raise ValueError(
             f"Unknown localization method {method!r}. Choose from: {sorted(_METHODS)}"

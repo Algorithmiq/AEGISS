@@ -20,20 +20,13 @@ def save_orbitals(
 ) -> None:
     """Save molecular orbitals as cube files for visualization.
 
-    Parameters
-    ----------
-    mol : pyscf.gto.Mole
-        Molecule object containing the geometry and basis set information.
-    mo_coeff : np.ndarray
-        Molecular orbital coefficients in the AO basis. Shape (n_ao, n_mo).
-    candidate_indices : np.ndarray
-        Indices of the orbitals to save.
-    filename_prefix : str
-        Prefix for the output cube files. Each orbital is saved as
-        ``"{filename_prefix}_{i}.cube"``.
-    folder : str
-        Output directory path. Created if it does not exist.
-    """
+    Args:
+        mol (pyscf.gto.Mole): Molecule object containing the geometry and basis set information.
+        mo_coeff (np.ndarray): Molecular orbital coefficients in the AO basis. Shape (n_ao, n_mo).
+        candidate_indices (np.ndarray): Indices of the orbitals to save.
+        filename_prefix (str): Prefix for the output cube files. Each orbital is saved as
+            ``"{filename_prefix}_{i}.cube"``.
+        folder (str): Output directory path. Created if it does not exist."""
     output_dir = Path(folder)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -51,20 +44,13 @@ def save_orbitals_from_entropies(
 ) -> None:
     """Save molecular orbitals (selected by entropy) as cube files.
 
-    Parameters
-    ----------
-    mol : pyscf.gto.Mole
-        Molecule object containing the geometry and basis set information.
-    mo_coeff : np.ndarray
-        Molecular orbital coefficients in the AO basis. Shape (n_ao, n_mo).
-    candidate_indices : list of tuple[int, float]
-        Orbital index/entropy pairs; only the indices are used for saving.
-    filename_prefix : str
-        Prefix for the output cube files. Each orbital is saved as
-        ``"{filename_prefix}_{i}.cube"``.
-    folder : str
-        Output directory path. Created if it does not exist.
-    """
+    Args:
+        mol (pyscf.gto.Mole): Molecule object containing the geometry and basis set information.
+        mo_coeff (np.ndarray): Molecular orbital coefficients in the AO basis. Shape (n_ao, n_mo).
+        candidate_indices (list of tuple[int, float]): Orbital index/entropy pairs; only the indices are used for saving.
+        filename_prefix (str): Prefix for the output cube files. Each orbital is saved as
+            ``"{filename_prefix}_{i}.cube"``.
+        folder (str): Output directory path. Created if it does not exist."""
     output_dir = Path(folder)
     output_dir.mkdir(parents=True, exist_ok=True)
 

@@ -37,7 +37,7 @@ class MolRenderer:
         pos: Atom positions array, shape ``(n, 3)``.
         nums: Atomic numbers array, shape ``(n,)``.
         bonds: List of ``(i, j)`` bonded-atom index pairs.
-    """
+"""
 
     def __init__(
         self,
@@ -51,7 +51,7 @@ class MolRenderer:
             plotter: Shared QtInteractor owned by the main window.
             atoms: ASE Atoms object for the loaded molecule.
             bonds: Pre-computed bond list from :func:`detect_bonds`.
-        """
+"""
         self.plotter = plotter
         self.pos: np.ndarray = atoms.get_positions()
         self.nums: np.ndarray = atoms.get_atomic_numbers()
@@ -64,7 +64,7 @@ class MolRenderer:
 
         Args:
             selected: Set of currently selected atom indices.
-        """
+"""
         self.plotter.clear()
         self._atom_actors.clear()
         self._halo_actors.clear()
@@ -88,7 +88,7 @@ class MolRenderer:
         Args:
             i: Zero-based atom index.
             selected: Whether to render a selection halo around the atom.
-        """
+"""
         if i in self._atom_actors:
             self.plotter.remove_actor(self._atom_actors[i])
         if i in self._halo_actors:

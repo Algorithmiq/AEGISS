@@ -78,9 +78,9 @@ def _guess_basis(Z: int) -> dict[str, list[str]]:
     Args:
         Z: Atomic number.
 
-    Returns:
+    Returns
         Dictionary with ``"all"`` and ``"valence"`` shell lists.
-    """
+"""
     order = [
         (1, "s"),
         (2, "s"),
@@ -128,10 +128,10 @@ def get_basis(Z: int) -> dict[str, list[str]]:
     Args:
         Z: Atomic number.
 
-    Returns:
+    Returns
         Dictionary with ``"all"`` (complete shell list) and ``"valence"``
         (valence-only shell list) keys.
-    """
+"""
     return MINIMAL_BASIS.get(Z, _guess_basis(Z))
 
 
@@ -141,9 +141,9 @@ def detect_bonds(atoms: ase.atoms.Atoms) -> list[tuple[int, int]]:
     Args:
         atoms: ASE Atoms object.
 
-    Returns:
+    Returns
         List of ``(i, j)`` index pairs where a bond is detected.
-    """
+"""
     pos = atoms.get_positions()
     nums = atoms.get_atomic_numbers()
     n = len(atoms)
@@ -170,10 +170,10 @@ def align_selection_to_xy(
         pos: All atomic positions, shape ``(n, 3)``.
         indices: Atom indices whose best-fit plane to align.
 
-    Returns:
+    Returns
         new_pos: Rotated positions, shape ``(n, 3)``.
         ok: ``False`` if *indices* has fewer than 3 atoms or they are collinear.
-    """
+"""
     if len(indices) < 3:
         return pos, False
     sel = pos[indices]
@@ -211,10 +211,10 @@ def load_xyz(filepath: str | Path) -> tuple[Atoms, dict[int, str]]:
     Args:
         filepath: Path to the XYZ file.
 
-    Returns:
+    Returns
         Tuple of ``(atoms, tags)`` where *tags* maps atom indices to their
         original ``Element.N`` label (empty dict if no tags are present).
-    """
+"""
     lines = Path(filepath).read_text().splitlines()
     n = int(lines[0].strip())
     symbols: list[str] = []

@@ -15,20 +15,14 @@ logger = logging.getLogger(__name__)
 def build_mol(atom: Any, **kwargs: Any) -> Any:
     """Helper function to build a PySCF molecule object.
 
-    Parameters
-    ----------
-    atom : str or list of str
-        Atomic geometry in PySCF format, e.g. ``"N 0 0 0; N 0 0 1.1"`` or
-        ``["N 0 0 0", "N 0 0 1.1"]``.
-    **kwargs
-        Additional keyword arguments to pass to the Mole object,
-        e.g. ``basis="ccpvdz"``.
+    Args:
+        atom (str or list of str): Atomic geometry in PySCF format, e.g. ``"N 0 0 0; N 0 0 1.1"`` or
+            ``["N 0 0 0", "N 0 0 1.1"]``.
+        **kwargs: Additional keyword arguments to pass to the Mole object,
+            e.g. ``basis="ccpvdz"``.
 
     Returns:
-    -------
-    mol : pyscf.gto.Mole
-        Molecule object with specified geometry and basis set.
-    """
+        mol (pyscf.gto.Mole): Molecule object with specified geometry and basis set."""
     logger.info("----------Building Molecule----------")
     mol = scf.gto.Mole()
     mol.atom = atom
@@ -69,27 +63,18 @@ def run_scf(
 ) -> Any:
     """Run an HF or KS-DFT mean-field calculation.
 
-    Parameters
-    ----------
-    mol : pyscf.gto.Mole
-        Molecular geometry and basis set.
-    method : {'RHF', 'UHF', 'RKS', 'UKS'}, optional
-        Level of theory. Default is ``'RHF'``.
-    xc : str, optional
-        Exchange-correlation functional; only used when *method* is
-        ``'RKS'`` or ``'UKS'``. Default is ``'b3lyp'``.
-    solvent_info : tuple[str, float], optional
-        Solvent model to use, specified as ``(model, dielectric_constant)``,
-        e.g. ``('PCM', 78.4)`` for water. Default is ``None`` (no solvent).
-    **kwargs
-        Additional attributes forwarded to the PySCF mean-field object
-        (e.g. ``max_cycle=50``).
+    Args:
+        mol (pyscf.gto.Mole): Molecular geometry and basis set.
+        method ({'RHF', 'UHF', 'RKS', 'UKS'}, optional): Level of theory. Default is ``'RHF'``.
+        xc (str, optional): Exchange-correlation functional; only used when *method* is
+            ``'RKS'`` or ``'UKS'``. Default is ``'b3lyp'``.
+        solvent_info (tuple[str, float], optional): Solvent model to use, specified as ``(model, dielectric_constant)``,
+            e.g. ``('PCM', 78.4)`` for water. Default is ``None`` (no solvent).
+        **kwargs: Additional attributes forwarded to the PySCF mean-field object
+            (e.g. ``max_cycle=50``).
 
     Returns:
-    -------
-    mf : pyscf.scf.SCF or pyscf.dft.KohnShamDFT
-        Converged mean-field object.
-    """
+        mf (pyscf.scf.SCF or pyscf.dft.KohnShamDFT): Converged mean-field object."""
     method = method.upper()
 
     logger.info("----------SCF Calculation (Method %s)----------", method)
