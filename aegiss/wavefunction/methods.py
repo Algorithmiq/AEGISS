@@ -18,7 +18,8 @@ def run_cisd(mf: Any, **kwargs: Any) -> Any:
         **kwargs: Additional attributes forwarded to the PySCF CISD object.
 
     Returns:
-        myci (pyscf.ci.CISD): Converged CISD object."""
+        myci (pyscf.ci.CISD): Converged CISD object.
+    """
     logger.info("Running CISD with options: %s", kwargs)
     myci = ci.CISD(mf)
     for key, val in kwargs.items():
@@ -35,7 +36,8 @@ def run_mp2(mf: Any, **kwargs: Any) -> Any:
         **kwargs: Additional attributes forwarded to the PySCF MP2 object.
 
     Returns:
-        mymp2 (pyscf.mp.MP2): Converged MP2 object."""
+        mymp2 (pyscf.mp.MP2): Converged MP2 object.
+    """
     logger.info("Running MP2 with options: %s", kwargs)
     mymp2 = mp.MP2(mf)
     for key, val in kwargs.items():
@@ -52,7 +54,8 @@ def run_ccsd(mf: Any, **kwargs: Any) -> Any:
         **kwargs: Additional attributes forwarded to the PySCF CCSD object.
 
     Returns:
-        mycc (pyscf.cc.CCSD): Converged CCSD object."""
+        mycc (pyscf.cc.CCSD): Converged CCSD object.
+    """
     logger.info("Running CCSD with options: %s", kwargs)
     mycc = cc.CCSD(mf)
     for key, val in kwargs.items():
@@ -76,7 +79,8 @@ def build_correlated_wfn(
         **kwargs: Keyword arguments forwarded to the method runner.
 
     Returns:
-        wfn_obj (pyscf correlated solver object): Converged correlated wavefunction object."""
+        wfn_obj (pyscf correlated solver object): Converged correlated wavefunction object.
+    """
     if method == "mp2":
         return run_mp2(mf, **kwargs)
     if method == "cisd":

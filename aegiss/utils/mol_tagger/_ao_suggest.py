@@ -43,9 +43,9 @@ def _valence_n(sym: str) -> int:
     Args:
         sym: Chemical symbol (e.g. ``"C"``, ``"N"``).
 
-    Returns
+    Returns:
         Principal quantum number (1 for H/He, 2 for period 2, 3 for period 3, ...).
-"""
+    """
     Z = _atomic_numbers.get(sym, 6)
     if Z <= _Z_P1:
         return 1
@@ -69,11 +69,11 @@ def _pi_axis(org_pos: np.ndarray) -> tuple[str, float]:
     Args:
         org_pos: Positions of the atoms, shape ``(n, 3)``.
 
-    Returns
+    Returns:
         axis: Which of ``'x'``, ``'y'``, ``'z'`` is closest to the plane normal.
         score: ``s[2] / s[1]`` from SVD — near 0 means flat, near 1 means
             spherical.  Values below ``_PLANARITY_THRESHOLD`` are planar.
-"""
+    """
     if len(org_pos) < _MIN_PLANE_ATOMS:
         return "z", 0.0
     centered = org_pos - org_pos.mean(axis=0)
@@ -109,11 +109,11 @@ def suggest_ao_labels(
             When provided, tag strings are used as label prefixes for metal
             atoms instead of bare chemical symbols.
 
-    Returns
+    Returns:
         labels: Ready-to-use ``ao_labels`` strings for ``ProjectionConfig``.
         warning: Non-fatal warning (e.g. non-planar atoms) or ``None``.
         info: One-line explanation of the suggestion.
-"""
+    """
     if not selected:
         return [], None, "No atoms selected."
     if character == "custom":
@@ -156,10 +156,10 @@ def _metal_shell_labels(prefix: str, shell: str, seen: set[str]) -> list[str]:
         shell: Shell string from ``_D_SHELL`` / ``_D_SHELL_SECONDARY`` (e.g. ``"3d"``).
         seen: Already-used label set; updated in place to avoid duplicates.
 
-    Returns
+    Returns:
         E.g. for ``"3d"``: ``["Fe 3d", "Fe 3dxz", "Fe 3dyz", "Fe 3dxy",
         "Fe 3dx2-y2", "Fe 3dz"]``.
-"""
+    """
     labels: list[str] = []
     lbl = f"{prefix} {shell}"
     if lbl not in seen:
@@ -190,9 +190,9 @@ def _d_shell_labels(
         metals: ``(atom_index, Z, prefix)`` triples for metal atoms.
         organics: ``(atom_index, Z, bare_sym, prefix)`` 4-tuples for non-metal atoms.
 
-    Returns
+    Returns:
         labels, warning, info — see :func:`suggest_ao_labels`.
-"""
+    """
     if not metals:
         return [], "No transition metals in selection.", "d-shell: no metals found."
     seen: set[str] = set()
@@ -225,9 +225,9 @@ def _pi_labels(
         organics: ``(atom_index, Z, symbol)`` triples for non-metal atoms.
         pos: Full position array for all atoms (indexed by atom index).
 
-    Returns
+    Returns:
         labels, warning, info — see :func:`suggest_ao_labels`.
-"""
+    """
     seen: set[str] = set()
     labels: list[str] = []
     info_parts: list[str] = []
@@ -261,9 +261,9 @@ def _collect_s_labels(org_atoms: list[tuple[str, str]], seen: set[str]) -> list[
             bare_sym used for the period lookup.
         seen: Already-used label set; updated in place to avoid duplicates.
 
-    Returns
+    Returns:
         New ``"prefix ns"`` labels added.
-"""
+    """
     labels: list[str] = []
     for prefix, sym in org_atoms:
         lbl = f"{prefix} {_valence_n(sym)}s"
@@ -285,9 +285,9 @@ def _collect_p_labels(
             or ``""`` for all-p (``"2p"``).
         seen: Already-used label set; updated in place to avoid duplicates.
 
-    Returns
+    Returns:
         New labels added; H/He (n=1) are silently skipped — they have no p orbitals.
-"""
+    """
     labels: list[str] = []
     for prefix, sym in org_atoms:
         n = _valence_n(sym)
@@ -312,9 +312,9 @@ def _organic_pi_labels(
         pos: Full position array for all atoms (indexed by atom index).
         seen: Already-used label set; updated in place to avoid duplicates.
 
-    Returns
+    Returns:
         labels, warning, info — see :func:`suggest_ao_labels`.
-"""
+    """
     org_pos = pos[[i for i, _, _, _ in organics]]
     org_atoms = [(prefix, sym) for _, _, sym, prefix in organics]
     unique_syms = sorted({sym for _, sym in org_atoms})
@@ -353,9 +353,9 @@ def _sigma_labels(
         organics: ``(atom_index, Z, bare_sym, prefix)`` 4-tuples for non-metal atoms.
         pos: Full position array for all atoms.
 
-    Returns
+    Returns:
         labels, warning, info — see :func:`suggest_ao_labels`.
-"""
+    """
     if not metals and not organics:
         return [], "No main-group atoms in selection.", ""
 

@@ -58,7 +58,7 @@ def run_dmrg(
       ``MEM=16`` allocates a 16 GiB stack.  Set this to roughly the amount of
       free RAM available to the process; block2 will raise an error at startup
       if the requested stack cannot be allocated.
-"""
+    """
     n_threads = omp_num_threads()
     stack_mem = mem()
     scratch_dir = get_scratch_dir()

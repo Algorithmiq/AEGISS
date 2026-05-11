@@ -11,12 +11,16 @@ class EntropyConfig:
     """Configuration dataclass for entropy-based active space screening.
 
     Args:
-        fraction (float, default 0.1): Entropy threshold value (see *fraction_type*).
-        fraction_type ({'r', 'a'}, default 'r'): ``'r'``: keep orbitals whose S(1) >= ``fraction x max(S(1))``;
+        fraction (float, default 0.1):
+            Entropy threshold value (see *fraction_type*).
+        fraction_type ({'r', 'a'}, default 'r'):
+            ``'r'``: keep orbitals whose S(1) >= ``fraction x max(S(1))``;
             ``'a'``: keep orbitals whose S(1) ≥ ``fraction`` (absolute).
-        ranking ({'subset', 'global'}, default 'subset'): How to rank orbitals for entropy screening.  ``'subset'`` applies the
-            threshold independently to occupied and virtual subspaces; ``'global'``
-            ranks all active orbitals together."""
+        ranking ({'subset', 'global'}, default 'subset'):
+            How to rank orbitals for entropy screening.
+            ``'subset'`` applies the threshold independently to occupied and virtual subspaces;
+            ``'global'`` ranks all active orbitals together.
+    """
 
     fraction: float = 0.1
     fraction_type: Literal["r", "a"] = "r"
@@ -26,7 +30,8 @@ class EntropyConfig:
         """Validate the configuration parameters.
 
         Raises:
-            ValueError: If any of the parameters are out of their expected ranges or have invalid values."""
+            ValueError: If any of the parameters are out of their expected ranges or have invalid values.
+        """
         if not isinstance(self.fraction, (int, float)):
             raise ValueError(
                 f"EntropyConfig: `fraction` must be a number, got {type(self.fraction).__name__}."

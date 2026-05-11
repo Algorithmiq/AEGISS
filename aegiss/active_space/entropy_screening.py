@@ -27,7 +27,8 @@ def _rank_and_threshold(
 
     Returns:
         selected (list of tuple[int, float]): Orbital index / (possibly normalised) entropy pairs above the threshold,
-            sorted by descending entropy."""
+            sorted by descending entropy.
+    """
     max_s1 = float(np.max(soe1))
     logger.debug("S(1) values for candidate orbitals:")
     for orb, s1 in zip(orbitals_index, soe1, strict=False):
@@ -93,7 +94,8 @@ def _global_entropy_ranking(
 
     Returns:
         occ_selected (list of tuple[int, float]): Selected occupied orbitals with their entropy values.
-        virt_selected (list of tuple[int, float]): Selected virtual orbitals with their entropy values."""
+        virt_selected (list of tuple[int, float]): Selected virtual orbitals with their entropy values.
+    """
     orbitals_index = np.concatenate((occ_orbs, virt_orbs))
     selected = _rank_and_threshold(soe1, orbitals_index, fraction, fraction_type)
     occ_set = set(occ_orbs.tolist())
@@ -118,7 +120,8 @@ def _relative_entropy_ranking(
         subspace (np.ndarray): Orbital indices in the subspace.
 
     Returns:
-        selected (list of tuple[int, float]): Selected orbitals with their (possibly normalised) entropy values."""
+        selected (list of tuple[int, float]): Selected orbitals with their (possibly normalised) entropy values.
+    """
     return _rank_and_threshold(soe1, subspace, fraction, fraction_type)
 
 
@@ -144,7 +147,8 @@ def select_by_entropy(
 
     Returns:
         selected_occ (list of tuple[int, float]): Selected occupied orbitals with entropy values.
-        selected_virt (list of tuple[int, float]): Selected virtual orbitals with entropy values."""
+        selected_virt (list of tuple[int, float]): Selected virtual orbitals with entropy values.
+    """
     logger.info("----------------Entropy Screening for AEGISS----------------\n")
     if soe1 is None:
         logger.info("No single-orbital entropies provided. Returning empty selection.")

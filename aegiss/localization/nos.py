@@ -17,13 +17,17 @@ def compute_nos(wfn_obj: Any, *, split_nos: bool = False) -> np.ndarray:
     diagonalises it, and returns the NOs sorted by descending occupation.
 
     Args:
-        wfn_obj (correlated PySCF solver object): Must expose a ``make_rdm1`` method returning the 1-RDM in the MO basis.
-        split_nos (bool, optional): Obtain the Natural Orbital basis by diagonalizing the 1-RDM in the
+        wfn_obj (correlated PySCF solver object):
+            Must expose a ``make_rdm1`` method returning the 1-RDM in the MO basis.
+        split_nos (bool, optional):
+            Obtain the Natural Orbital basis by diagonalizing the 1-RDM in the
             occupied and virtual subspaces separately. Useful for certain post-HF
             methods where the occupied and virtual spaces are treated differently.
 
     Returns:
-        nos (np.ndarray, shape (nao, nmo)): Natural orbital coefficients in the AO basis."""
+        nos (np.ndarray, shape (nao, nmo)):
+            Natural orbital coefficients in the AO basis.
+    """
     rdm1_mo = wfn_obj.make_rdm1()
     logger.debug("1-RDM in MO basis:\n%s", rdm1_mo.shape)
     if split_nos:

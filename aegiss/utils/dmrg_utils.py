@@ -29,7 +29,8 @@ def _default_dmrg_schedule(
     Returns:
         bond_dims (list of int): Bond dimension for each sweep.
         noises (list of float): Perturbative noise injected at each sweep.
-        thrds (list of float): Davidson convergence threshold for each sweep."""
+        thrds (list of float): Davidson convergence threshold for each sweep.
+    """
     if init_bond_dim <= 0:
         raise ValueError("init_bond_dim must be a positive integer")
 
@@ -87,7 +88,8 @@ def compute_qmi(
     Returns:
         ordm1 (np.ndarray): Single-orbital entropies.
         ordm2 (np.ndarray): Two-orbital entropies.
-        minfo (np.ndarray): Quantum mutual information matrix."""
+        minfo (np.ndarray): Quantum mutual information matrix.
+    """
     ordm1 = driver.get_orbital_entropies(ket, orb_type=1)
     ordm2 = driver.get_orbital_entropies(ket, orb_type=2)
 

@@ -45,12 +45,19 @@ def _make_soe_plots(
     Saves both an SOE heatmap and a threshold curve (TH plot) to *saving_folder*.
 
     Args:
-        active_orbs (np.ndarray): Indices of the occupied (active) orbitals in the CAS.
-        virt_orbs (np.ndarray): Indices of the virtual orbitals in the CAS.
-        soe1 (np.ndarray): Single-orbital entropies for all CAS orbitals, ordered as
-            ``[active_orbs..., virt_orbs...]``.
-        saving_folder (str): Directory where the PDF files are written.
-        saving_prefix (str): Filename prefix; ``_SOE_heatmap.pdf`` and ``_TH_plot.pdf`` are appended."""
+        active_orbs (np.ndarray):
+            Indices of the occupied (active) orbitals in the CAS.
+        virt_orbs (np.ndarray):
+            Indices of the virtual orbitals in the CAS.
+        soe1 (np.ndarray):
+            Single-orbital entropies for all CAS orbitals, ordered as ``[active_orbs..., virt_orbs...]``.
+        minfo (np.ndarray):
+            Mutual information matrix for all CAS orbitals, ordered as ``[active_orbs..., virt_orbs...]``.
+        saving_folder (str):
+            Directory where the PDF files are written.
+        saving_prefix (str):
+            Filename prefix; ``_SOE_heatmap.pdf`` and ``_TH_plot.pdf`` are appended.
+    """
     tagged = [(orb_id, soe1[idx]) for idx, orb_id in enumerate(active_orbs)]
     tagged += [
         (orb_id, soe1[len(active_orbs) + idx]) for idx, orb_id in enumerate(virt_orbs)
@@ -107,7 +114,8 @@ def select_aegiss(
         output_config (OutputConfig): Configuration for output options (file saving, plots).
 
     Returns:
-        active_indices (np.ndarray of int): Sorted array of orbital indices forming the selected active space."""
+        active_indices (np.ndarray of int): Sorted array of orbital indices forming the selected active space.
+    """
     active_orbs, virt_orbs = get_subspaces_from_cas(
         mf, ncas=dmrg_config.ncas, nelecas=dmrg_config.nelecas
     )

@@ -20,7 +20,7 @@ def mem() -> int:
 
     Returns:
         int: The amount of memory in bytes to use for DMRG stack memory.
-"""
+    """
     raw = os.environ.get("MEM")
     if raw is None:
         return _DEFAULT_MEM_GIB * (1 << 30)
@@ -55,7 +55,7 @@ def omp_num_threads() -> int:
 
     Returns:
         int: The number of OpenMP threads to use.
-"""
+    """
     value = os.environ.get("OMP_NUM_THREADS", "4").strip() or "4"
     try:
         return int(value)
@@ -73,7 +73,7 @@ def scratch_dir() -> str:
 
     Returns:
         str: The DMRG scratch directory path.
-"""
+    """
     value = os.environ.get("SCRATCH_DIR", "").strip()
     return value or "./tmp"
 
@@ -86,7 +86,7 @@ def pyscf_max_memory() -> int:
 
     Returns:
         int: The PySCF max memory in MB.
-"""
+    """
     value = os.environ.get("PYSCF_MAX_MEMORY", "4000").strip() or "4000"
     try:
         return int(value)

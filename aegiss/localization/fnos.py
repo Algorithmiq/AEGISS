@@ -18,12 +18,17 @@ def compute_fnos(
     """Construct frozen natural orbitals by truncating weakly occupied NOs.
 
     Args:
-        wfn_obj (correlated PySCF solver object): Must expose a ``make_rdm1`` method returning the 1-RDM in the MO basis.
-        frozen (list of int): Indices of orbitals to be frozen (0-based indexing).
-        active (list of int): Indices of orbitals to be retained in the active space (0-based indexing).
+        wfn_obj (correlated PySCF solver object):
+            Must expose a ``make_rdm1`` method returning the 1-RDM in the MO basis.
+        frozen (list of int):
+            Indices of orbitals to be frozen (0-based indexing).
+        active (list of int):
+            Indices of orbitals to be retained in the active space (0-based indexing).
 
     Returns:
-        mo_coeff (np.ndarray, shape (nao, nmo)): FNO coefficients in the AO basis, including both frozen and active orbitals."""
+        mo_coeff (np.ndarray, shape (nao, nmo)):
+            FNO coefficients in the AO basis, including both frozen and active orbitals.
+    """
     rdm1 = wfn_obj.make_rdm1()
 
     nocc = len(frozen) + len(active)

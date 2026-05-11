@@ -22,7 +22,8 @@ def build_mol(atom: Any, **kwargs: Any) -> Any:
             e.g. ``basis="ccpvdz"``.
 
     Returns:
-        mol (pyscf.gto.Mole): Molecule object with specified geometry and basis set."""
+        mol (pyscf.gto.Mole): Molecule object with specified geometry and basis set.
+    """
     logger.info("----------Building Molecule----------")
     mol = scf.gto.Mole()
     mol.atom = atom
@@ -74,7 +75,8 @@ def run_scf(
             (e.g. ``max_cycle=50``).
 
     Returns:
-        mf (pyscf.scf.SCF or pyscf.dft.KohnShamDFT): Converged mean-field object."""
+        mf (pyscf.scf.SCF or pyscf.dft.KohnShamDFT): Converged mean-field object.
+    """
     method = method.upper()
 
     logger.info("----------SCF Calculation (Method %s)----------", method)

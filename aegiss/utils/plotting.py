@@ -34,7 +34,8 @@ def _draw_pie_subplot(
         labels_names (list of str): Slice labels corresponding to each entry in *data*.
         orb_id (int): Orbital index displayed as the subplot title.
         min_pct (float): Minimum fractional contribution below which the slice label and
-            percentage text are hidden."""
+            percentage text are hidden.
+    """
     n_labels = len(data)
     explode = np.zeros(n_labels)
     explode[np.argmax(data)] = 0.1
@@ -84,7 +85,8 @@ def _save_contributions(
         folder (str): Directory where the PDF is saved.
         filename (str): Output filename without extension.
         min_pct (float): Minimum fractional contribution below which the slice label and
-            percentage are hidden."""
+            percentage are hidden.
+    """
     n_orbs, n_labels = len(orbs), len(ao_labels)
     total_ao_idx = np.unique(
         np.concatenate([mol.search_ao_label(lbl) for lbl in ao_labels])
@@ -164,7 +166,7 @@ def plot_pie_contribution(
     min_pct:
         Minimum fractional contribution (0-1) below which the slice label
         and percentage are hidden. Default is 0.01 (1 %).
-"""
+    """
     if isinstance(ao_labels, str):
         ao_labels = [ao_labels]
     if len(ao_labels) != len(labels_names):
@@ -224,7 +226,7 @@ def plot_ao_contribution(
         integers when *None*.
     mos_per_plot:
         Maximum number of MOs shown in each subplot panel.
-"""
+    """
     keys = list(ao_contributions.keys())
 
     def _ytick(group_idx: int, position: int) -> str:
@@ -315,7 +317,7 @@ def soe_heatmap(
         Directory where the PDF is saved.
     filename:
         Base name of the output file (without extension).
-"""
+    """
     so1_abs = np.array([x[1] for x in so1_entropies])
     max_so1 = max(so1_abs)
     so1_rel = so1_abs / max_so1
@@ -384,7 +386,8 @@ def _detect_plateaus(
         plateau_index (list of float): x-coordinates (threshold fractions) of plateau points.
         starting_plateaus_indices (list of int): Index into *y_values* at which each plateau begins.
         rect_size (list of list of float): For each plateau: ``[x_start, x_end, n_orbs]``, used to draw bounding
-            rectangles on the plot."""
+            rectangles on the plot.
+    """
     tmp_val = y_values[0]
     plateau_vector: list[float] = []
     plateau_index: list[float] = []
@@ -428,7 +431,8 @@ def _define_cas_size(selected_ones: np.ndarray, occ_index: int) -> tuple[int, in
 
     Returns:
         cas_size (tuple[int, int]): ``(n_orbs, n_elec)`` where *n_orbs* is the total number of selected
-            orbitals and *n_elec* is twice the number of selected occupied orbitals."""
+            orbitals and *n_elec* is twice the number of selected occupied orbitals.
+    """
     return (len(selected_ones), 2 * int(np.sum(selected_ones < occ_index)))
 
 
@@ -448,17 +452,20 @@ def th_plots(
     the implied CAS(n_elec, n_orbs) sizes. Saves the figure as a PDF.
 
     Args:
-    so1_entropies:
-        List of (orbital_index, relative_entropy) tuples, where the entropy
-        is already normalised by ``max_so1``.
-    folder:
-        Directory where the PDF is saved.
-    plateau_size:
-        Minimum number of consecutive threshold steps (out of 101) for a
-        flat region to be considered a plateau and annotated on the plot.
-    filename:
-        Base name of the output file (without extension).
-"""
+        so1_entropies (list of (int, float)):
+            List of (orbital_index, relative_entropy) tuples, where the entropy
+            is already normalised by ``max_so1``.
+        folder (str):
+            Directory where the PDF is saved.
+        occ_index (int):
+            Index of the first virtual orbital (HOMO + 1).
+            Used to determine the number of electrons in candidate CAS regions.
+        plateau_size (int):
+            Minimum number of consecutive threshold steps (out of 101) for a
+            flat region to be considered a plateau and annotated on the plot.
+        filename (str):
+            Base name of the output file (without extension).
+    """
     so1_abs = np.array([x[1] for x in so1_entropies])
     max_so1 = max(so1_abs)
     so1_rel = so1_abs / max_so1
@@ -558,7 +565,7 @@ def _ticks_helper(soe1: list[tuple[int, float]], ax: plt.Axes) -> None:
         List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
     ax:
         Matplotlib Axes object on which to set the ticks.
-"""
+    """
     N = len(soe1)
     orbital_indices = np.array([x[0] for x in soe1])
     x = np.arange(N)
@@ -586,7 +593,7 @@ def mi_plot(
         Directory where the PDF is saved.
     filename:
         Base name of the output file (without extension).
-"""
+    """
     fig, ax = plt.subplots(figsize=(8, 8))
     ax.matshow(minfo, cmap="magma", vmin=0, vmax=np.max(minfo))
     plt.colorbar(
@@ -619,7 +626,8 @@ def _helper_mi(
         ax (plt.Axes): Matplotlib Axes object on which to plot the lines.
 
     Returns:
-        list of plt.Line2D: Legend handles for the different MI thresholds."""
+        list of plt.Line2D: Legend handles for the different MI thresholds.
+    """
     # Set up line styles and alpha values for different MI thresholds
     N = minfo.shape[0]
     minfo = minfo / np.max(minfo)  # Normalize MI values to [0, 1]
@@ -663,7 +671,8 @@ def _helper_soe(
         ax (plt.Axes): Matplotlib Axes object on which to plot the orbital markers.
 
     Returns:
-        list of plt.Line2D: Legend handles for the different SOE thresholds."""
+        list of plt.Line2D: Legend handles for the different SOE thresholds.
+    """
     # Set up marker sizes and colors for different SOE thresholds
     N = len(soe1)
     c = sns.color_palette("magma", n_colors=1)
@@ -730,7 +739,8 @@ def entanglement_diagrams(
         soe1 (list of tuples): List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
         minfo (np.ndarray): Mutual Information matrix between orbitals.
         folder (str, default "./"): Directory where the PDF file will be saved.
-        filename (str, default "entanglement_diagrams"): Base name of the output PDF file (without extension)."""
+        filename (str, default "entanglement_diagrams"): Base name of the output PDF file (without extension).
+    """
     N = len(soe1)
 
     angles = np.linspace(0, 2 * np.pi, N, endpoint=False)

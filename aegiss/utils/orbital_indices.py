@@ -19,7 +19,8 @@ def resolve_nelecas(nelecas: int | tuple[int, int]) -> tuple[int, int]:
             high-spin doublets (nalpha = ceil, nbeta = floor).
 
     Returns:
-        nalpha, nbeta (tuple[int, int]):"""
+        nalpha, nbeta (tuple[int, int]):
+    """
     if isinstance(nelecas, tuple):
         return nelecas
     return (nelecas + 1) // 2, nelecas // 2
@@ -35,7 +36,8 @@ def combine_candidate_entropies(
         virt_orbs (list of tuple[int, float]): Virtual orbital index/entropy pairs.
 
     Returns:
-        combined_space (list of tuple[int, float]): Merged list sorted by orbital index."""
+        combined_space (list of tuple[int, float]): Merged list sorted by orbital index.
+    """
     combined_space = occ_orbs + virt_orbs
     combined_space.sort(key=lambda x: x[0])
     return combined_space
@@ -65,7 +67,7 @@ def get_orbital_spaces(
 
     Example:
     >>> frozen_occ, active_occ, active_virt, frozen_virt = get_orbital_spaces(mf, [3, 4, 5, 6])
-"""
+    """
     selected = set(orbital_list)
     if not selected:
         logger.info(
@@ -105,7 +107,8 @@ def get_subspaces_from_cas(
 
     Returns:
         active_orbs (np.ndarray of int): Orbital indices (0-based) of the active space.
-        virt_orbs (np.ndarray of int): Orbital indices (0-based) of the virtual space (not in the active space)."""
+        virt_orbs (np.ndarray of int): Orbital indices (0-based) of the virtual space (not in the active space).
+    """
     logger.info(
         "----------DMRG CAS Subspace Selection (ncas=%d, nelecas=%s)----------",
         ncas,
