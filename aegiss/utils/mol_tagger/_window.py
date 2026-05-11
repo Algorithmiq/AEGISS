@@ -578,6 +578,7 @@ class MolViewWindow(QMainWindow):
         self._refresh_list_labels()
         n = len(self._pos_history)
         self.geom_status.setText(f"Aligned. Ctrl+Z to undo ({n} step(s) in history).")
+        self._update_ao_suggestions()
         logger.info("Aligned %d selected atoms to XY plane", len(indices))
 
     def _undo_geometry(self) -> None:
@@ -593,6 +594,7 @@ class MolViewWindow(QMainWindow):
         self.geom_status.setText(
             f"Undone. {n} step(s) remaining." if n else "Geometry restored to original."
         )
+        self._update_ao_suggestions()
         logger.info("Undo geometry alignment: %d steps remaining", n)
 
     # ------------------------------------------------------------------
