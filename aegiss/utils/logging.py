@@ -62,13 +62,17 @@ def configure_logging(
         foreign_pre_chain=shared_processors,
     )
 
-    handler = logging.FileHandler(log_file)
-    handler.setFormatter(formatter)
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setFormatter(formatter)
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
 
     root = logging.getLogger()
     root.handlers.clear()
     root.setLevel(level)
-    root.addHandler(handler)
+    root.addHandler(file_handler)
+    root.addHandler(stream_handler)
 
     for name in _SILENCED:
         logging.getLogger(name).setLevel(logging.WARNING)
