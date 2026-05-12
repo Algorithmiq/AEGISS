@@ -15,13 +15,10 @@ from aegiss.config_dataclasses import (
 )
 from aegiss.initial_guess import build_mol, run_scf
 from aegiss.utils.banner import print_banner
+from aegiss.utils.logging import configure_logging
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
+    configure_logging(level=logging.DEBUG)
     os.environ["OMP_NUM_THREADS"] = "4"
     os.environ["SCRATCH_DIR"] = str(Path(__file__).parent / "aegiss/examples/tmp")
     print_banner()

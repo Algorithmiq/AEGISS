@@ -94,36 +94,26 @@ os.environ["PYSCF_MAX_MEMORY"] = "16000"  # 16 GB for PySCF
 
 ## Logging
 
-AEGISS uses Python's standard `logging` module. The library never configures
-handlers or formatters — it only emits records through named loggers under the
-`aegiss.*` hierarchy. Callers control where and how output appears.
-
-**Enable output in a script:**
+AEGISS ships a `configure_logging` helper that sets up structlog over stdlib,
+writing timestamped plain-text output to a file:
 
 ```python
 import logging
-logging.basicConfig(level=logging.INFO, format="%(message)s")
+from aegiss.utils.logging import configure_logging
+
+# Choose one configuration:
+configure_logging(level=logging.INFO)  # writes to log.out by default
+# configure_logging(level=logging.DEBUG)  # per-orbital detail
+# configure_logging(level=logging.INFO, log_file="run.log")  # custom file
 ```
 
-Use `logging.DEBUG` to also see per-orbital detail (contribution weights,
-individual S(1) values):
+`configure_logging` must be called before any AEGISS import that triggers logging.
+It silences the noisy `matplotlib` and `h5py` loggers automatically.
 
-```python
-logging.basicConfig(level=logging.DEBUG, format="%(message)s")
-```
-
-**Silence the library selectively (e.g. in a notebook):**
+**Silence AEGISS selectively (e.g. in a notebook):**
 
 ```python
 logging.getLogger("aegiss").setLevel(logging.WARNING)
-```
-
-**structlog users** — configure structlog's stdlib integration before importing
-AEGISS and the library will emit through it automatically:
-
-```python
-import structlog
-structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.INFO))
 ```
 
 ---

@@ -9,6 +9,7 @@ dependencies = [
     "matplotlib>=3.9",
     "pyscf>=2.12.1",
     "seaborn>=0.13",
+    "structlog>=25.5.0",
 ]
 
 [project.optional-dependencies]
@@ -223,6 +224,7 @@ module = [
     "pyvista.*",
     "pyvistaqt.*",
     "qtpy.*",
+    "structlog.*",
 ]
 ignore_missing_imports = true
 
