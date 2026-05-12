@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from pyscf.tools import cubegen
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +34,8 @@ def save_orbitals(
     folder : str
         Output directory path. Created if it does not exist.
     """
+    from pyscf.tools import cubegen  # noqa: PLC0415
+
     output_dir = Path(folder)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -66,6 +67,8 @@ def save_orbitals_from_entropies(
     folder : str
         Output directory path. Created if it does not exist.
     """
+    from pyscf.tools import cubegen  # noqa: PLC0415
+
     output_dir = Path(folder)
     output_dir.mkdir(parents=True, exist_ok=True)
 
