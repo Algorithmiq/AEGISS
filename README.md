@@ -101,9 +101,10 @@ writing timestamped plain-text output to a file:
 import logging
 from aegiss.utils.logging import configure_logging
 
-configure_logging(level=logging.INFO)           # writes to log.out by default
-configure_logging(level=logging.DEBUG)          # per-orbital detail
-configure_logging(level=logging.INFO, log_file="run.log")  # custom file
+# Choose one configuration:
+configure_logging(level=logging.INFO)  # writes to log.out by default
+# configure_logging(level=logging.DEBUG)  # per-orbital detail
+# configure_logging(level=logging.INFO, log_file="run.log")  # custom file
 ```
 
 `configure_logging` must be called before any AEGISS import that triggers logging.
