@@ -71,8 +71,7 @@ def pipeline_patches():
         ),
         patch(f"{_MODULE}.save_orbitals") as mock_save,
         patch(f"{_MODULE}.save_orbitals_from_entropies") as mock_save_ent,
-        patch(f"{_MODULE}.soe_heatmap"),
-        patch(f"{_MODULE}.th_plots"),
+        patch(f"{_MODULE}._make_soe_plots"),
         patch(f"{_MODULE}.plot_pie_contribution"),
     ):
         yield {"save": mock_save, "save_ent": mock_save_ent}

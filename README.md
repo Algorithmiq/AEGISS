@@ -487,7 +487,7 @@ localize("fnos", mf, correlated_method="ccsd", active=[0, 1, 2])
 ### `save_orbitals`
 
 ```python
-from aegiss.utils.dump_info import save_orbitals, save_orbitals_from_entropies
+from aegiss.utils.dump import save_orbitals, save_orbitals_from_entropies
 ```
 
 **`save_orbitals(mol, mo_coeff, candidate_indices, filename_prefix="mo", folder="./")`**
