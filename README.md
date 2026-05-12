@@ -208,6 +208,10 @@ benzene π manifold exclusively.
 For custom workflows that call individual steps directly, see `run_dmrg`,
 `select_by_entropy`, and `select_by_ao_projection` in the API reference below.
 
+Further step-by-step tutorials covering SCF & localization, DMRG, AO projection, and
+the full pipeline are available as Jupyter notebooks in
+[aegiss/examples/tutorials/](aegiss/examples/tutorials/README.md).
+
 ---
 
 ## API reference
@@ -530,3 +534,16 @@ pytest --cov=aegiss           # run with coverage
 
 Code style is enforced by **ruff** (linting + formatting) and **mypy** (strict type
 checking). Both run automatically as pre-commit hooks and in CI on every pull request.
+
+### Building the documentation
+
+Install the `docs` dependency group, then use the MkDocs CLI:
+
+```bash
+uv sync --group docs          # install MkDocs and plugins
+uv run mkdocs serve                  # live-reload preview at http://127.0.0.1:8000
+mkdocs build                  # write static site to site/
+```
+
+See [docs/README.md](docs/README.md) for a full description of the docs layout and
+how to add new pages.
