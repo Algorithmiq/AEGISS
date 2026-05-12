@@ -224,6 +224,7 @@ module = [
     "pyvista.*",
     "pyvistaqt.*",
     "qtpy.*",
+    "structlog.*",
 ]
 ignore_missing_imports = true
 
