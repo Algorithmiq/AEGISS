@@ -60,7 +60,7 @@ def _rank_and_threshold(
     sortkey = np.argsort(entropies)[::-1]
     entropies = entropies[sortkey]
     sorted_indices = orbitals_index[sortkey]
-    logging.info("Candidate orbitals sorted by entropy values:")
+    logger.info("Candidate orbitals sorted by entropy values:")
     for orb, s1 in zip(sorted_indices, entropies, strict=False):
         logger.info(_ORB_S1_FMT, orb, s1)
 
