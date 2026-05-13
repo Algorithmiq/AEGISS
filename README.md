@@ -95,20 +95,28 @@ os.environ["PYSCF_MAX_MEMORY"] = "16000"  # 16 GB for PySCF
 ## Logging
 
 AEGISS ships a `configure_logging` helper that sets up structlog over stdlib,
-writing timestamped plain-text output to a file:
+writing timestamped plain-text output to **stdout**:
 
 ```python
 import logging
 from aegiss.utils.logging import configure_logging
 
-# Choose one configuration:
-configure_logging(level=logging.INFO)  # writes to log.out by default
-# configure_logging(level=logging.DEBUG)  # per-orbital detail
-# configure_logging(level=logging.INFO, log_file="run.log")  # custom file
+configure_logging(level=logging.INFO)   # info
+configure_logging(level=logging.DEBUG)  # per-orbital detail
 ```
 
 `configure_logging` must be called before any AEGISS import that triggers logging.
 It silences the noisy `matplotlib` and `h5py` loggers automatically.
+
+**Redirect stdout to control the destination:**
+
+```bash
+# local — save to file
+python main.py > log.out
+
+# SLURM — output lands in slurm-<jobid>.out automatically
+#SBATCH -o slurm-%j.out
+```
 
 **Silence AEGISS selectively (e.g. in a notebook):**
 
