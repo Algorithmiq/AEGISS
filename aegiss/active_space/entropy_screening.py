@@ -37,10 +37,10 @@ def _rank_and_threshold(
         sorted by descending entropy.
     """
     max_s1 = float(np.max(soe1))
-    logger.debug("S(1) values for candidate orbitals:")
+    logger.info("S(1) values for candidate orbitals:")
     for orb, s1 in zip(orbitals_index, soe1, strict=False):
-        logger.debug(_ORB_S1_FMT, orb, s1)
-    logger.debug(
+        logger.info(_ORB_S1_FMT, orb, s1)
+    logger.info(
         "MAX S(1): %.4f (orbital %d)\n", max_s1, orbitals_index[np.argmax(soe1)]
     )
 
@@ -60,8 +60,9 @@ def _rank_and_threshold(
     sortkey = np.argsort(entropies)[::-1]
     entropies = entropies[sortkey]
     sorted_indices = orbitals_index[sortkey]
+    logger.info("Candidate orbitals sorted by entropy values:")
     for orb, s1 in zip(sorted_indices, entropies, strict=False):
-        logger.debug(_ORB_S1_FMT, orb, s1)
+        logger.info(_ORB_S1_FMT, orb, s1)
 
     stop_idx = next((k for k, s in enumerate(entropies) if s < fraction), None)
     if stop_idx is None:
@@ -74,7 +75,7 @@ def _rank_and_threshold(
         entropies = entropies[:stop_idx]
         sorted_indices = sorted_indices[:stop_idx]
         logger.info(
-            "\nSelected %d orbitals by entropy threshold %g (fraction type: %s).",
+            "Selected %d orbitals by entropy threshold %g (fraction type: %s).",
             len(sorted_indices),
             fraction,
             fraction_type,
