@@ -101,7 +101,7 @@ writing timestamped plain-text output to **stdout**:
 import logging
 from aegiss.utils.logging import configure_logging
 
-configure_logging(level=logging.INFO) 
+configure_logging(level=logging.INFO)
 # configure_logging(level=logging.DEBUG)  # alternative: For additional execution and selection details.
 ```
 
