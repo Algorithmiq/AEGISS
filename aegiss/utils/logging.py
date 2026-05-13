@@ -7,6 +7,7 @@ not to this module.
 from __future__ import annotations
 
 import logging  # stdlib — not this module
+import os
 import sys
 from typing import TYPE_CHECKING
 
@@ -62,11 +63,17 @@ def configure_logging(
         foreign_pre_chain=shared_processors,
     )
 
-    handler: logging.Handler = (
-        logging.FileHandler(log_file)
-        if log_file is not None
-        else logging.StreamHandler(sys.stdout)
-    )
+    if log_file is not None:
+        # Truncate the file so each run starts clean.
+        open(log_file, "w").close()
+        handler: logging.Handler = logging.FileHandler(log_file, mode="a")
+        # Redirect C-level fd 1 so print() and block2's C printf land in the same file.
+        sys.stdout.flush()
+        _fd = os.open(str(log_file), os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
+        os.dup2(_fd, 1)
+        os.close(_fd)
+    else:
+        handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)
 
     root = logging.getLogger()
