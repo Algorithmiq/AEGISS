@@ -101,8 +101,8 @@ writing timestamped plain-text output to **stdout**:
 import logging
 from aegiss.utils.logging import configure_logging
 
-configure_logging(level=logging.INFO)   # info
-configure_logging(level=logging.DEBUG)  # per-orbital detail
+configure_logging(level=logging.INFO) 
+# configure_logging(level=logging.DEBUG)  # alternative: For additional execution and selection details.
 ```
 
 `configure_logging` must be called before any AEGISS import that triggers logging.
