@@ -9,13 +9,12 @@ from __future__ import annotations
 import logging  # stdlib — not this module
 import os
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import structlog
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from structlog.types import Processor
 
 # ── Format constants ─────────────────────────────────────────────────────────
@@ -65,7 +64,7 @@ def configure_logging(
 
     if log_file is not None:
         # Truncate the file so each run starts clean.
-        open(log_file, "w").close()
+        Path(log_file).open("w").close()
         handler: logging.Handler = logging.FileHandler(log_file, mode="a")
         # Redirect C-level fd 1 so print() and block2's C printf land in the same file.
         sys.stdout.flush()
