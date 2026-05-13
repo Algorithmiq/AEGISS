@@ -7,6 +7,7 @@ not to this module.
 from __future__ import annotations
 
 import logging  # stdlib — not this module
+import sys
 from typing import TYPE_CHECKING
 
 import structlog
@@ -29,15 +30,14 @@ _SILENCED: tuple[str, ...] = ("matplotlib", "h5py")
 
 def configure_logging(
     level: int = logging.INFO,
-    log_file: str | Path = "log.out",
+    log_file: str | Path | None = "log.out",
     timestamp_fmt: str = TIMESTAMP_FMT,
 ) -> None:
-    """Configure structlog over stdlib logging, writing plain-text output to *log_file*.
+    """Configure structlog over stdlib logging.
 
     Args:
         level: Root log level (e.g. ``logging.DEBUG``, ``logging.INFO``).
-        log_file: Destination file; opened in append mode so a pre-written
-            banner is preserved.
+        log_file: Destination file, or ``None`` to write to stdout.
         timestamp_fmt: ``strftime`` format for the timestamp column.
     """
     shared_processors: list[Processor] = [
@@ -62,7 +62,11 @@ def configure_logging(
         foreign_pre_chain=shared_processors,
     )
 
-    handler = logging.FileHandler(log_file)
+    handler: logging.Handler = (
+        logging.FileHandler(log_file)
+        if log_file is not None
+        else logging.StreamHandler(sys.stdout)
+    )
     handler.setFormatter(formatter)
 
     root = logging.getLogger()
