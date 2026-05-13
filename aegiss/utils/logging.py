@@ -7,9 +7,7 @@ not to this module.
 from __future__ import annotations
 
 import logging  # stdlib — not this module
-import os
 import sys
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import structlog
@@ -30,19 +28,16 @@ _SILENCED: tuple[str, ...] = ("matplotlib", "h5py")
 
 def configure_logging(
     level: int = logging.INFO,
-    log_file: str | Path | None = "log.out",
     timestamp_fmt: str = TIMESTAMP_FMT,
 ) -> None:
-    """Configure structlog over stdlib logging.
+    """Configure structlog over stdlib logging, writing to stdout.
 
-    Args:
-        level: Root log level (e.g. ``logging.DEBUG``, ``logging.INFO``).
-        log_file: Destination file, or ``None`` to write to stdout.
-        timestamp_fmt: ``strftime`` format for the timestamp column.
+    Redirect stdout from the shell to control the destination:
+        python main.py > log.out        # local
+        #SBATCH -o slurm-%j.out         # SLURM
     """
     shared_processors: list[Processor] = [
         structlog.stdlib.add_log_level,
-        # structlog.stdlib.add_logger_name,
         structlog.processors.TimeStamper(fmt=timestamp_fmt),
         structlog.stdlib.PositionalArgumentsFormatter(),
     ]
@@ -62,17 +57,7 @@ def configure_logging(
         foreign_pre_chain=shared_processors,
     )
 
-    if log_file is not None:
-        # Truncate the file so each run starts clean.
-        Path(log_file).open("w").close()
-        handler: logging.Handler = logging.FileHandler(log_file, mode="a")
-        # Redirect C-level fd 1 so print() and block2's C printf land in the same file.
-        sys.stdout.flush()
-        _fd = os.open(str(log_file), os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
-        os.dup2(_fd, 1)
-        os.close(_fd)
-    else:
-        handler = logging.StreamHandler(sys.stdout)
+    handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)
 
     root = logging.getLogger()
