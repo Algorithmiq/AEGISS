@@ -101,36 +101,34 @@ os.environ["PYSCF_MAX_MEMORY"] = "16000"  # 16 GB for PySCF
 
 ## Logging
 
-AEGISS uses Python's standard `logging` module. The library never configures
-handlers or formatters — it only emits records through named loggers under the
-`aegiss.*` hierarchy. Callers control where and how output appears.
-
-**Enable output in a script:**
+AEGISS ships a `configure_logging` helper that sets up structlog over stdlib,
+writing timestamped plain-text output to **stdout**:
 
 ```python
 import logging
-logging.basicConfig(level=logging.INFO, format="%(message)s")
+from aegiss.utils.logging import configure_logging
+
+configure_logging(level=logging.INFO)
+# configure_logging(level=logging.DEBUG)  # alternative: For additional execution and selection details.
 ```
 
-Use `logging.DEBUG` to also see per-orbital detail (contribution weights,
-individual S(1) values):
+`configure_logging` must be called before any AEGISS import that triggers logging.
+It silences the noisy `matplotlib` and `h5py` loggers automatically.
 
-```python
-logging.basicConfig(level=logging.DEBUG, format="%(message)s")
+**Redirect stdout to control the destination:**
+
+```bash
+# local — save to file
+python main.py > log.out
+
+# SLURM — output lands in slurm-<jobid>.out automatically
+#SBATCH -o slurm-%j.out
 ```
 
-**Silence the library selectively (e.g. in a notebook):**
+**Silence AEGISS selectively (e.g. in a notebook):**
 
 ```python
 logging.getLogger("aegiss").setLevel(logging.WARNING)
-```
-
-**structlog users** — configure structlog's stdlib integration before importing
-AEGISS and the library will emit through it automatically:
-
-```python
-import structlog
-structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.INFO))
 ```
 
 ---
@@ -341,7 +339,7 @@ Returns a built `pyscf.gto.Mole` object.
 ```python
 from aegiss.initial_guess import run_scf
 
-mf = run_scf(mol, method="RHF", xc="b3lyp", solvent_info=None, **kwargs)
+mf = run_scf(mol, method="RHF", xc="b3lyp", solvent_info=None, relativistic=None, **kwargs)
 ```
 
 | Parameter | Type | Default | Description |
@@ -350,6 +348,7 @@ mf = run_scf(mol, method="RHF", xc="b3lyp", solvent_info=None, **kwargs)
 | `method` | `str` | `"RHF"` | Level of theory: `"RHF"`, `"UHF"`, `"RKS"`, `"UKS"` |
 | `xc` | `str` | `"b3lyp"` | XC functional (KS methods only) |
 | `solvent_info` | `tuple[str, float]` or `None` | `None` | Solvent model and dielectric constant, e.g. `("PCM", 78.4)` or `("DDCOSMO", 78.4)` |
+| `relativistic` | `'x2c'` or `None` | `None` | Scalar relativistic correction. `'x2c'` applies the exact two-component (X2C) transformation via `mf.x2c()`. Recommended for transition metals and heavier elements. |
 | `**kwargs` | — | — | Any PySCF SCF attribute forwarded verbatim (`max_cycle`, `conv_tol`, …) |
 
 Returns the converged PySCF mean-field object.
@@ -508,7 +507,7 @@ localize("fnos", mf, correlated_method="ccsd", active=[0, 1, 2])
 ### `save_orbitals`
 
 ```python
-from aegiss.utils.dump_info import save_orbitals, save_orbitals_from_entropies
+from aegiss.utils.dump import save_orbitals, save_orbitals_from_entropies
 ```
 
 **`save_orbitals(mol, mo_coeff, candidate_indices, filename_prefix="mo", folder="./")`**

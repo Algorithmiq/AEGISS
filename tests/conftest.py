@@ -64,6 +64,13 @@ def ne_rhf() -> Any:
 
 
 @pytest.fixture(scope="session")
+def ne_x2c_rhf() -> Any:
+    """Ne atom X2C-RHF/sto-3g mean-field object."""
+    mol = build_mol("Ne 0 0 0", basis="sto-3g", symmetry=False, verbose=0, spin=0)
+    return run_scf(mol, method="RHF", verbose=0, relativistic="x2c")
+
+
+@pytest.fixture(scope="session")
 def c_sto3g_uhf() -> Any:
     """C atom UHF/sto-3g mean-field object (spin=2, triplet ground state)."""
     mol = build_mol("C 0 0 0", basis="sto-3g", symmetry=False, verbose=0, spin=2)

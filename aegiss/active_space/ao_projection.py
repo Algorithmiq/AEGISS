@@ -91,12 +91,12 @@ def _compute_contribution(
     sorted_weights = sorted(projected_weights, key=lambda x: x[1], reverse=True)
 
     first_below = False
-    logger.debug("\t%s", "-" * 10 + "above" + "-" * 10)
+    logger.info("\t%s", "-" * 10 + "above" + "-" * 10)
     for idx, tmp in sorted_weights:
         if tmp < contribution and not first_below:
-            logger.debug("\t%s", "-" * 10 + "below" + "-" * 10)
+            logger.info("\t%s", "-" * 10 + "below" + "-" * 10)
             first_below = True
-        logger.debug("\tOrbital %d: contribution = %.8f", idx, tmp)
+        logger.info("\tOrbital %d: contribution = %.8f", idx, tmp)
 
     return [
         (idx, tmp) for idx, tmp in sorted_weights if tmp >= contribution

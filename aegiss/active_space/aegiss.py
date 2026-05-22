@@ -10,14 +10,11 @@ import numpy as np
 
 from aegiss.active_space.ao_projection import select_by_ao_projection
 from aegiss.active_space.entropy_screening import select_by_entropy
-from aegiss.utils.dump_info import save_orbitals, save_orbitals_from_entropies
+from aegiss.utils.dump import save_orbitals, save_orbitals_from_entropies
 from aegiss.utils.orbital_indices import get_subspaces_from_cas
 from aegiss.utils.plotting import (
-    entanglement_diagrams,
-    mi_plot,
+    _make_soe_plots,
     plot_pie_contribution,
-    soe_heatmap,
-    th_plots,
 )
 from aegiss.wavefunction.dmrg import run_dmrg
 
@@ -31,62 +28,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-
-def _make_soe_plots(
-    active_orbs: np.ndarray,
-    virt_orbs: np.ndarray,
-    soe1: np.ndarray,
-    minfo: np.ndarray,
-    saving_folder: str,
-    saving_prefix: str,
-) -> None:
-    """Generate and save single-orbital entropy diagnostic plots.
-
-    Saves both an SOE heatmap and a threshold curve (TH plot) to *saving_folder*.
-
-    Args:
-        active_orbs (np.ndarray):
-            Indices of the occupied (active) orbitals in the CAS.
-        virt_orbs (np.ndarray):
-            Indices of the virtual orbitals in the CAS.
-        soe1 (np.ndarray):
-            Single-orbital entropies for all CAS orbitals, ordered as ``[active_orbs..., virt_orbs...]``.
-        minfo (np.ndarray):
-            Mutual information matrix for all CAS orbitals, ordered as ``[active_orbs..., virt_orbs...]``.
-        saving_folder (str):
-            Directory where the PDF files are written.
-        saving_prefix (str):
-            Filename prefix; ``_SOE_heatmap.pdf`` and ``_TH_plot.pdf`` are appended.
-    """
-    tagged = [(orb_id, soe1[idx]) for idx, orb_id in enumerate(active_orbs)]
-    tagged += [
-        (orb_id, soe1[len(active_orbs) + idx]) for idx, orb_id in enumerate(virt_orbs)
-    ]
-    soe_heatmap(
-        so1_entropies=tagged,
-        n_occ=len(active_orbs),
-        folder=saving_folder,
-        filename=saving_prefix + "_SOE_heatmap",
-    )
-    th_plots(
-        so1_entropies=tagged,
-        occ_index=max(active_orbs) + 1,
-        folder=saving_folder,
-        filename=saving_prefix + "_TH_plot",
-    )
-    entanglement_diagrams(
-        soe1=tagged,
-        minfo=minfo,
-        folder=saving_folder,
-        filename=saving_prefix + "_entanglement_diagram",
-    )
-
-    mi_plot(
-        minfo=minfo,
-        soe1=tagged,
-        folder=saving_folder,
-        filename=saving_prefix + "_MI_heatmap",
-    )
 
 
 def select_aegiss(

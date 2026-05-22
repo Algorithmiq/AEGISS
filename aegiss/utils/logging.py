@@ -7,13 +7,12 @@ not to this module.
 from __future__ import annotations
 
 import logging  # stdlib — not this module
+import sys
 from typing import TYPE_CHECKING
 
 import structlog
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from structlog.types import Processor
 
 # ── Format constants ─────────────────────────────────────────────────────────
@@ -29,20 +28,16 @@ _SILENCED: tuple[str, ...] = ("matplotlib", "h5py")
 
 def configure_logging(
     level: int = logging.INFO,
-    log_file: str | Path = "log.out",
     timestamp_fmt: str = TIMESTAMP_FMT,
 ) -> None:
-    """Configure structlog over stdlib logging, writing plain-text output to *log_file*.
+    """Configure structlog over stdlib logging, writing to stdout.
 
-    Args:
-        level: Root log level (e.g. ``logging.DEBUG``, ``logging.INFO``).
-        log_file: Destination file; opened in append mode so a pre-written
-            banner is preserved.
-        timestamp_fmt: ``strftime`` format for the timestamp column.
+    Redirect stdout from the shell to control the destination:
+        python main.py > log.out        # local
+        #SBATCH -o slurm-%j.out         # SLURM
     """
     shared_processors: list[Processor] = [
         structlog.stdlib.add_log_level,
-        # structlog.stdlib.add_logger_name,
         structlog.processors.TimeStamper(fmt=timestamp_fmt),
         structlog.stdlib.PositionalArgumentsFormatter(),
     ]
@@ -62,7 +57,7 @@ def configure_logging(
         foreign_pre_chain=shared_processors,
     )
 
-    handler = logging.FileHandler(log_file)
+    handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)
 
     root = logging.getLogger()

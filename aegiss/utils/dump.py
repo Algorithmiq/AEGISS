@@ -1,14 +1,14 @@
-"""Utilities for saving molecular orbitals as cube files."""
+"""Utilities for saving molecular orbitals and intermediate DMRG quantities to disk."""
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from pyscf.tools import cubegen
+import numpy as np
 
-if TYPE_CHECKING:
-    import numpy as np
+logger = logging.getLogger(__name__)
 
 
 def save_orbitals(
@@ -28,6 +28,8 @@ def save_orbitals(
             ``"{filename_prefix}_{i}.cube"``.
         folder (str): Output directory path. Created if it does not exist.
     """
+    from pyscf.tools import cubegen  # noqa: PLC0415
+
     output_dir = Path(folder)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -57,9 +59,38 @@ def save_orbitals_from_entropies(
         folder (str):
             Output directory path. Created if it does not exist.
     """
+    from pyscf.tools import cubegen  # noqa: PLC0415
+
     output_dir = Path(folder)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     for i, _ in candidate_indices:
         filename = output_dir / f"{filename_prefix}_{i}.cube"
         cubegen.orbital(mol, str(filename), mo_coeff[:, i])
+
+
+def dump_qmi(
+    minfo: np.ndarray,
+    soe1: np.ndarray,
+    soe2: np.ndarray | None = None,
+    path: Path | str = "./qmi_data.npz",
+) -> None:
+    """Dump QMI, SOE1, and optional SOE2 data to disk.
+
+    Parameters
+    ----------
+    minfo : np.ndarray
+        Mutual information matrix.
+    soe1 : np.ndarray
+        Single orbital entropy values.
+    soe2 : np.ndarray or None
+        Double orbital entropy values, or ``None`` if not computed.
+    path : Path or str
+        Output file path (without extension; ``.npz`` is appended by numpy).
+    """
+    filename = Path(path)
+    data: dict[str, np.ndarray] = {"minfo": minfo, "soe1": soe1}
+    if soe2 is not None:
+        data["soe2"] = soe2
+    np.savez(filename, **data)  # type: ignore[arg-type]
+    logger.info("QMI data dumped to %s", filename)

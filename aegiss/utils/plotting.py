@@ -768,3 +768,63 @@ def entanglement_diagrams(
     fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf", bbox_inches="tight")
     logger.info("Entanglement diagram saved as %s.pdf", filename)
     plt.close(fig)
+
+
+def _make_soe_plots(
+    active_orbs: np.ndarray,
+    virt_orbs: np.ndarray,
+    soe1: np.ndarray,
+    minfo: np.ndarray,
+    saving_folder: str,
+    saving_prefix: str,
+) -> None:
+    """Generate and save single-orbital entropy diagnostic plots.
+
+    Saves an SOE heatmap, a threshold curve (TH plot), an entanglement diagram,
+    and a mutual information heatmap to *saving_folder*.
+
+    Parameters
+    ----------
+    active_orbs : np.ndarray
+        Indices of the occupied (active) orbitals in the CAS.
+    virt_orbs : np.ndarray
+        Indices of the virtual orbitals in the CAS.
+    soe1 : np.ndarray
+        Single-orbital entropies for all CAS orbitals, ordered as
+        ``[active_orbs..., virt_orbs...]``.
+    minfo : np.ndarray
+        Mutual information matrix for all CAS orbitals.
+    saving_folder : str
+        Directory where the PDF files are written.
+    saving_prefix : str
+        Filename prefix; ``_SOE_heatmap.pdf``, ``_TH_plot.pdf``,
+        ``_entanglement_diagram.pdf``, and ``_MI_heatmap.pdf`` are appended.
+    """
+    tagged = [(orb_id, soe1[idx]) for idx, orb_id in enumerate(active_orbs)]
+    tagged += [
+        (orb_id, soe1[len(active_orbs) + idx]) for idx, orb_id in enumerate(virt_orbs)
+    ]
+    soe_heatmap(
+        so1_entropies=tagged,
+        n_occ=len(active_orbs),
+        folder=saving_folder,
+        filename=saving_prefix + "_SOE_heatmap",
+    )
+    th_plots(
+        so1_entropies=tagged,
+        occ_index=max(active_orbs) + 1,
+        folder=saving_folder,
+        filename=saving_prefix + "_TH_plot",
+    )
+    entanglement_diagrams(
+        soe1=tagged,
+        minfo=minfo,
+        folder=saving_folder,
+        filename=saving_prefix + "_entanglement_diagram",
+    )
+    mi_plot(
+        minfo=minfo,
+        soe1=tagged,
+        folder=saving_folder,
+        filename=saving_prefix + "_MI_heatmap",
+    )
