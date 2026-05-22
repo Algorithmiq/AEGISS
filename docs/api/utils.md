@@ -14,6 +14,7 @@ from aegiss.utils import (
     plot_ao_contribution,
     print_banner,
 )
+from aegiss.utils.dump import save_orbitals_from_entropies
 ```
 
 ## Orbital spaces
@@ -26,7 +27,9 @@ from aegiss.utils import (
 
 ## Orbital export
 
-::: aegiss.utils.dump_info.save_orbitals
+::: aegiss.utils.dump.save_orbitals
+
+::: aegiss.utils.dump.save_orbitals_from_entropies
 
 ---
 
@@ -34,7 +37,7 @@ from aegiss.utils import (
 
 ::: aegiss.utils.dmrg_utils.compute_qmi
 
-::: aegiss.utils.dump_intermediates.dump_qmi
+::: aegiss.utils.dump.dump_qmi
 
 ---
 

@@ -5,7 +5,7 @@ Each notebook is self-contained and builds on the previous one.
 
 | Notebook | Topic |
 |---|---|
-| [01 — SCF & Localization](01_scf_and_localization.ipynb) | Building the molecule, running HF/DFT, orbital localization (Boys, PM, ER, NOs, FNOs) |
+| [01 — SCF & Localization](01_scf_and_localization.ipynb) | Building the molecule, running HF/DFT, scalar relativistic corrections (X2C), orbital localization (Boys, PM, ER, NOs, FNOs) |
 | [02 — DMRG & Entropy](02_dmrg.ipynb) | `DMRGConfig`, running DMRG, inspecting single-orbital entropies, entropy screening |
 | [03 — AO Projection](03_ao_projection.ipynb) | `ProjectionConfig`, AO-projection selection, thresholds and top-N ranking |
 | [04 — Full Pipeline](04_aegiss.ipynb) | End-to-end AEGISS pipeline with all four config objects |
@@ -46,6 +46,15 @@ $D_i \in \mathcal{D}$ as a set of PySCF `ao_labels` strings.
 Perform HF or KS-DFT to obtain the MO coefficient matrix $[\mathbf{C}]_{\mu p}$, then
 select orbitals belonging to the active region $\mathbf{A}$ defined by the CAS window
 (`ncas`, `nelecas`).
+
+**Optional scalar relativistic correction** — for systems containing transition metals
+or heavier elements, pass `relativistic='x2c'` to `run_scf` to apply the exact
+two-component (X2C) transformation. The relativistic one-electron Hamiltonian propagates
+automatically into the DMRG integral step via `CASCI.get_h1eff`.
+
+```python
+mf = run_scf(mol, method="RHF", relativistic="x2c")
+```
 
 **Optional orbital localization** — canonical MOs can be transformed before DMRG to
 improve physical interpretability of entropy screening:
