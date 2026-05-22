@@ -201,7 +201,7 @@ class TestRunScf:
         with pytest.raises(ValueError, match="Relativistic method must be specified"):
             run_scf(mol, method="RHF", verbose=0, relativistic="")
 
-    def test_spacepacing_relativistic_raises(self) -> None:
+    def test_whitespace_relativistic_raises(self) -> None:
         mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
         with pytest.raises(ValueError, match="Relativistic method must be specified"):
             run_scf(mol, method="RHF", verbose=0, relativistic="   ")
