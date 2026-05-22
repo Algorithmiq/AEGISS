@@ -132,7 +132,9 @@ def run_scf(
             logger.info("Applying X2C scalar relativistic correction.")
             mf = mf.x2c()
         else:
-            raise ValueError(f"Unknown relativistic method '{relativistic}'. Choose from: x2c.")
+            raise ValueError(
+                f"Unknown relativistic method '{relativistic}'. Choose from: x2c."
+            )
 
     mf.kernel()
     return mf
