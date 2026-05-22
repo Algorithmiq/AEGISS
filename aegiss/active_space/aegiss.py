@@ -29,7 +29,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-
 def select_aegiss(
     mol: Any,
     mf: Any,
