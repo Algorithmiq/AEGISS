@@ -47,6 +47,9 @@ def build_mol(atom: Any, **kwargs: Any) -> Any:
 def run_scf(
     mol: scf.hf.SCF,
     method: Literal["RHF", "rhf", "UHF", "uhf"] = ...,
+    xc: str = ...,
+    solvent_info: tuple[str, float] | None = ...,
+    relativistic: str | None = ...,
     **kwargs: Any,
 ) -> scf.hf.SCF: ...
 
@@ -56,6 +59,8 @@ def run_scf(
     mol: scf.hf.SCF,
     method: Literal["RKS", "rks", "UKS", "uks"] = ...,
     xc: str = ...,
+    solvent_info: tuple[str, float] | None = ...,
+    relativistic: str | None = ...,
     **kwargs: Any,
 ) -> dft.rks.KohnShamDFT: ...
 
@@ -65,6 +70,7 @@ def run_scf(
     method: str = "RHF",
     xc: str = "b3lyp",
     solvent_info: tuple[str, float] | None = None,
+    relativistic: str | None = None,
     **kwargs: Any,
 ) -> Any:
     """Run an HF or KS-DFT mean-field calculation.
@@ -81,6 +87,10 @@ def run_scf(
     solvent_info : tuple[str, float], optional
         Solvent model to use, specified as ``(model, dielectric_constant)``,
         e.g. ``('PCM', 78.4)`` for water. Default is ``None`` (no solvent).
+    relativistic : {'x2c'} or None, optional
+        Relativistic correction to apply. ``'x2c'`` applies the scalar
+        exact two-component (X2C) transformation via ``mf.x2c()``.
+        Default is ``None`` (no relativistic correction).
     **kwargs
         Additional attributes forwarded to the PySCF mean-field object
         (e.g. ``max_cycle=50``).
@@ -118,5 +128,18 @@ def run_scf(
             mf = mf.DDCOSMO()
             mf.with_solvent.method = model
             mf.with_solvent.eps = eps
+
+    if relativistic is not None:
+        relativistic = relativistic.strip().lower()
+        if not relativistic:
+            raise ValueError("Relativistic method must be specified. Choose from: x2c.")
+        if relativistic == "x2c":
+            logger.info("Applying X2C scalar relativistic correction.")
+            mf = mf.x2c()
+        else:
+            raise ValueError(
+                f"Unknown relativistic method '{relativistic}'. Choose from: x2c."
+            )
+
     mf.kernel()
     return mf

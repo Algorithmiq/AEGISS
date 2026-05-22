@@ -4,7 +4,7 @@
 
 | Notebook | Topic |
 |---|---|
-| [01_scf_and_localization.ipynb](01_scf_and_localization.ipynb) | Building the molecule, running HF/DFT, orbital localization (Boys, PM, ER, NOs, FNOs) |
+| [01_scf_and_localization.ipynb](01_scf_and_localization.ipynb) | Building the molecule, running HF/DFT, scalar relativistic corrections (X2C), orbital localization (Boys, PM, ER, NOs, FNOs) |
 | [02_dmrg.ipynb](02_dmrg.ipynb) | `DMRGConfig`, running DMRG, inspecting single-orbital entropies, entropy screening |
 | [03_ao_projection.ipynb](03_ao_projection.ipynb) | `ProjectionConfig`, AO-projection selection, thresholds and top-N ranking |
 | [04_aegiss.ipynb](04_aegiss.ipynb) | End-to-end AEGISS pipeline with all four config objects |

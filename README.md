@@ -328,7 +328,7 @@ Returns a built `pyscf.gto.Mole` object.
 ```python
 from aegiss.initial_guess import run_scf
 
-mf = run_scf(mol, method="RHF", xc="b3lyp", solvent_info=None, **kwargs)
+mf = run_scf(mol, method="RHF", xc="b3lyp", solvent_info=None, relativistic=None, **kwargs)
 ```
 
 | Parameter | Type | Default | Description |
@@ -337,6 +337,7 @@ mf = run_scf(mol, method="RHF", xc="b3lyp", solvent_info=None, **kwargs)
 | `method` | `str` | `"RHF"` | Level of theory: `"RHF"`, `"UHF"`, `"RKS"`, `"UKS"` |
 | `xc` | `str` | `"b3lyp"` | XC functional (KS methods only) |
 | `solvent_info` | `tuple[str, float]` or `None` | `None` | Solvent model and dielectric constant, e.g. `("PCM", 78.4)` or `("DDCOSMO", 78.4)` |
+| `relativistic` | `'x2c'` or `None` | `None` | Scalar relativistic correction. `'x2c'` applies the exact two-component (X2C) transformation via `mf.x2c()`. Recommended for transition metals and heavier elements. |
 | `**kwargs` | — | — | Any PySCF SCF attribute forwarded verbatim (`max_cycle`, `conv_tol`, …) |
 
 Returns the converged PySCF mean-field object.
