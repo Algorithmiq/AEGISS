@@ -168,6 +168,18 @@ class TestRunScf:
         mf = run_scf(mol, method="RHF", verbose=0, solvent_info=("DDCOSMO", 78.4))
         assert mf.converged
 
+    def test_x2c_with_pcm_solvent_converges(self) -> None:
+        pytest.importorskip("pyscf.solvent")
+        mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
+        mf = run_scf(
+            mol,
+            method="RHF",
+            verbose=0,
+            solvent_info=("IEF-PCM", 78.4),
+            relativistic="x2c",
+        )
+        assert mf.converged
+
     def test_x2c_rhf_converges(self, ne_x2c_rhf) -> None:
         assert ne_x2c_rhf.converged
 
