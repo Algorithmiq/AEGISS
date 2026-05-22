@@ -167,3 +167,29 @@ class TestRunScf:
         mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
         mf = run_scf(mol, method="RHF", verbose=0, solvent_info=("DDCOSMO", 78.4))
         assert mf.converged
+
+    def test_x2c_rhf_converges(self, ne_x2c_rhf) -> None:
+        assert ne_x2c_rhf.converged
+
+    def test_x2c_rhf_energy_differs_from_nonrel(self, ne_x2c_rhf, ne_rhf) -> None:
+        assert ne_x2c_rhf.e_tot != pytest.approx(ne_rhf.e_tot, abs=1e-4)
+
+    def test_x2c_rks_converges(self) -> None:
+        mol = build_mol("Ne 0 0 0", basis="sto-3g", verbose=0)
+        mf = run_scf(mol, method="RKS", xc="lda", verbose=0, relativistic="x2c")
+        assert mf.converged
+
+    def test_unknown_relativistic_raises(self) -> None:
+        mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
+        with pytest.raises(ValueError, match="Unknown relativistic method"):
+            run_scf(mol, method="RHF", verbose=0, relativistic="dkh")
+
+    def test_empty_relativistic_raises(self) -> None:
+        mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
+        with pytest.raises(ValueError, match="Relativistic method must be specified"):
+            run_scf(mol, method="RHF", verbose=0, relativistic="")
+
+    def test_spacepacing_relativistic_raises(self) -> None:
+        mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
+        with pytest.raises(ValueError, match="Relativistic method must be specified"):
+            run_scf(mol, method="RHF", verbose=0, relativistic="   ")
