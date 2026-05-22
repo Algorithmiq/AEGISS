@@ -47,6 +47,8 @@ def build_mol(atom: Any, **kwargs: Any) -> Any:
 def run_scf(
     mol: scf.hf.SCF,
     method: Literal["RHF", "rhf", "UHF", "uhf"] = ...,
+    xc: str = ...,
+    solvent_info: tuple[str, float] | None = ...,
     relativistic: str | None = ...,
     **kwargs: Any,
 ) -> scf.hf.SCF: ...
@@ -57,6 +59,7 @@ def run_scf(
     mol: scf.hf.SCF,
     method: Literal["RKS", "rks", "UKS", "uks"] = ...,
     xc: str = ...,
+    solvent_info: tuple[str, float] | None = ...,
     relativistic: str | None = ...,
     **kwargs: Any,
 ) -> dft.rks.KohnShamDFT: ...
