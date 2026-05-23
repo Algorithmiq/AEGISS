@@ -7,42 +7,28 @@ as its first argument; each specific function can also be called directly.
 from aegiss.localization import localize
 ```
 
-## localize
-
 ::: aegiss.localization.orbital_localization.localize
 
 ---
-
-## localize_boys
 
 ::: aegiss.localization.orbital_localization.localize_boys
 
 ---
 
-## localize_pipek_mezey
-
 ::: aegiss.localization.orbital_localization.localize_pipek_mezey
 
 ---
-
-## localize_edmiston
 
 ::: aegiss.localization.orbital_localization.localize_edmiston
 
 ---
 
-## localize_nos
-
 ::: aegiss.localization.orbital_localization.localize_nos
 
 ---
 
-## compute_nos
-
 ::: aegiss.localization.nos.compute_nos
 
 ---
-
-## compute_fnos
 
 ::: aegiss.localization.fnos.compute_fnos

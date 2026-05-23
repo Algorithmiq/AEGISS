@@ -9,24 +9,16 @@ from aegiss import DMRGConfig, EntropyConfig, ProjectionConfig, OutputConfig
 from aegiss.config_dataclasses import DMRGConfig, EntropyConfig, ProjectionConfig, OutputConfig
 ```
 
-## DMRGConfig
-
 ::: aegiss.config_dataclasses.dmrg_config.DMRGConfig
 
 ---
-
-## EntropyConfig
 
 ::: aegiss.config_dataclasses.entropy_config.EntropyConfig
 
 ---
 
-## ProjectionConfig
-
 ::: aegiss.config_dataclasses.projection_config.ProjectionConfig
 
 ---
-
-## OutputConfig
 
 ::: aegiss.config_dataclasses.output_config.OutputConfig

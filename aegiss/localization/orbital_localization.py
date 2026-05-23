@@ -204,11 +204,6 @@ def localize(method: str, *args: Any, **kwargs: Any) -> Any:
             ``'nos'``, ``'fnos'``.
         *args: Positional arguments forwarded to the selected method.
         **kwargs: Keyword arguments forwarded to the selected method.
-
-    Example:
-    >>> localize('pm', mol, mf, on_virtual=True)
-    >>> localize('nos', wfn, frozen=True)
-    >>> localize('boys', mol, mf, n_occ=5, on_virtual=False)
     """
     if method not in _METHODS:
         raise ValueError(

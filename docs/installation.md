@@ -44,33 +44,33 @@ os.environ["PYSCF_MAX_MEMORY"] = "16000"
 
 ## Logging
 
-AEGISS uses Python's standard `logging` module. The library never configures handlers
-or formatters — it only emits records through named loggers under the `aegiss.*`
-hierarchy.
+AEGISS uses [structlog](https://www.structlog.org/) over Python's stdlib logging.
+Call `configure_logging` once at the top of your script, **before** any AEGISS
+import that triggers logging:
 
-=== "Script"
-    ```python
-    import logging
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    ```
+```python
+import logging
+from aegiss.utils.logging import configure_logging
 
-=== "Debug (per-orbital detail)"
-    ```python
-    import logging
-    logging.basicConfig(level=logging.DEBUG, format="%(message)s")
-    ```
+configure_logging(level=logging.INFO)
+# configure_logging(level=logging.DEBUG)  # for per-orbital detail
+```
 
-=== "Silence in notebooks"
-    ```python
-    logging.getLogger("aegiss").setLevel(logging.WARNING)
-    ```
+Output goes to **stdout** as plain timestamped text. Redirect it to control the
+destination:
 
-=== "structlog"
-    ```python
-    import structlog
-    structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.INFO))
-    # import aegiss after configuring structlog
-    ```
+```bash
+python main.py > log.out         # local — save to file
+#SBATCH -o slurm-%j.out          # SLURM — output in slurm-<jobid>.out
+```
+
+`configure_logging` silences the noisy `matplotlib` and `h5py` loggers automatically.
+
+**Silence AEGISS selectively (e.g. in a notebook):**
+
+```python
+logging.getLogger("aegiss").setLevel(logging.WARNING)
+```
 
 ## Development
 

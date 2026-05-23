@@ -147,9 +147,3 @@ H        1.500000   1.000000   0.000000
 
 The file can be reloaded into MolTagger; tags are automatically recovered from the
 `Element.N` labels.
-
----
-
-## API reference
-
-::: aegiss.utils.mol_tagger.MolTagger

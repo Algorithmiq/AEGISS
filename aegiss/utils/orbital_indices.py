@@ -64,9 +64,6 @@ def get_orbital_spaces(
         active_virt (np.ndarray of int): Virtual orbitals that **are** in *orbital_list* (empty when
             *unique_virt_space* is ``True``).
         frozen_virt (np.ndarray of int): Virtual orbitals **not** in *orbital_list* (external / frozen virtual).
-
-    Example:
-    >>> frozen_occ, active_occ, active_virt, frozen_virt = get_orbital_spaces(mf, [3, 4, 5, 6])
     """
     selected = set(orbital_list)
     if not selected:

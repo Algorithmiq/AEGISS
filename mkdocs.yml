@@ -40,6 +40,7 @@ plugins:
             show_root_full_path: false
             members_order: source
             show_signature_annotations: true
+            filters: ["!^__"]
   - mkdocs-jupyter:
       execute: false
       include_source: true

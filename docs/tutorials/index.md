@@ -5,7 +5,7 @@ Each notebook is self-contained and builds on the previous one.
 
 | Notebook | Topic |
 |---|---|
-| [01 — SCF & Localization](01_scf_and_localization.ipynb) | Building the molecule, running HF/DFT, scalar relativistic corrections (X2C), orbital localization (Boys, PM, ER, NOs, FNOs) |
+| [01 — SCF & Localization](01_scf_and_localization.ipynb) | Building the molecule, running HF/DFT, solvation models (PCM, DD-COSMO), scalar relativistic corrections (X2C), orbital localization (Boys, PM, ER, NOs, FNOs) |
 | [02 — DMRG & Entropy](02_dmrg.ipynb) | `DMRGConfig`, running DMRG, inspecting single-orbital entropies, entropy screening |
 | [03 — AO Projection](03_ao_projection.ipynb) | `ProjectionConfig`, AO-projection selection, thresholds and top-N ranking |
 | [04 — Full Pipeline](04_aegiss.ipynb) | End-to-end AEGISS pipeline with all four config objects |
@@ -43,14 +43,34 @@ $D_i \in \mathcal{D}$ as a set of PySCF `ao_labels` strings.
 
 ## Step 2 — Mean-field calculation
 
-Perform HF or KS-DFT to obtain the MO coefficient matrix $[\mathbf{C}]_{\mu p}$, then
-select orbitals belonging to the active region $\mathbf{A}$ defined by the CAS window
-(`ncas`, `nelecas`).
+Perform [HF](https://pyscf.org/user/scf.html) or [KS-DFT](https://pyscf.org/user/dft.html)
+to obtain the MO coefficient matrix $[\mathbf{C}]_{\mu p}$, then select orbitals belonging
+to the active region $\mathbf{A}$ defined by the CAS window (`ncas`, `nelecas`).
+
+**Optional solvation** — for molecules in solution, pass `solvent_info=(model, dielectric_constant)`
+to `run_scf`. Two implicit-solvent families are supported
+([PySCF solvation docs](https://pyscf.org/user/solvent.html)):
+
+| Model | Key | Notes |
+|---|---|---|
+| [IEF-PCM](https://pyscf.org/user/solvent.html#pcm-model) | `"IEF-PCM"` | ISO standard; general purpose |
+| [C-PCM](https://pyscf.org/user/solvent.html#pcm-model) | `"C-PCM"` | Conductor-like limit; slightly cheaper |
+| [DD-COSMO](https://pyscf.org/user/solvent.html#ddcosmo) | `"DDCOSMO"` | Linear-scaling; good for large systems |
+
+```python
+mf_pcm = run_scf(mol, method="RHF", solvent_info=("IEF-PCM", 78.4))  # water
+```
+
+The solvation wrapper is fully composable with the `relativistic` parameter and
+propagates into the DMRG integral step transparently via `CASCI.get_h1eff`.
+
+---
 
 **Optional scalar relativistic correction** — for systems containing transition metals
-or heavier elements, pass `relativistic='x2c'` to `run_scf` to apply the exact
-two-component (X2C) transformation. The relativistic one-electron Hamiltonian propagates
-automatically into the DMRG integral step via `CASCI.get_h1eff`.
+or heavier elements, pass `relativistic='x2c'` to `run_scf` to apply the
+[exact two-component (X2C) transformation](https://pyscf.org/user/scf.html#scalar-relativistic-correction).
+The relativistic one-electron Hamiltonian propagates automatically into the DMRG integral
+step via `CASCI.get_h1eff`.
 
 ```python
 mf = run_scf(mol, method="RHF", relativistic="x2c")
@@ -102,7 +122,9 @@ The threshold is applied **independently** to occupied and virtual subspaces
 
 ## Step 4 — AO projection for each group $D \in \mathcal{D}$
 
-Compute AO weights by projecting entropy-filtered MOs onto a minimal basis:
+Compute AO weights by projecting entropy-filtered MOs onto a minimal basis
+(AO groups are specified as [`ao_labels`](https://pyscf.org/user/gto.html) strings,
+e.g. `"Fe 3d"`, `"C 2pz"`):
 
 $$
 w_p^D = \sum_{\eta \in D} \left|[\mathbf{O}_E^D]_{\eta p}\right|

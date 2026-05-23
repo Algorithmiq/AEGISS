@@ -19,11 +19,6 @@ class MolTagger:
     Wraps the Qt application lifecycle and :class:`MolViewWindow` so callers
     only need to know about ``filepath``, ``show()``, and ``export_tags()``.
 
-    Example:
-    >>> tagger = MolTagger("ethanol.xyz")
-    >>> tagger.show()
-    >>> print(tagger.export_tags())
-
     Attributes:
         filepath (Path): Resolved path to the loaded XYZ file.
     """
