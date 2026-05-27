@@ -3,6 +3,7 @@
 Interactive 3D molecular viewer for selecting atoms and generating PySCF-compatible
 `ao_labels` strings ready to paste into `ProjectionConfig`.
 
+![main_screen_mol_tagger](assets/images/main_screen.png)
 ## Requirements
 
 MolTagger requires the `viz` optional extra:
@@ -37,6 +38,9 @@ print(tagger.export_tags())   # {atom_index: "Element.N", ...}
 └─────────────────────────────────────────────┴──────────────┘
 ```
 
+The 3D viewport supports standard mouse navigation: rotate (left-drag), zoom (scroll), pan (middle-drag).
+Additional camera controls — fixed orientations and auto-alignment — are described in the [Camera / Navigation](#camera--navigation) section.
+
 ### Selecting atoms
 
 | Action | Effect |
@@ -48,11 +52,14 @@ print(tagger.export_tags())   # {atom_index: "Element.N", ...}
 Selected atoms are highlighted with a translucent red halo in the 3D view and
 highlighted in the atom list simultaneously. Both views stay in sync.
 
-### Tagging atoms
+![select_atoms](assets/images/main_screen_selected.png)
 
+### Tagging atoms
 1. Select one or more atoms.
-2. Type a whole-number label in the **Tag Selected** text box (e.g. `1`).
+2. Type a whole-number label in the **Tag Selected** text box (e.g. `0`).
 3. Press **Apply Tag** or `Return`.
+
+![tagged](assets/images/after_tagging_lateral.png){ width="40%" }
 
 Each tagged atom is stored as `Element.N` (e.g. `C.1`, `Ru.2`). Tags appear next to the
 atom coordinates in the Atoms list. **Remove Tags** clears tags from the current selection.
@@ -61,27 +68,27 @@ atom coordinates in the Atoms list. **Remove Tags** clears tags from the current
 
 Shows the minimal-basis shell structure for each selected atom:
 
-```
-#4 Ru (Z=44)
-  Minimal basis : 1s, 2s, 2p, 3s, 3p, 3d, 4s, 4d
-  Valence       : 3d, 4s, 4d
-```
-
+![info](assets/images/atom_info_selected_benzene.png){ width="60%" }
 ---
 
 ## AO Labels panel
 
+
 Automatically suggests PySCF-compatible `ao_labels` strings based on the selected atoms
 and the chosen **character mode**. The output is ready to copy directly into
-`ProjectionConfig`:
+`ProjectionConfig`. For example:
 
 ```python
 ["Ru 4d", "N 2pz", "C 2pz"]
 ```
 
+![ao_labels](assets/images/ao_suggestion_benzene.png){ width="60%" }
+
 Press **Copy** to send the string to the system clipboard.
 
 ### Character modes
+
+![suggestion](assets/images/ao_suggestion_options.png){ width="60%" }
 
 | Mode | Intended use | Logic |
 |---|---|---|
@@ -99,6 +106,17 @@ The planarity score is `s₂ / s₁` from the singular values.
 |---|---|---|
 | < 0.25 | Planar | `C 2pz` (or `px`/`py` as appropriate) |
 | ≥ 0.25 | Non-planar | All `C 2p` (warning shown in orange) |
+
+#### Auto-alignment
+
+The **Auto-align** button uses the SVD-detected plane normal to orient the camera perpendicular to
+the molecular plane of the selected atoms, so the ring (or ligand framework) appears face-on.
+
+![auto_align](assets/images/auto_align.png){ width="60%" }
+
+Auto-alignment is only meaningful for planar selections (score < 0.25). For non-planar selections
+the button is still available but the resulting view is along the dominant singular vector, which
+may not be chemically intuitive.
 
 ### Transition metal classification
 
@@ -127,6 +145,33 @@ Select **Ce** in d-shell mode:
 ```python
 ["Ce 4f", "Ce 5d"]
 ```
+
+---
+
+## Camera / Navigation
+
+### Mouse controls
+
+| Action | Effect |
+|---|---|
+| **Left-click + drag** | Rotate |
+| **Scroll wheel** | Zoom in / out |
+| **Middle-click + drag** | Pan |
+| **Right-click** | Select atom (does not move camera) |
+
+### Fixed orientations
+
+Four preset buttons snap the camera to a standard plane-aligned view, keeping the current molecule
+centre:
+
+![spatial_orientation](assets/images/spatial_orientation.png){ width="50%" }
+
+| Button | Camera looks along | Plane shown |
+|---|---|---|
+| **XY** | +Z axis | XY plane (top view) |
+| **XZ** | +Y axis | XZ plane (front view) |
+| **YZ** | +X axis | YZ plane (side view) |
+| **\*** | — | Reset to default isometric view |
 
 ---
 

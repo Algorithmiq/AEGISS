@@ -91,18 +91,37 @@ improve physical interpretability of entropy screening:
 
 ## Step 3a — Correlated wavefunction in active region
 
-Compute the DMRG wavefunction in $\mathbf{A}$ and construct the one-orbital reduced
-density matrix $\rho^{p}$ by tracing over all other sites.
+Solve a correlated wavefunction method (e.g. CASSCF, DMRG, CISD) within the active
+region $\mathbf{A}$ to obtain the many-body state $|\Psi\rangle$.
+
+### One-orbital reduced density matrix
+
+For each orbital $p \in \mathbf{A}$, construct the one-orbital reduced density matrix
+(1-RDM) $\rho^p$ by tracing $|\Psi\rangle\langle\Psi|$ over all orbitals except $p$:
+
+$$
+\rho^p = \mathrm{Tr}_{\mathbf{A} \setminus \{p\}} \left( |\Psi\rangle\langle\Psi| \right)
+$$
+
+Each orbital $p$ can be in one of four occupation states
+$|\alpha\rangle \in \{|0\rangle,\, |\!\uparrow\rangle,\, |\!\downarrow\rangle,\, |\!\uparrow\downarrow\rangle\}$,
+so $\rho^p$ is a $4\times 4$ matrix. Its eigenvalues $\{\omega_{\alpha,p}\}$ are the
+probabilities of finding orbital $p$ in each of those states, satisfying
+$\omega_{\alpha,p} \geq 0$ and $\sum_\alpha \omega_{\alpha,p} = 1$.
 
 ---
 
 ## Step 3b — Entropy-based reduction
 
-For each orbital $p$, compute the single-orbital entropy:
+For each orbital $p$, compute the single-orbital entropy from the eigenvalues of $\rho^p$:
 
 $$
 S(1)_p = -\sum_{\alpha=1}^{4} \omega_{\alpha,p} \ln \omega_{\alpha,p}
 $$
+
+$S(1)_p$ quantifies the entanglement of orbital $p$ with the rest of the active space.
+It is zero for orbitals that are fully occupied or fully empty (doubly occupied core or
+unoccupied virtual), and maximal for orbitals in a strongly correlated superposition.
 
 Select entropy-active orbitals:
 
@@ -122,18 +141,59 @@ The threshold is applied **independently** to occupied and virtual subspaces
 
 ## Step 4 — AO projection for each group $D \in \mathcal{D}$
 
-Compute AO weights by projecting entropy-filtered MOs onto a minimal basis
-(AO groups are specified as [`ao_labels`](https://pyscf.org/user/gto.html) strings,
-e.g. `"Fe 3d"`, `"C 2pz"`):
+For each AO group $D$ (e.g. `"Fe 3d"`, `"C 2pz"`), a weight $w_p^D$ is assigned to
+every entropy-filtered orbital $\psi_p \in \{\psi^{\mathbf{A}}_E\}$ that measures how
+much of that orbital lives in the target chemical subspace.
+
+### Cross-overlap matrix $\mathbf{O}^D_E$
+
+The projection is performed against a **secondary minimal basis** (default: `minao`) rather
+than the original working basis. Let $\{\phi^D_\mu\}$ be the AOs of the minimal basis
+restricted to the atoms and angular-momentum channels defined by $D$, and let
+$\{\phi^E_\nu\}$ be the AOs of the original molecular basis. The cross-overlap matrix is:
 
 $$
-w_p^D = \sum_{\eta \in D} \left|[\mathbf{O}_E^D]_{\eta p}\right|
+[\mathbf{O}^D_E]_{\mu\nu} = \langle \phi^D_\mu \mid \phi^E_\nu \rangle, \qquad \mu \in D,\ \nu \in E
 $$
 
-Two selection modes, controlled by `ProjectionConfig`:
+computed via `pyscf.gto.intor_cross("int1e_ovlp", ...)`. Using a minimal basis for $D$
+removes noise from diffuse or polarisation functions that are present in the working basis
+but are not chemically meaningful for the selection criterion.
 
-- **Threshold** — keep orbitals where $w_p^D \geq \epsilon_D$ (absolute or relative)
-- **Top-N** — keep the $n_D$ orbitals with the largest weight regardless of magnitude
+### Projection and weight
+
+The MO coefficients $[\mathbf{C}_E]_{\nu p}$ expand each orbital $\psi_p$ in the original
+basis. The projection of $\psi_p$ onto the target AO subspace $D$ is:
+
+$$
+[\mathbf{O}^D_E\,\mathbf{C}_E]_{\mu p}
+= \sum_{\nu \in E} [\mathbf{O}^D_E]_{\mu\nu}\,[\mathbf{C}_E]_{\nu p}
+= \langle \phi^D_\mu \mid \psi_p \rangle
+$$
+
+The weight is the $\ell^1$ norm of this projection over all $\mu \in D$:
+
+$$
+w_p^D = \sum_{\mu \in D} \left|\langle \phi^D_\mu \mid \psi_p \rangle\right|
+= \sum_{\mu \in D} \left|[\mathbf{O}^D_E\,\mathbf{C}_E]_{\mu p}\right|
+$$
+
+A large $w_p^D$ means orbital $\psi_p$ has strong overlap with the target AO characters;
+a value near zero means it is essentially orthogonal to that subspace.
+
+### Normalisation
+
+| `contribution_type` | Weight used for thresholding |
+|---|---|
+| `'a'` (absolute) | $w_p^D$ directly |
+| `'r'` (relative) | $\tilde{w}_p^D = w_p^D \,/\, \max_{p'} w_{p'}^D \in [0,1]$ |
+
+### Selection
+
+Two modes are available, controlled by `ProjectionConfig`:
+
+- **Threshold** — keep all $\psi_p$ where $w_p^D \geq \epsilon_D$
+- **Top-N** — keep the $n_D$ orbitals with the largest $w_p^D$, regardless of magnitude
 
 ---
 
