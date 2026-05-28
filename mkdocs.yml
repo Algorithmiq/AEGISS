@@ -6,28 +6,31 @@ repo_name: Algorithmiq/AEGISS
 edit_uri: ""
 
 theme:
+  icon:
+      repo: fontawesome/brands/github
   name: material
   palette:
     - scheme: default
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    - scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: blue grey
+      accent: teal
       toggle:
         icon: material/brightness-4
+        name: To the Dark-side
+    - scheme: slate
+      primary: teal
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
         name: Switch to light mode
   features:
     - navigation.tabs
+    - navigation.tracking
     - navigation.sections
     - navigation.top
+    - navigation.footer
     - search.highlight
     - content.code.copy
     - content.tooltips
-
 plugins:
   - search
   - mkdocstrings:
