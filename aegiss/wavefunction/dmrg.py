@@ -24,7 +24,7 @@ def run_dmrg(
     mf: Any,
     ncas: int,
     nelecas: int | tuple[int, int],
-    init_bond_dim: int = 10,
+    max_bond_dim: int = 500,
     symm_type: str = "SU2",
     verbosity: int = 0,
     *,
@@ -41,8 +41,8 @@ def run_dmrg(
     nelecas : int or tuple[int, int]
         Number of active electrons, either as a total count or an explicit
         ``(nalpha, nbeta)`` pair (same convention as PySCF's CASCI).
-    init_bond_dim : int
-        Initial bond dimension for the DMRG schedule.
+    max_bond_dim : int
+        Target bond dimension for the DMRG schedule (must be a positive multiple of 4).
     symm_type : {'SU2', 'SZ'}
         Spin symmetry type for block2.
     verbosity : int
@@ -115,16 +115,14 @@ def run_dmrg(
     logger.info("Scratch directory: %s", scratch_dir)
     logger.info("Number of threads: %d", n_threads)
 
-    bond_dims, noises, thrds = _default_dmrg_schedule(init_bond_dim=init_bond_dim)
+    bond_dims, noises, thrds = _default_dmrg_schedule(max_bond_dim=max_bond_dim)
 
     n_sweeps = len(bond_dims)
-    twosite_to_onesite = max(n_sweeps - 2, 0)
+    twosite_to_onesite = 20
     logger.info(
-        "DMRG settings: n_sweeps = %d, init_bond_dim = %d, final_bond_dim = %d,"
-        " twosite_to_onesite = %d",
+        "DMRG settings: n_sweeps = %d, max_bond_dim = %d, twosite_to_onesite = %d",
         n_sweeps,
-        init_bond_dim,
-        bond_dims[-1],
+        max_bond_dim,
         twosite_to_onesite,
     )
     logger.info("DMRG Noise: init = %s, final = %s", noises[0], noises[-1])
@@ -136,7 +134,7 @@ def run_dmrg(
         iprint=verbosity,
     )
 
-    ket = driver.get_random_mps(tag="GS", bond_dim=init_bond_dim, nroots=1)
+    ket = driver.get_random_mps(tag="GS", bond_dim=bond_dims[0], nroots=1)
 
     t = time.time()
     energy = driver.dmrg(
@@ -148,6 +146,7 @@ def run_dmrg(
         noises=noises,
         thrds=thrds,
         twosite_to_onesite=twosite_to_onesite,
+        tol=1e-10,
     )
     logger.info("DMRG completed in %.3f [s]", time.time() - t)
     logger.info("DMRG Energy (%s)\t : %.8f", symm_type, energy)

@@ -73,7 +73,7 @@ def select_aegiss(
         ncas=dmrg_config.ncas,
         nelecas=dmrg_config.nelecas,
         symm_type=dmrg_config.symm_type,
-        init_bond_dim=dmrg_config.init_bond_dim,
+        max_bond_dim=dmrg_config.max_bond_dim,
         verbosity=dmrg_config.verbosity,
     )
     if output_config.save_plots and (soe1 is not None and minfo is not None):
