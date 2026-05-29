@@ -77,6 +77,18 @@ class TestDMRGConfig:
         cfg = DMRGConfig(ncas=4, nelecas=4, verbosity=0)
         assert cfg.verbosity == 0
 
+    def test_default_backend_is_pyblock2(self) -> None:
+        cfg = DMRGConfig(ncas=4, nelecas=4)
+        assert cfg.backend == "pyblock2"
+
+    def test_subprocess_backend_valid(self) -> None:
+        cfg = DMRGConfig(ncas=4, nelecas=4, backend="subprocess")
+        assert cfg.backend == "subprocess"
+
+    def test_invalid_backend_raises(self) -> None:
+        with pytest.raises(ValueError, match="backend"):
+            DMRGConfig(ncas=4, nelecas=4, backend="unknown")  # type: ignore[arg-type]
+
 
 class TestEntropyConfig:
     def test_valid_default_config(self) -> None:

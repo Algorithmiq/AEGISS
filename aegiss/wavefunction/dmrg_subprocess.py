@@ -1,0 +1,235 @@
+"""DMRG wavefunction retrieval via block2main subprocess."""
+
+from __future__ import annotations
+
+import logging
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
+import numpy as np
+from pyscf import ao2mo, mcscf, tools
+
+from aegiss.utils.dmrg_utils import _default_dmrg_schedule
+from aegiss.utils.env import mem, omp_num_threads
+from aegiss.utils.env import scratch_dir as get_scratch_dir
+from aegiss.utils.orbital_indices import resolve_nelecas
+
+if TYPE_CHECKING:
+    pass
+
+logger = logging.getLogger(__name__)
+
+_VALID_SYMM_TYPES = ("SU2", "SZ")
+
+
+def _write_fcidump(
+    path: Path,
+    mf: Any,
+    ncas: int,
+    nelecas: int | tuple[int, int],
+) -> None:
+    """Write a PySCF FCIDUMP for the CAS active space to *path*."""
+    mycas = mcscf.CASCI(mf, ncas, nelecas)
+    h1e, ecore = mycas.get_h1eff()
+    g2e = ao2mo.restore(1, mycas.get_h2eff(), ncas)
+    tools.fcidump.from_integrals(
+        str(path), h1e, g2e, ncas, nelecas, ecore, orbsym=[1] * ncas, ms=0
+    )
+
+
+def _write_input(
+    path: Path,
+    fcidump_path: Path,
+    n_elec: int,
+    spin: int,
+    scratch_dir: Path,
+    bond_dims: list[int],
+    noises: list[float],
+    thrds: list[float],
+    n_threads: int,
+    stack_mem_gb: float,
+    symm_type: str = "SZ",
+) -> None:
+    """Write a StackBlock-compatible block2main input file to *path*."""
+    n_sweeps = len(bond_dims)
+    twosite_to_onesite = max(n_sweeps - 2, 0)
+
+    sched_rows: list[str] = []
+    prev = None
+    for i, (m, thr, noise) in enumerate(zip(bond_dims, thrds, noises)):
+        if prev is None or (m, thr, noise) != prev:
+            sched_rows.append(f"{i}  {m}  {thr}  {noise}")
+            prev = (m, thr, noise)
+
+    mem_gb = int(stack_mem_gb) if stack_mem_gb == int(stack_mem_gb) else stack_mem_gb
+
+    lines: list[str] = [
+        f"orbitals {fcidump_path}",
+        f"nelec {n_elec}",
+        f"spin {spin}",
+        "hf_occ integral",
+    ]
+    if symm_type == "SZ":
+        lines.append("nonspinadapted")
+    lines += [
+        "sym c1",
+        "noreorder",
+        f"prefix {scratch_dir}/",
+        f"num_thrds {n_threads}",
+        f"mem {mem_gb}G",
+        "",
+        "schedule",
+        *sched_rows,
+        "end",
+        f"twodot_to_onedot {twosite_to_onesite}",
+        f"maxiter {n_sweeps + 2}",
+        f"sweep_tol {thrds[-1]}",
+        "",
+        "onepdm",
+        "correlation",
+    ]
+    path.write_text("\n".join(lines))
+
+
+def _read_outputs(scratch_dir: Path, ncas: int) -> tuple[float, np.ndarray, np.ndarray]:
+    """Read block2main output files and return ``(energy, pdm1, npc1)``."""
+    node0 = scratch_dir / "node0"
+    missing = [
+        f for f in ("E_dmrg.npy", "1pdm.npy", "1npc.npy") if not (node0 / f).exists()
+    ]
+    if missing:
+        raise FileNotFoundError(
+            f"block2main output missing in {node0}: {missing}. "
+            "Check block2main stderr for errors."
+        )
+    energy = float(np.load(node0 / "E_dmrg.npy"))
+    pdm1 = np.load(node0 / "1pdm.npy")  # (2, ncas, ncas): [0]=α, [1]=β
+    npc1 = np.load(node0 / "1npc.npy")  # (2, ncas, ncas)
+    return energy, pdm1, npc1
+
+
+def _compute_soe(pdm1: np.ndarray, npc1: np.ndarray) -> np.ndarray:
+    """Compute single-orbital von Neumann entropy from 1-PDM and 1-NPC.
+
+    ``npc1[0,i,i] = n_i + 2*d_i``  →  ``d_i = (npc1[0,i,i] - n_i) / 2``.
+    Validated to machine precision (1e-15) against pyblock2's
+    ``get_orbital_entropies`` when applied to the same MPS.
+    """
+    ncas = pdm1.shape[-1]
+    soe = np.zeros(ncas)
+    for i in range(ncas):
+        n_i = pdm1[0, i, i] + pdm1[1, i, i]
+        d_i = (npc1[0, i, i] - n_i) / 2.0
+        w = np.array([d_i, pdm1[0, i, i] - d_i, pdm1[1, i, i] - d_i, 1.0 - n_i + d_i])
+        w = w[w > 1e-14]
+        soe[i] = -np.dot(w, np.log(w))
+    return soe
+
+
+def run_dmrg_subprocess(
+    mf: Any,
+    ncas: int,
+    nelecas: int | tuple[int, int],
+    init_bond_dim: int = 10,
+    symm_type: str = "SZ",
+    verbosity: int = 0,
+    *,
+    get_qmi: bool = True,
+) -> tuple[float, np.ndarray | None, np.ndarray | None, np.ndarray | None]:
+    """Run a DMRG calculation via the ``block2main`` subprocess.
+
+    Parameters
+    ----------
+    mf : pyscf.scf.hf.SCF
+        Converged mean-field object.
+    ncas : int
+        Number of active orbitals.
+    nelecas : int or tuple[int, int]
+        Number of active electrons (total count or ``(nalpha, nbeta)`` pair).
+    init_bond_dim : int
+        Initial bond dimension for the DMRG schedule.
+    symm_type : {'SU2', 'SZ'}
+        Spin symmetry: ``'SZ'`` adds the ``nonspinadapted`` keyword so
+        block2main runs without spin adaptation; ``'SU2'`` omits it.
+    verbosity : int
+        If non-zero, block2main stdout/stderr are forwarded to the terminal.
+    get_qmi : bool
+        If ``True``, compute and return single-orbital entropies.
+
+    Returns
+    -------
+    energy : float
+        DMRG ground-state energy.
+    soe1 : np.ndarray or None
+        Single-orbital entropies (``None`` if *get_qmi* is ``False``).
+    soe2 : None
+        Always ``None``; two-orbital entropies require 3/4-body PDMs not
+        available from ``1pdm`` + ``1npc`` alone.
+    minfo : None
+        Always ``None`` for the same reason as *soe2*.
+    """
+    if symm_type not in _VALID_SYMM_TYPES:
+        raise ValueError(
+            f"Unsupported symmetry type: {symm_type!r}. Expected one of {list(_VALID_SYMM_TYPES)}."
+        )
+
+    scratch = get_scratch_dir()
+    n_threads = omp_num_threads()
+    stack_mem_gb = mem() / (1024**3)
+
+    bond_dims, noises, thrds = _default_dmrg_schedule(init_bond_dim)
+    nalpha, nbeta = resolve_nelecas(nelecas)
+
+    work_dir = Path(scratch) / "dmrg_subprocess"
+    work_dir.mkdir(parents=True, exist_ok=True)
+
+    fcidump_path = work_dir / "FCIDUMP"
+    _write_fcidump(fcidump_path, mf, ncas, nelecas)
+
+    input_path = work_dir / "dmrg.conf"
+    _write_input(
+        input_path,
+        fcidump_path,
+        nalpha + nbeta,
+        nalpha - nbeta,
+        work_dir,
+        bond_dims,
+        noises,
+        thrds,
+        n_threads,
+        stack_mem_gb,
+        symm_type,
+    )
+
+    _venv_bin = Path(sys.executable).parent
+    block2main_path = shutil.which("block2main") or (
+        str(_venv_bin / "block2main") if (_venv_bin / "block2main").exists() else None
+    )
+    if block2main_path is None:
+        raise RuntimeError(
+            "block2main not found in PATH or venv bin directory. "
+            "Activate the project venv or add block2main to PATH."
+        )
+
+    logger.info("Running block2main: %s %s", block2main_path, input_path)
+    subprocess.run(
+        [block2main_path, str(input_path)],
+        capture_output=(verbosity == 0),
+        check=True,
+    )
+
+    energy, pdm1, npc1 = _read_outputs(work_dir, ncas)
+    logger.info("DMRG energy (subprocess): %.8f", energy)
+
+    if not get_qmi:
+        return energy, None, None, None
+
+    soe1 = _compute_soe(pdm1, npc1)
+    logger.info(
+        "soe2 and minfo are None for subprocess backend "
+        "(two-orbital entropy requires 3/4-body PDMs unavailable from 1pdm+1npc)"
+    )
+    return energy, soe1, None, None

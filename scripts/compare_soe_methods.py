@@ -19,6 +19,7 @@ M1  vs M3  (SZ vs SU2, coarser sched) : < 1e-4
 Usage:
     python scripts/compare_soe_methods.py
 """
+
 from __future__ import annotations
 
 import os
@@ -87,7 +88,8 @@ driver.initialize_system(n_sites=ncas, n_elec=nalpha + nbeta, spin=nalpha - nbet
 mpo = driver.get_qc_mpo(h1e=h1e, g2e=g2e, ecore=ecore, iprint=0)
 ket = driver.get_random_mps(tag="GS", bond_dim=INIT_BD, nroots=1)
 energy1 = driver.dmrg(
-    mpo, ket,
+    mpo,
+    ket,
     n_sweeps=n_sweeps,
     bond_dims=bond_dims,
     iprint=0,
@@ -109,7 +111,9 @@ print(f"SOE   : {np.round(soe1, 6)}\n")
 # the 1pdm + npc1 representation.  Agreement < 1e-12 validates the formula.
 # ---------------------------------------------------------------------------
 print("=" * 60)
-print("Method 1b: formula validation (same MPS as M1, PDM formula vs get_orbital_entropies)")
+print(
+    "Method 1b: formula validation (same MPS as M1, PDM formula vs get_orbital_entropies)"
+)
 print("=" * 60)
 
 exprs, nx = OrbitalEntropy.get_one_orb_rdm_exprs(is_sgf=False)
@@ -129,17 +133,21 @@ for ((_, m), v), pdm in zip(exprs.items(), pdms_m1b):
 # Reconstruct 1pdm-style and npc1[0,i,i] quantities and apply the formula.
 d_i_ref = rrdms[:, 3]
 n_alpha_i = rrdms[:, 2] + d_i_ref
-n_beta_i  = rrdms[:, 1] + d_i_ref
+n_beta_i = rrdms[:, 1] + d_i_ref
 n_i = n_alpha_i + n_beta_i
 npc_00_diag = n_i + 2 * d_i_ref
 d_i_formula = (npc_00_diag - n_i) / 2.0
 
 soe1b = np.zeros(ncas)
 for i in range(ncas):
-    w = np.array([d_i_formula[i],
-                  n_alpha_i[i] - d_i_formula[i],
-                  n_beta_i[i]  - d_i_formula[i],
-                  1.0 - n_i[i] + d_i_formula[i]])
+    w = np.array(
+        [
+            d_i_formula[i],
+            n_alpha_i[i] - d_i_formula[i],
+            n_beta_i[i] - d_i_formula[i],
+            1.0 - n_i[i] + d_i_formula[i],
+        ]
+    )
     w = w[w > 1e-14]
     soe1b[i] = -np.dot(w, np.log(w))
 
@@ -295,6 +303,10 @@ for i in range(ncas):
     print(f"{i:<10} {soe1[i]:>18.8f} {soe2[i]:>18.8f} {soe3[i]:>15.8f}")
 
 print()
-print(f"Max |M1b - M1| (formula, same MPS)   : {diff_1b1:.2e}  ({'PASS (<1e-12)' if diff_1b1 < 1e-12 else 'FAIL'})")
-print(f"Max |M1  - M2| (independent runs)     : {diff_12:.2e}  ({'PASS (<1e-5)' if diff_12 < 1e-5 else 'FAIL'})")
+print(
+    f"Max |M1b - M1| (formula, same MPS)   : {diff_1b1:.2e}  ({'PASS (<1e-12)' if diff_1b1 < 1e-12 else 'FAIL'})"
+)
+print(
+    f"Max |M1  - M2| (independent runs)     : {diff_12:.2e}  ({'PASS (<1e-5)' if diff_12 < 1e-5 else 'FAIL'})"
+)
 print(f"Max |M1  - M3| (SZ vs SU2)            : {diff_13:.2e}")

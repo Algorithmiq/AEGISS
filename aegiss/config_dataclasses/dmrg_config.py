@@ -26,6 +26,10 @@ class DMRGConfig:
         calculations; ``'SU2'`` is faster but needs MPS conversion for entropies.
     verbosity : int, default 0
         Verbosity level for block2 output.  Higher values produce more detailed logs.
+    backend : {'pyblock2', 'subprocess'}, default 'pyblock2'
+        DMRG execution backend.  ``'pyblock2'`` uses the Python API directly;
+        ``'subprocess'`` calls the ``block2main`` executable and reads numpy
+        output files (no Python import of block2).
     """
 
     ncas: int
@@ -33,6 +37,7 @@ class DMRGConfig:
     init_bond_dim: int = 10
     symm_type: Literal["SZ", "SU2"] = "SZ"
     verbosity: int = 0
+    backend: Literal["pyblock2", "subprocess"] = "pyblock2"
 
     def __post_init__(self) -> None:
         """Validate the configuration parameters.
@@ -70,4 +75,8 @@ class DMRGConfig:
         if self.verbosity < 0:
             raise ValueError(
                 f"DMRGConfig: `verbosity` must be non-negative, got {self.verbosity}."
+            )
+        if self.backend not in ("pyblock2", "subprocess"):
+            raise ValueError(
+                f"DMRGConfig: Invalid backend {self.backend!r}. Must be 'pyblock2' or 'subprocess'."
             )
