@@ -158,7 +158,7 @@ mf = run_scf(mol, method="RHF")
 from aegiss.active_space.aegiss import select_aegiss
 from aegiss.config_dataclasses import DMRGConfig, EntropyConfig, ProjectionConfig, OutputConfig
 
-dmrg_config = DMRGConfig(ncas=20, nelecas=20, init_bond_dim=10, symm_type="SZ")
+dmrg_config = DMRGConfig(ncas=20, nelecas=20, max_bond_dim=500, symm_type="SZ")
 
 entropy_config = EntropyConfig(
     fraction=0.1,
@@ -248,14 +248,14 @@ from aegiss.config_dataclasses import DMRGConfig, EntropyConfig, ProjectionConfi
 #### `DMRGConfig`
 
 ```python
-DMRGConfig(ncas, nelecas, init_bond_dim=10, symm_type="SZ", verbosity=0)
+DMRGConfig(ncas, nelecas, max_bond_dim=500, symm_type="SZ", verbosity=0)
 ```
 
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `ncas` | `int` | — | Number of active orbitals |
 | `nelecas` | `int` or `tuple[int, int]` | — | Number of active electrons. An integer total count or an explicit `(nalpha, nbeta)` pair — same convention as PySCF's CASCI. Odd integers are treated as high-spin doublets. |
-| `init_bond_dim` | `int` | `10` | Initial DMRG bond dimension; grows automatically during the sweep schedule |
+| `max_bond_dim` | `int` | `500` | Target DMRG bond dimension. The schedule starts at `max_bond_dim // 2` and ramps to `max_bond_dim`. Must be a positive multiple of 4. |
 | `symm_type` | `"SZ"` or `"SU2"` | `"SZ"` | Spin symmetry: `"SZ"` is required for entropy calculations; `"SU2"` is faster |
 | `verbosity` | `int` | `0` | block2 output verbosity |
 
@@ -351,7 +351,7 @@ from aegiss.wavefunction.dmrg import run_dmrg
 
 energy, soe1, soe2, minfo = run_dmrg(
     mf, ncas, nelecas,
-    init_bond_dim=10,
+    max_bond_dim=500,
     symm_type="SU2",
     verbosity=0,
     get_qmi=False,
@@ -363,7 +363,7 @@ energy, soe1, soe2, minfo = run_dmrg(
 | `mf` | SCF object | — | Converged mean-field |
 | `ncas` | `int` | — | Number of active orbitals |
 | `nelecas` | `int` or `tuple[int, int]` | — | Number of active electrons. An integer total count or an explicit `(nalpha, nbeta)` pair. Odd integers are treated as high-spin doublets. |
-| `init_bond_dim` | `int` | `10` | Initial DMRG bond dimension; the schedule grows to a larger final dimension automatically |
+| `max_bond_dim` | `int` | `500` | Target DMRG bond dimension (must be a positive multiple of 4). The sweep schedule starts at `max_bond_dim // 2` and ramps up. |
 | `symm_type` | `str` | `"SU2"` | Spin symmetry: `"SU2"` (faster) or `"SZ"` (required for entropy calculation without MPS conversion) |
 | `verbosity` | `int` | `0` | block2 output verbosity |
 | `get_qmi` | `bool` | `False` | If `True`, compute and return single- and two-orbital entropies and the quantum mutual information matrix |

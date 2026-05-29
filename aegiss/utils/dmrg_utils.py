@@ -13,20 +13,26 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _default_dmrg_schedule(
-    init_bond_dim: int = 20,
-) -> tuple[list[int], list[float], list[float]]:
-    """Define a default DMRG sweep schedule for the Block2 ``DMRGDriver.solve`` method.
+_SCHEDULE_WAYPOINTS = [0, 4, 8, 12, 16]
+_SCHEDULE_MAX_SWEEPS = 30
+_SCHEDULE_NOISES = [1e-4, 1e-4, 5e-5, 5e-5, 0.0]
+_SCHEDULE_THRDS = [1e-8, 1e-10, 1e-12, 1e-12, 1e-12]
 
-    Builds a 16-sweep schedule that starts at *init_bond_dim* and grows through
-    multipliers ``[1x, 2x, 4x, 6x]``, with noise and convergence thresholds
-    tightened in lock-step.
+
+def _default_dmrg_schedule(
+    max_bond_dim: int = 500,
+) -> tuple[list[int], list[float], list[float]]:
+    """Define a default DMRG sweep schedule for the Block2 ``DMRGDriver.dmrg`` method.
+
+    Builds a 30-sweep schedule from fixed waypoints at sweeps ``[0, 4, 8, 12, 16]``.
+    The first segment uses ``max_bond_dim // 2``; all subsequent segments use
+    ``max_bond_dim``.  Noise and thresholds are tightened at each waypoint.
 
     Parameters
     ----------
-    init_bond_dim : int
-        Initial bond dimension for the first sweeps. Subsequent bond dimensions
-        are integer multiples of this value.
+    max_bond_dim : int
+        Target bond dimension.  Must be a positive multiple of 4
+        so that both ``max_bond_dim`` and ``max_bond_dim // 2`` are even.
 
     Returns:
     -------
@@ -36,48 +42,35 @@ def _default_dmrg_schedule(
         Perturbative noise injected at each sweep.
     thrds : list of float
         Davidson convergence threshold for each sweep.
-    """
-    if init_bond_dim <= 0:
-        raise ValueError("init_bond_dim must be a positive integer")
 
-    multipliers = [1, 1, 1, 1, 2, 2, 2, 2, 4, 4, 4, 4, 6, 6, 6, 6]
-    bond_dims = [init_bond_dim * m for m in multipliers]
-    noises = [
-        1e-4,
-        1e-4,
-        1e-4,
-        1e-4,
-        1e-5,
-        1e-5,
-        1e-5,
-        1e-5,
-        1e-6,
-        1e-6,
-        1e-6,
-        1e-6,
-        1e-7,
-        1e-7,
-        0.0,
-        0.0,
-    ]
-    thrds = [
-        1e-6,
-        1e-6,
-        1e-7,
-        1e-7,
-        1e-8,
-        1e-8,
-        1e-9,
-        1e-9,
-        1e-10,
-        1e-10,
-        1e-10,
-        1e-10,
-        1e-10,
-        1e-10,
-        1e-10,
-        1e-10,
-    ]
+    Note:
+        Suggested in: https://github.com/block-hczhai/block2-preview/issues/63
+    """
+    if max_bond_dim <= 0:
+        raise ValueError("max_bond_dim must be a positive multiple of 4")
+    if max_bond_dim % 4 != 0:
+        raise ValueError(
+            "max_bond_dim must be a multiple of 4 to keep all bond dimensions even"
+        )
+
+    bd_at_waypoint = [max_bond_dim // 2] + [max_bond_dim] * (
+        len(_SCHEDULE_WAYPOINTS) - 1
+    )
+
+    bond_dims: list[int] = []
+    noises: list[float] = []
+    thrds: list[float] = []
+    for i, start in enumerate(_SCHEDULE_WAYPOINTS):
+        end = (
+            _SCHEDULE_WAYPOINTS[i + 1]
+            if i + 1 < len(_SCHEDULE_WAYPOINTS)
+            else _SCHEDULE_MAX_SWEEPS
+        )
+        n = end - start
+        bond_dims.extend([bd_at_waypoint[i]] * n)
+        noises.extend([_SCHEDULE_NOISES[i]] * n)
+        thrds.extend([_SCHEDULE_THRDS[i]] * n)
+
     return bond_dims, noises, thrds
 
 
