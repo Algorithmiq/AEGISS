@@ -77,9 +77,9 @@ class TestDMRGConfig:
         cfg = DMRGConfig(ncas=4, nelecas=4, verbosity=0)
         assert cfg.verbosity == 0
 
-    def test_default_backend_is_pyblock2(self) -> None:
+    def test_default_backend_is_subprocess(self) -> None:
         cfg = DMRGConfig(ncas=4, nelecas=4)
-        assert cfg.backend == "pyblock2"
+        assert cfg.backend == "subprocess"
 
     def test_subprocess_backend_valid(self) -> None:
         cfg = DMRGConfig(ncas=4, nelecas=4, backend="subprocess")

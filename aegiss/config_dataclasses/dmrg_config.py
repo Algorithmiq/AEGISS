@@ -37,7 +37,7 @@ class DMRGConfig:
     init_bond_dim: int = 10
     symm_type: Literal["SZ", "SU2"] = "SZ"
     verbosity: int = 0
-    backend: Literal["pyblock2", "subprocess"] = "pyblock2"
+    backend: Literal["pyblock2", "subprocess"] = "subprocess"
 
     def __post_init__(self) -> None:
         """Validate the configuration parameters.

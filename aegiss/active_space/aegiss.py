@@ -16,7 +16,6 @@ from aegiss.utils.plotting import (
     _make_soe_plots,
     plot_pie_contribution,
 )
-from aegiss.wavefunction.dmrg import run_dmrg
 
 if TYPE_CHECKING:
     from aegiss.config_dataclasses import (
@@ -80,6 +79,8 @@ def select_aegiss(
             verbosity=dmrg_config.verbosity,
         )
     else:
+        from aegiss.wavefunction.dmrg import run_dmrg
+
         _energy, soe1, _soe2, minfo = run_dmrg(
             mf,
             ncas=dmrg_config.ncas,
