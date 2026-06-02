@@ -133,6 +133,8 @@ def localize_fnos(
     mf: Any,
     correlated_method: Literal["mp2", "cisd", "ccsd"],
     active: bool | list[int] = True,  # noqa: FBT001, FBT002
+    *,
+    frozen: list[int] | None = None,
 ) -> np.ndarray:
     """Frozen natural orbital (FNO) transformation.
 
@@ -149,7 +151,10 @@ def localize_fnos(
         Controls which occupied orbitals enter the correlated calculation.
         ``True`` uses all occupied orbitals (no freezing). A list of integers
         specifies the indices of orbitals to freeze; all other occupied orbitals
-        are treated as active.
+        are treated as active. Ignored when *frozen* is provided.
+    frozen : list of int, optional
+        Indices of occupied orbitals to freeze (0-based). Takes precedence over
+        *active* when provided.
 
     Returns:
     -------
@@ -160,9 +165,20 @@ def localize_fnos(
 
     logger.info("Computing FNOs using %s", correlated_method.upper())
 
+    orbital_list: list[int]
+    if frozen is not None:
+        # frozen names the orbitals to exclude; active for get_orbital_spaces is the complement
+        frozen_set = set(frozen)
+        orbital_list = [
+            int(i) for i in np.nonzero(mf.mo_occ > 0)[0] if i not in frozen_set
+        ]
+    elif isinstance(active, list):
+        orbital_list = active
+    else:
+        orbital_list = []
     frozen_orbs, active_orbs, _, frozen_virt = get_orbital_spaces(
         mf,
-        orbital_list=active if isinstance(active, list) else [],
+        orbital_list=orbital_list,
         unique_virt_space=True,
     )
     wfn_obj = build_correlated_wfn(mf, correlated_method, frozen=frozen_orbs)
@@ -182,6 +198,7 @@ def localize_nos(
     correlated_method: Literal["mp2", "cisd", "ccsd"],
     *,
     split: bool = False,
+    frozen: list[int] | None = None,
 ) -> np.ndarray:
     """Natural orbital (NO) transformation from a correlated 1-RDM.
 
@@ -194,6 +211,9 @@ def localize_nos(
     split : bool
         If ``True``, diagonalise the occupied and virtual blocks of the 1-RDM
         separately instead of the full matrix.
+    frozen : list of int, optional
+        Indices of occupied orbitals to freeze (0-based). Frozen orbitals are
+        excluded from the correlated calculation but kept in the output.
 
     Returns:
     -------
@@ -203,7 +223,7 @@ def localize_nos(
     from aegiss.localization.nos import compute_nos  # noqa: PLC0415
 
     logger.info("Computing NOs using %s", correlated_method.upper())
-    wfn_obj = build_correlated_wfn(mf, correlated_method)
+    wfn_obj = build_correlated_wfn(mf, correlated_method, frozen=frozen)
     logger.info(
         "Using standard NOs without freezing. %s",
         "With Splitted NOs." if split else "Without Split NOs.",

@@ -27,6 +27,10 @@ workflows.
 - [Environment variables](#environment-variables)
 - [Logging](#logging)
 - [Tutorial — benzene π system](#tutorial--benzene-π-system)
+  - [1. Build the molecule](#1-build-the-molecule)
+  - [2. Run a mean-field calculation](#2-run-a-mean-field-calculation)
+  - [3. Configure and run the full pipeline](#3-configure-and-run-the-full-pipeline)
+  - [4. Localize orbitals before the pipeline (optional)](#4-localize-orbitals-before-the-pipeline-optional)
 - [API reference](#api-reference)
   - [select_aegiss](#select_aegiss)
   - [Configuration dataclasses](#configuration-dataclasses)
@@ -198,6 +202,47 @@ benzene π manifold exclusively.
 
 For custom workflows that call individual steps directly, see `run_dmrg`,
 `select_by_entropy`, and `select_by_ao_projection` in the API reference below.
+
+### 4. Localize orbitals before the pipeline (optional)
+
+Orbital localization can improve DMRG convergence by making the orbitals more
+spatially compact. Pass the localized coefficients back into `mf` before calling
+`select_aegiss`.
+
+```python
+from aegiss.localization.orbital_localization import localize
+
+# Boys localization of occupied orbitals only
+mf.mo_coeff = localize("boys", mol, mf)
+
+# Pipek-Mezey including virtuals
+mf.mo_coeff = localize("pm", mol, mf, on_virtual=True)
+
+# Natural orbitals from an MP2 density matrix
+mf.mo_coeff = localize("nos", mf, "mp2")
+```
+
+#### Freezing core orbitals
+
+For heavier atoms it is common to exclude chemically inert core orbitals from the
+correlated calculation used to build the NOs or FNOs. Pass `frozen` as a list of
+0-based orbital indices:
+
+```python
+import numpy as np
+
+nocc = int(np.count_nonzero(mf.mo_occ > 0))
+
+# Freeze the two lowest-energy (core) occupied orbitals for NOs
+mf.mo_coeff = localize("nos", mf, "mp2", frozen=[0, 1])
+
+# Same for FNOs — identical frozen= syntax
+mf.mo_coeff = localize("fnos", mf, "mp2", frozen=[0, 1])
+```
+
+The frozen orbitals are excluded from the MP2/CISD/CCSD density matrix but are
+kept in the output coefficient matrix, so `mf.mo_coeff` retains its original
+shape and the rest of the pipeline is unaffected.
 
 ---
 
@@ -480,15 +525,18 @@ Arguments for `"nos"` and `"fnos"`:
 |---|---|---|---|
 | `mf` | SCF object | — | First positional argument |
 | `correlated_method` | `"mp2"`, `"cisd"`, `"ccsd"` | — | Method used to build the correlated density matrix |
+| `frozen` | `list[int]` or `None` | `None` | Indices of occupied orbitals to freeze (0-based). Frozen orbitals are excluded from the correlated calculation but kept in the output. |
 | `split` *(nos only)* | `bool` | `False` | Diagonalise occupied and virtual blocks of the 1-RDM separately |
-| `active` *(fnos only)* | `bool` or `list[int]` | `True` | `True`: use all occupied orbitals; list of indices: freeze those orbitals |
+| `active` *(fnos only)* | `bool` or `list[int]` | `True` | `True`: use all occupied orbitals; list of indices: the active occupied set (the complement is frozen). Ignored when `frozen` is provided. |
 
 ```python
 # Examples
 localize("boys", mol, mf, on_virtual=True)
 localize("pm", mol, mf, n_occ=10)
 localize("nos", mf, correlated_method="mp2", split=True)
-localize("fnos", mf, correlated_method="ccsd", active=[0, 1, 2])
+localize("nos", mf, correlated_method="mp2", frozen=[0, 1])      # freeze core orbitals
+localize("fnos", mf, correlated_method="ccsd", frozen=[0, 1, 2]) # freeze core orbitals
+localize("fnos", mf, correlated_method="ccsd", active=[3, 4, 5]) # equivalent: keep 3,4,5 active
 ```
 
 ---
