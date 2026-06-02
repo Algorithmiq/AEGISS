@@ -242,8 +242,8 @@ def localize_fnos(
     active : bool or list of int
         Controls which occupied orbitals enter the correlated calculation.
         ``True`` uses all occupied orbitals (no freezing). A list of integers
-        specifies the indices of orbitals to freeze; all other occupied orbitals
-        are treated as active. Ignored when *frozen* is provided.
+        specifies the indices of the active occupied orbitals; all others
+        are frozen. Ignored when *frozen* is provided.
     frozen : list of int, optional
         Indices of occupied orbitals to freeze (0-based). Takes precedence over
         *active* when provided.
