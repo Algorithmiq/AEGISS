@@ -239,7 +239,7 @@ def localize_fnos(
         Converged mean-field object.
     correlated_method : {'mp2', 'cisd', 'ccsd'}
         Correlated method used to build the 1-RDM for the NO transformation.
-    active : bool or list of int
+    active : True or list of int
         Controls which occupied orbitals enter the correlated calculation.
         ``True`` uses all occupied orbitals (no freezing). A list of integers
         specifies the indices of the active occupied orbitals; all others
@@ -266,8 +266,12 @@ def localize_fnos(
         ]
     elif isinstance(active, list):
         orbital_list = active
-    else:
+    elif active is True:
         orbital_list = []
+    else:
+        raise ValueError(
+            "active=False is not supported; pass True to use all occupied orbitals or a list of active orbital indices."
+        )
     frozen_orbs, active_orbs, _, frozen_virt = get_orbital_spaces(
         mf,
         orbital_list=orbital_list,
