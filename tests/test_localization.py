@@ -33,32 +33,13 @@ def _capture_wfn(target_fn: Any) -> tuple[dict[str, Any], Any]:
     return store, spy
 
 
-class TestLocalizeNosWithFrozen:
-    def test_output_shape_no_frozen(self, be_rhf: Any) -> None:
+class TestLocalizeNos:
+    def test_output_shape(self, be_rhf: Any) -> None:
         result = localize_nos(be_rhf, "mp2")
         nao, nmo = be_rhf.mo_coeff.shape
         assert result.shape == (nao, nmo)
 
-    def test_output_shape_with_frozen(self, be_rhf: Any) -> None:
-        result = localize_nos(be_rhf, "mp2", frozen=[0])
-        nao, nmo = be_rhf.mo_coeff.shape
-        assert result.shape == (nao, nmo)
-
-    def test_frozen_mask_matches_passed_frozen(self, be_rhf: Any) -> None:
-        """_get_frozen_mask of the underlying wfn must mark exactly the passed indices."""
-        frozen = [0]
-        store, spy = _capture_wfn(build_correlated_wfn)
-
-        with patch(
-            "aegiss.localization.orbital_localization.build_correlated_wfn", spy
-        ):
-            localize_nos(be_rhf, "mp2", frozen=frozen)
-
-        mask = store["wfn"].get_frozen_mask()
-        assert not mask[0], "orbital 0 should be frozen"
-        assert mask[1:].all(), "all other orbitals should be active"
-
-    def test_no_frozen_all_orbitals_active(self, be_rhf: Any) -> None:
+    def test_all_orbitals_active(self, be_rhf: Any) -> None:
         store, spy = _capture_wfn(build_correlated_wfn)
 
         with patch(
@@ -67,7 +48,7 @@ class TestLocalizeNosWithFrozen:
             localize_nos(be_rhf, "mp2")
 
         mask = store["wfn"].get_frozen_mask()
-        assert mask.all(), "no orbital should be frozen when frozen=None"
+        assert mask.all(), "NOs always use the full space — no orbital should be frozen"
 
 
 class TestLocalizeFnosWithFrozen:
@@ -104,11 +85,6 @@ class TestLocalizeFnosWithFrozen:
 
 
 class TestLocalizeDispatcherFrozen:
-    def test_nos_frozen_via_localize(self, be_rhf: Any) -> None:
-        result = localize("nos", be_rhf, "mp2", frozen=[0])
-        nao, nmo = be_rhf.mo_coeff.shape
-        assert result.shape == (nao, nmo)
-
     def test_fnos_frozen_via_localize(self, be_rhf: Any) -> None:
         result = localize("fnos", be_rhf, "mp2", frozen=[0])
         nao, nmo = be_rhf.mo_coeff.shape

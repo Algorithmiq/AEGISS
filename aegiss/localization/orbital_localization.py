@@ -294,9 +294,11 @@ def localize_nos(
     correlated_method: Literal["mp2", "cisd", "ccsd"],
     *,
     split: bool = False,
-    frozen: list[int] | None = None,
 ) -> np.ndarray:
     """Natural orbital (NO) transformation from a correlated 1-RDM.
+
+    Always uses the full molecular orbital space. To freeze core orbitals use
+    :func:`localize_fnos` instead.
 
     Parameters
     ----------
@@ -307,9 +309,6 @@ def localize_nos(
     split : bool
         If ``True``, diagonalise the occupied and virtual blocks of the 1-RDM
         separately instead of the full matrix.
-    frozen : list of int, optional
-        Indices of occupied orbitals to freeze (0-based). Frozen orbitals are
-        excluded from the correlated calculation but kept in the output.
 
     Returns:
     -------
@@ -319,11 +318,8 @@ def localize_nos(
     from aegiss.localization.nos import compute_nos  # noqa: PLC0415
 
     logger.info("Computing NOs using %s", correlated_method.upper())
-    wfn_obj = build_correlated_wfn(mf, correlated_method, frozen=frozen)
-    logger.info(
-        "Using standard NOs without freezing. %s",
-        "With Splitted NOs." if split else "Without Split NOs.",
-    )
+    wfn_obj = build_correlated_wfn(mf, correlated_method)
+    logger.info("%s NOs over the full orbital space.", "Split" if split else "Standard")
     result: np.ndarray = compute_nos(wfn_obj, split_nos=split)
     return result
 

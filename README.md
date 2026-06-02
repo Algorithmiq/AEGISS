@@ -228,21 +228,16 @@ mf.mo_coeff = localize("iaos", mol, mf)
 mf.mo_coeff = localize("nos", mf, "mp2")
 ```
 
-#### Freezing core orbitals
+#### Freezing core orbitals (FNOs only)
 
 For heavier atoms it is common to exclude chemically inert core orbitals from the
-correlated calculation used to build the NOs or FNOs. Pass `frozen` as a list of
-0-based orbital indices:
+correlated calculation. This is supported by `"fnos"` via the `frozen` keyword
+(NOs always use the full orbital space):
 
 ```python
 import numpy as np
 
-nocc = int(np.count_nonzero(mf.mo_occ > 0))
-
-# Freeze the two lowest-energy (core) occupied orbitals for NOs
-mf.mo_coeff = localize("nos", mf, "mp2", frozen=[0, 1])
-
-# Same for FNOs — identical frozen= syntax
+# Freeze the two lowest-energy (core) occupied orbitals
 mf.mo_coeff = localize("fnos", mf, "mp2", frozen=[0, 1])
 ```
 
@@ -542,9 +537,9 @@ Arguments for `"nos"` and `"fnos"`:
 |---|---|---|---|
 | `mf` | SCF object | — | First positional argument |
 | `correlated_method` | `"mp2"`, `"cisd"`, `"ccsd"` | — | Method used to build the correlated density matrix |
-| `frozen` | `list[int]` or `None` | `None` | Indices of occupied orbitals to freeze (0-based). Frozen orbitals are excluded from the correlated calculation but kept in the output. |
 | `split` *(nos only)* | `bool` | `False` | Diagonalise occupied and virtual blocks of the 1-RDM separately |
-| `active` *(fnos only)* | `bool` or `list[int]` | `True` | `True`: use all occupied orbitals; list of indices: the active occupied set (the complement is frozen). Ignored when `frozen` is provided. |
+| `frozen` *(fnos only)* | `list[int]` or `None` | `None` | Indices of occupied orbitals to freeze (0-based). Excluded from the correlated calculation but kept in the output. |
+| `active` *(fnos only)* | `True` or `list[int]` | `True` | `True`: use all occupied orbitals; list of indices: the active occupied set (the complement is frozen). Ignored when `frozen` is provided. |
 
 ```python
 # Examples
@@ -552,8 +547,7 @@ localize("boys", mol, mf, on_virtual=True)
 localize("pm", mol, mf, n_occ=10)
 localize("ibos", mol, mf)                                         # IBO localization
 localize("iaos", mol, mf, minao="minao")                          # IAO construction
-localize("nos", mf, correlated_method="mp2", split=True)
-localize("nos", mf, correlated_method="mp2", frozen=[0, 1])      # freeze core orbitals
+localize("nos", mf, correlated_method="mp2", split=True)          # full space, split blocks
 localize("fnos", mf, correlated_method="ccsd", frozen=[0, 1, 2]) # freeze core orbitals
 localize("fnos", mf, correlated_method="ccsd", active=[3, 4, 5]) # equivalent: keep 3,4,5 active
 ```
