@@ -218,6 +218,12 @@ mf.mo_coeff = localize("boys", mol, mf)
 # Pipek-Mezey including virtuals
 mf.mo_coeff = localize("pm", mol, mf, on_virtual=True)
 
+# Intrinsic Bond Orbitals — good for transition metals and mixed bonding
+mf.mo_coeff = localize("ibos", mol, mf)
+
+# Intrinsic Atomic Orbitals — atom-centred, useful for population analysis
+mf.mo_coeff = localize("iaos", mol, mf)
+
 # Natural orbitals from an MP2 density matrix
 mf.mo_coeff = localize("nos", mf, "mp2")
 ```
@@ -501,6 +507,8 @@ Dispatches to a localization method by name.
 | `"boys"` | — | Foster-Boys localization (minimises orbital spread) |
 | `"edmiston"` | `"er"` | Edmiston-Ruedenberg localization (maximises self-repulsion) |
 | `"pm"` | `"pipek"` | Pipek-Mezey localization (maximises partial charges) |
+| `"ibos"` | `"ibo"` | Intrinsic Bond Orbital localization (maximises IAO population) |
+| `"iaos"` | `"iao"` | Intrinsic Atomic Orbital construction (Löwdin-orthogonalized) |
 | `"nos"` | — | Natural orbitals from a correlated wavefunction |
 | `"fnos"` | — | Frozen natural orbitals |
 
@@ -519,6 +527,15 @@ Additional keyword for `"pm"`:
 |---|---|---|---|
 | `pop_method` | `str` | `"becke"` | Population analysis scheme for the virtual block |
 
+Additional keywords for `"ibos"` / `"iaos"`:
+
+| Keyword | Type | Default | Description |
+|---|---|---|---|
+| `minao` | `str` | `"minao"` | Reference minimal basis for IAO construction |
+| `exponent` | `int` | `4` | Exponent in the IBO cost function (`"ibos"` only) |
+
+Both methods transform only the occupied block; the virtual block is unchanged.
+
 Arguments for `"nos"` and `"fnos"`:
 
 | Keyword | Type | Default | Description |
@@ -533,6 +550,8 @@ Arguments for `"nos"` and `"fnos"`:
 # Examples
 localize("boys", mol, mf, on_virtual=True)
 localize("pm", mol, mf, n_occ=10)
+localize("ibos", mol, mf)                                         # IBO localization
+localize("iaos", mol, mf, minao="minao")                          # IAO construction
 localize("nos", mf, correlated_method="mp2", split=True)
 localize("nos", mf, correlated_method="mp2", frozen=[0, 1])      # freeze core orbitals
 localize("fnos", mf, correlated_method="ccsd", frozen=[0, 1, 2]) # freeze core orbitals

@@ -10,6 +10,8 @@ import numpy as np
 from aegiss.localization.orbital_localization import (
     localize,
     localize_fnos,
+    localize_iaos,
+    localize_ibos,
     localize_nos,
 )
 from aegiss.wavefunction.methods import build_correlated_wfn
@@ -111,3 +113,57 @@ class TestLocalizeDispatcherFrozen:
         result = localize("fnos", be_rhf, "mp2", frozen=[0])
         nao, nmo = be_rhf.mo_coeff.shape
         assert result.shape == (nao, nmo)
+
+
+class TestLocalizeIbos:
+    def test_output_shape(self, be_rhf: Any) -> None:
+        mol = be_rhf.mol
+        result = localize_ibos(mol, be_rhf)
+        nao, nmo = be_rhf.mo_coeff.shape
+        assert result.shape == (nao, nmo)
+
+    def test_occupied_block_changes(self, be_rhf: Any) -> None:
+        mol = be_rhf.mol
+        n_occ = int(np.count_nonzero(be_rhf.mo_occ > 0))
+        result = localize_ibos(mol, be_rhf)
+        assert not np.allclose(result[:, :n_occ], be_rhf.mo_coeff[:, :n_occ])
+
+    def test_virtual_block_unchanged(self, be_rhf: Any) -> None:
+        mol = be_rhf.mol
+        n_occ = int(np.count_nonzero(be_rhf.mo_occ > 0))
+        result = localize_ibos(mol, be_rhf)
+        np.testing.assert_array_equal(result[:, n_occ:], be_rhf.mo_coeff[:, n_occ:])
+
+    def test_via_dispatcher_ibo_alias(self, be_rhf: Any) -> None:
+        mol = be_rhf.mol
+        nao, nmo = be_rhf.mo_coeff.shape
+        assert localize("ibo", mol, be_rhf).shape == (nao, nmo)
+        assert localize("ibos", mol, be_rhf).shape == (nao, nmo)
+
+
+class TestLocalizeIaos:
+    def test_output_shape(self, be_rhf: Any) -> None:
+        mol = be_rhf.mol
+        result = localize_iaos(mol, be_rhf)
+        nao, nmo = be_rhf.mo_coeff.shape
+        assert result.shape == (nao, nmo)
+
+    def test_occupied_block_is_orthonormal(self, be_rhf: Any) -> None:
+        mol = be_rhf.mol
+        n_occ = int(np.count_nonzero(be_rhf.mo_occ > 0))
+        result = localize_iaos(mol, be_rhf)
+        s = be_rhf.mol.intor_symmetric("int1e_ovlp")
+        overlap = result[:, :n_occ].T @ s @ result[:, :n_occ]
+        np.testing.assert_allclose(overlap, np.eye(n_occ), atol=1e-10)
+
+    def test_virtual_block_unchanged(self, be_rhf: Any) -> None:
+        mol = be_rhf.mol
+        n_occ = int(np.count_nonzero(be_rhf.mo_occ > 0))
+        result = localize_iaos(mol, be_rhf)
+        np.testing.assert_array_equal(result[:, n_occ:], be_rhf.mo_coeff[:, n_occ:])
+
+    def test_via_dispatcher_iao_alias(self, be_rhf: Any) -> None:
+        mol = be_rhf.mol
+        nao, nmo = be_rhf.mo_coeff.shape
+        assert localize("iao", mol, be_rhf).shape == (nao, nmo)
+        assert localize("iaos", mol, be_rhf).shape == (nao, nmo)
