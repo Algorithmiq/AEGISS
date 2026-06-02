@@ -163,6 +163,11 @@ def localize_ibos(
     """
     from pyscf.lo import ibo as _ibo  # noqa: PLC0415
 
+    if mol.natm == 1:
+        logger.warning(
+            "IBO localization skipped: single-atom molecule has no bonds to localize."
+        )
+        return np.array(mf.mo_coeff)
     if n_occ is None:
         n_occ = int(np.count_nonzero(mf.mo_occ > 0))
     loc_occ = _ibo.ibo(mol, mf.mo_coeff[:, :n_occ], minao=minao, exponent=exponent)
@@ -200,8 +205,14 @@ def localize_iaos(
         Löwdin-orthogonalized IAOs for the occupied block; virtual block is
         unchanged.
     """
-    from pyscf.lo import iao as _iao, orth as _orth  # noqa: PLC0415
+    from pyscf.lo import iao as _iao  # noqa: PLC0415
+    from pyscf.lo import orth as _orth  # noqa: PLC0415
 
+    if mol.natm == 1:
+        logger.warning(
+            "IAO localization skipped: single-atom molecule has no off-site contributions."
+        )
+        return np.array(mf.mo_coeff)
     if n_occ is None:
         n_occ = int(np.count_nonzero(mf.mo_occ > 0))
     iaos = _iao.iao(mol, mf.mo_coeff[:, :n_occ], minao=minao)

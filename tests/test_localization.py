@@ -122,17 +122,22 @@ class TestLocalizeIbos:
         nao, nmo = be_rhf.mo_coeff.shape
         assert result.shape == (nao, nmo)
 
-    def test_occupied_block_changes(self, be_rhf: Any) -> None:
-        mol = be_rhf.mol
-        n_occ = int(np.count_nonzero(be_rhf.mo_occ > 0))
-        result = localize_ibos(mol, be_rhf)
-        assert not np.allclose(result[:, :n_occ], be_rhf.mo_coeff[:, :n_occ])
+    def test_occupied_block_changes(self, h2o_rhf: Any) -> None:
+        mol = h2o_rhf.mol
+        n_occ = int(np.count_nonzero(h2o_rhf.mo_occ > 0))
+        result = localize_ibos(mol, h2o_rhf)
+        assert not np.allclose(result[:, :n_occ], h2o_rhf.mo_coeff[:, :n_occ])
 
     def test_virtual_block_unchanged(self, be_rhf: Any) -> None:
         mol = be_rhf.mol
         n_occ = int(np.count_nonzero(be_rhf.mo_occ > 0))
         result = localize_ibos(mol, be_rhf)
         np.testing.assert_array_equal(result[:, n_occ:], be_rhf.mo_coeff[:, n_occ:])
+
+    def test_single_atom_returns_unchanged(self, be_rhf: Any) -> None:
+        mol = be_rhf.mol
+        result = localize_ibos(mol, be_rhf)
+        np.testing.assert_array_equal(result, be_rhf.mo_coeff)
 
     def test_via_dispatcher_ibo_alias(self, be_rhf: Any) -> None:
         mol = be_rhf.mol
@@ -161,6 +166,11 @@ class TestLocalizeIaos:
         n_occ = int(np.count_nonzero(be_rhf.mo_occ > 0))
         result = localize_iaos(mol, be_rhf)
         np.testing.assert_array_equal(result[:, n_occ:], be_rhf.mo_coeff[:, n_occ:])
+
+    def test_single_atom_returns_unchanged(self, be_rhf: Any) -> None:
+        mol = be_rhf.mol
+        result = localize_iaos(mol, be_rhf)
+        np.testing.assert_array_equal(result, be_rhf.mo_coeff)
 
     def test_via_dispatcher_iao_alias(self, be_rhf: Any) -> None:
         mol = be_rhf.mol
