@@ -1,4 +1,4 @@
-"""Tests for frozen-orbital support in localize_nos and localize_fnos."""
+"""Tests for orbital localization (NOs/FNOs freezing, IBO/IAO, and dispatcher aliases)."""
 
 from __future__ import annotations
 
