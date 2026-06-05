@@ -6,6 +6,7 @@ import logging
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -182,6 +183,31 @@ def run_dmrg_subprocess(
 
     bond_dims, noises, thrds = _default_dmrg_schedule(max_bond_dim)
     nalpha, nbeta = resolve_nelecas(nelecas)
+    n_sweeps = len(bond_dims)
+    twosite_to_onesite = max(n_sweeps - 2, 0)
+
+    logger.info(
+        "----------------DMRG Calculation (symmetry: %s)----------------\n", symm_type
+    )
+    logger.info("Using pyscf.CASCI to obtain integrals for DMRG...")
+    logger.info("CAS (ncas=%d, nelecas=%s)", ncas, nelecas)
+    logger.info(
+        "System parameters: n_sites=%d, n_elec=%d, spin=%d, symm_type=%s",
+        ncas,
+        nalpha + nbeta,
+        nalpha - nbeta,
+        symm_type,
+    )
+    logger.info("Scratch directory: %s", scratch)
+    logger.info("Number of threads: %d", n_threads)
+    logger.info(
+        "DMRG settings: n_sweeps = %d, max_bond_dim = %d, twosite_to_onesite = %d",
+        n_sweeps,
+        max_bond_dim,
+        twosite_to_onesite,
+    )
+    logger.info("DMRG Noise: init = %s, final = %s", noises[0], noises[-1])
+    logger.info("DMRG Threshold: init = %s, final = %s\n", thrds[0], thrds[-1])
 
     work_dir = Path(scratch) / "dmrg_subprocess"
     work_dir.mkdir(parents=True, exist_ok=True)
@@ -215,14 +241,16 @@ def run_dmrg_subprocess(
         )
 
     logger.info("Running block2main: %s %s", block2main_path, input_path)
+    t = time.time()
     subprocess.run(
         [block2main_path, str(input_path)],
         capture_output=(verbosity == 0),
         check=True,
     )
+    logger.info("DMRG completed in %.3f [s]", time.time() - t)
 
     energy, pdm1, npc1 = _read_outputs(work_dir, ncas)
-    logger.info("DMRG energy (subprocess): %.8f", energy)
+    logger.info("DMRG Energy (%s)\t : %.8f", symm_type, energy)
 
     if not get_qmi:
         return energy, None, None, None
