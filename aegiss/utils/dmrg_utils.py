@@ -1,14 +1,8 @@
-"""DMRG utilities: default schedule and quantum mutual information computation."""
+"""DMRG utilities: default sweep schedule."""
 
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
-
-import numpy as np
-
-if TYPE_CHECKING:
-    from pyblock2.driver.core import DMRGDriver
 
 logger = logging.getLogger(__name__)
 
@@ -79,35 +73,3 @@ def _default_dmrg_schedule(
         1e-10,
     ]
     return bond_dims, noises, thrds
-
-
-def compute_qmi(
-    driver: DMRGDriver,
-    ket: Any,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Compute quantum mutual information (QMI) from a DMRG state.
-
-    Parameters
-    ----------
-    driver : DMRGDriver
-        Block2 DMRG driver after a completed calculation.
-    ket : MPS
-        Many-particle state (MPS) from which entropies are extracted.
-
-    Returns:
-    -------
-    ordm1 : np.ndarray
-        Single-orbital entropies.
-    ordm2 : np.ndarray
-        Two-orbital entropies.
-    minfo : np.ndarray
-        Quantum mutual information matrix.
-    """
-    ordm1 = driver.get_orbital_entropies(ket, orb_type=1)
-    ordm2 = driver.get_orbital_entropies(ket, orb_type=2)
-
-    minfo = (
-        0.5 * (ordm1[:, None] + ordm1[None, :] - ordm2) * (1 - np.identity(len(ordm1)))
-    )
-
-    return ordm1, ordm2, minfo

@@ -42,8 +42,8 @@ from aegiss.utils.orbital_indices import resolve_nelecas
 # Molecule: N2, STO-3G, RHF, CAS(6,6)
 # ---------------------------------------------------------------------------
 mol = gto.Mole()
-mol.atom = "N 0 0 0; N 0 0 1.8"
-mol.basis = "sto-3g"
+mol.atom = "N 0 0 0; N 0 0 1.095"
+mol.basis = "ccpvdz"
 mol.symmetry = False
 mol.verbose = 0
 mol.build()

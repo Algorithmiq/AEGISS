@@ -62,7 +62,7 @@ def pipeline_patches():
             return_value=(np.array([2, 3]), np.array([5])),
         ),
         patch(
-            "aegiss.wavefunction.dmrg_subprocess.run_dmrg_subprocess",
+            "aegiss.active_space.aegiss.run_dmrg_subprocess",
             return_value=(-75.0, np.ones(3), None, None),
         ),
         patch(
@@ -434,7 +434,7 @@ class TestEntropyScreeningEarlyReturn:
                 return_value=(np.array([2, 3]), np.array([5])),
             ),
             patch(
-                "aegiss.wavefunction.dmrg_subprocess.run_dmrg_subprocess",
+                "aegiss.active_space.aegiss.run_dmrg_subprocess",
                 return_value=(-75.0, np.ones(3), None, None),
             ),
             patch(f"{_MODULE}.select_by_entropy", return_value=([], [])),
@@ -469,7 +469,7 @@ class TestEntropyScreeningEarlyReturn:
                 return_value=(np.array([2, 3]), np.array([5])),
             ),
             patch(
-                "aegiss.wavefunction.dmrg_subprocess.run_dmrg_subprocess",
+                "aegiss.active_space.aegiss.run_dmrg_subprocess",
                 return_value=(-75.0, np.ones(3), None, None),
             ),
             patch(f"{_MODULE}.select_by_entropy", return_value=([], [(5, 0.4)])),
@@ -507,7 +507,7 @@ class TestEntropyScreeningEarlyReturn:
                 return_value=(np.array([2, 3]), np.array([5])),
             ),
             patch(
-                "aegiss.wavefunction.dmrg_subprocess.run_dmrg_subprocess",
+                "aegiss.active_space.aegiss.run_dmrg_subprocess",
                 return_value=(-75.0, np.ones(3), None, None),
             ),
             patch(f"{_MODULE}.select_by_entropy", return_value=([(2, 0.8)], [])),
