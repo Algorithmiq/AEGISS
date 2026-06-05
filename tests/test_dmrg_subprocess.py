@@ -198,7 +198,7 @@ class TestWriteInput:
 
     def _make_input(self, tmp_path: Path, symm_type: str = "SZ") -> str:
 
-        bond_dims, noises, thrds = _default_dmrg_schedule(init_bond_dim=10)
+        bond_dims, noises, thrds = _default_dmrg_schedule(max_bond_dim=500)
         path = tmp_path / "dmrg.conf"
         fcidump = tmp_path / "FCIDUMP"
         _write_input(

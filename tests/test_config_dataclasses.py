@@ -17,7 +17,7 @@ class TestDMRGConfig:
         cfg = DMRGConfig(ncas=4, nelecas=4)
         assert cfg.ncas == 4
         assert cfg.nelecas == 4
-        assert cfg.init_bond_dim == 10
+        assert cfg.max_bond_dim == 500
         assert cfg.symm_type == "SZ"
         assert cfg.verbosity == 0
 
@@ -53,13 +53,21 @@ class TestDMRGConfig:
         with pytest.raises(ValueError, match="nelecas"):
             DMRGConfig(ncas=10, nelecas=(3, -1))
 
-    def test_zero_init_bond_dim_raises(self) -> None:
-        with pytest.raises(ValueError, match="init_bond_dim"):
-            DMRGConfig(ncas=4, nelecas=4, init_bond_dim=0)
+    def test_zero_max_bond_dim_raises(self) -> None:
+        with pytest.raises(ValueError, match="max_bond_dim"):
+            DMRGConfig(ncas=4, nelecas=4, max_bond_dim=0)
 
-    def test_negative_init_bond_dim_raises(self) -> None:
-        with pytest.raises(ValueError, match="init_bond_dim"):
-            DMRGConfig(ncas=4, nelecas=4, init_bond_dim=-5)
+    def test_negative_max_bond_dim_raises(self) -> None:
+        with pytest.raises(ValueError, match="max_bond_dim"):
+            DMRGConfig(ncas=4, nelecas=4, max_bond_dim=-4)
+
+    def test_non_multiple_of_4_max_bond_dim_raises(self) -> None:
+        with pytest.raises(ValueError, match="max_bond_dim"):
+            DMRGConfig(ncas=4, nelecas=4, max_bond_dim=250)
+
+    def test_valid_max_bond_dim(self) -> None:
+        cfg = DMRGConfig(ncas=4, nelecas=4, max_bond_dim=500)
+        assert cfg.max_bond_dim == 500
 
     def test_invalid_symm_type_raises(self) -> None:
         with pytest.raises(ValueError, match="symm_type"):
@@ -76,6 +84,7 @@ class TestDMRGConfig:
     def test_zero_verbosity_valid(self) -> None:
         cfg = DMRGConfig(ncas=4, nelecas=4, verbosity=0)
         assert cfg.verbosity == 0
+
 
 class TestEntropyConfig:
     def test_valid_default_config(self) -> None:

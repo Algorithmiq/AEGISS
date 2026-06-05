@@ -133,7 +133,7 @@ def run_dmrg_subprocess(
     mf: Any,
     ncas: int,
     nelecas: int | tuple[int, int],
-    init_bond_dim: int = 10,
+    max_bond_dim: int = 500,
     symm_type: str = "SZ",
     verbosity: int = 0,
     *,
@@ -149,8 +149,8 @@ def run_dmrg_subprocess(
         Number of active orbitals.
     nelecas : int or tuple[int, int]
         Number of active electrons (total count or ``(nalpha, nbeta)`` pair).
-    init_bond_dim : int
-        Initial bond dimension for the DMRG schedule.
+    max_bond_dim : int
+        Target bond dimension for the DMRG schedule (must be a positive multiple of 4).
     symm_type : {'SU2', 'SZ'}
         Spin symmetry: ``'SZ'`` adds the ``nonspinadapted`` keyword so
         block2main runs without spin adaptation; ``'SU2'`` omits it.
@@ -180,7 +180,7 @@ def run_dmrg_subprocess(
     n_threads = omp_num_threads()
     stack_mem_gb = mem() / (1024**3)
 
-    bond_dims, noises, thrds = _default_dmrg_schedule(init_bond_dim)
+    bond_dims, noises, thrds = _default_dmrg_schedule(max_bond_dim)
     nalpha, nbeta = resolve_nelecas(nelecas)
 
     work_dir = Path(scratch) / "dmrg_subprocess"
