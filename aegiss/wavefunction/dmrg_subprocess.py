@@ -108,6 +108,10 @@ def _read_outputs(scratch_dir: Path, ncas: int) -> tuple[float, np.ndarray, np.n
     energy = float(np.load(node0 / "E_dmrg.npy"))
     pdm1 = np.load(node0 / "1pdm.npy")  # (2, ncas, ncas): [0]=α, [1]=β
     npc1 = np.load(node0 / "1npc.npy")  # (2, ncas, ncas)
+    if pdm1.shape != (2, ncas, ncas) or npc1.shape != (2, ncas, ncas):
+        raise ValueError(
+            f"Unexpected block2main output shapes: pdm1={pdm1.shape}, npc1={npc1.shape}; expected (2, {ncas}, {ncas})."
+        )
     return energy, pdm1, npc1
 
 
