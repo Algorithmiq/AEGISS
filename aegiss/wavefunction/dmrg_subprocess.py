@@ -212,9 +212,8 @@ def run_dmrg_subprocess(
     logger.info("DMRG Noise: init = %s, final = %s", noises[0], noises[-1])
     logger.info("DMRG Threshold: init = %s, final = %s\n", thrds[0], thrds[-1])
 
-    work_dir = Path(scratch) / "dmrg_subprocess"
-    work_dir.mkdir(parents=True, exist_ok=True)
-
+    work_dir = Path(scratch) / f"dmrg_subprocess_{time.time_ns()}"
+    work_dir.mkdir(parents=True, exist_ok=False)
     fcidump_path = work_dir / "FCIDUMP"
     _write_fcidump(fcidump_path, mf, ncas, nelecas)
 
