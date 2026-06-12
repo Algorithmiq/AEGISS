@@ -826,14 +826,15 @@ def _make_soe_plots(
     active_orbs: np.ndarray,
     virt_orbs: np.ndarray,
     soe1: np.ndarray,
-    minfo: np.ndarray,
     saving_folder: str,
     saving_prefix: str,
+    minfo: np.ndarray | None = None,
 ) -> None:
     """Generate and save single-orbital entropy diagnostic plots.
 
-    Saves an SOE heatmap, a threshold curve (TH plot), an entanglement diagram,
-    and a mutual information heatmap to *saving_folder*.
+    Always saves an SOE heatmap and a threshold curve (TH plot).
+    When *minfo* is provided, also saves an entanglement diagram and a mutual
+    information heatmap.
 
     Parameters
     ----------
@@ -844,13 +845,16 @@ def _make_soe_plots(
     soe1 : np.ndarray
         Single-orbital entropies for all CAS orbitals, ordered as
         ``[active_orbs..., virt_orbs...]``.
-    minfo : np.ndarray
-        Mutual information matrix for all CAS orbitals.
     saving_folder : str
         Directory where the PDF files are written.
     saving_prefix : str
         Filename prefix; ``_SOE_heatmap.pdf``, ``_TH_plot.pdf``,
-        ``_entanglement_diagram.pdf``, and ``_MI_heatmap.pdf`` are appended.
+        and optionally ``_entanglement_diagram.pdf`` and ``_MI_heatmap.pdf``
+        are appended.
+    minfo : np.ndarray or None
+        Mutual information matrix for all CAS orbitals.  When ``None``, the
+        entanglement diagram and MI heatmap are skipped — pass *minfo* from an
+        external source (e.g. a separate pyblock2 run) to produce those plots.
     """
     tagged = [(orb_id, soe1[idx]) for idx, orb_id in enumerate(active_orbs)]
     tagged += [
@@ -868,15 +872,16 @@ def _make_soe_plots(
         folder=saving_folder,
         filename=saving_prefix + "_TH_plot",
     )
-    entanglement_diagrams(
-        soe1=tagged,
-        minfo=minfo,
-        folder=saving_folder,
-        filename=saving_prefix + "_entanglement_diagram",
-    )
-    mi_plot(
-        minfo=minfo,
-        soe1=tagged,
-        folder=saving_folder,
-        filename=saving_prefix + "_MI_heatmap",
-    )
+    if minfo is not None:
+        entanglement_diagrams(
+            soe1=tagged,
+            minfo=minfo,
+            folder=saving_folder,
+            filename=saving_prefix + "_entanglement_diagram",
+        )
+        mi_plot(
+            minfo=minfo,
+            soe1=tagged,
+            folder=saving_folder,
+            filename=saving_prefix + "_MI_heatmap",
+        )

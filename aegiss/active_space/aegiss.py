@@ -68,7 +68,7 @@ def select_aegiss(
     active_orbs, virt_orbs = get_subspaces_from_cas(
         mf, ncas=dmrg_config.ncas, nelecas=dmrg_config.nelecas
     )
-    _energy, soe1, _soe2, minfo = run_dmrg_subprocess(
+    _energy, soe1 = run_dmrg_subprocess(
         mf,
         ncas=dmrg_config.ncas,
         nelecas=dmrg_config.nelecas,
@@ -76,12 +76,11 @@ def select_aegiss(
         max_bond_dim=dmrg_config.max_bond_dim,
         verbosity=dmrg_config.verbosity,
     )
-    if output_config.save_plots and (soe1 is not None and minfo is not None):
+    if output_config.save_plots and soe1 is not None:
         _make_soe_plots(
             active_orbs,
             virt_orbs,
             soe1,
-            minfo,
             output_config.saving_folder,
             output_config.saving_prefix,
         )

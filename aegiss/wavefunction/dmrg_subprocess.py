@@ -8,7 +8,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import numpy as np
 from pyscf import ao2mo, mcscf, tools
@@ -17,9 +17,6 @@ from aegiss.utils.dmrg_utils import _default_dmrg_schedule
 from aegiss.utils.env import mem, omp_num_threads
 from aegiss.utils.env import scratch_dir as get_scratch_dir
 from aegiss.utils.orbital_indices import resolve_nelecas
-
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +139,7 @@ def run_dmrg_subprocess(
     verbosity: int = 0,
     *,
     get_qmi: bool = True,
-) -> tuple[float, np.ndarray | None, np.ndarray | None, np.ndarray | None]:
+) -> tuple[float, np.ndarray | None]:
     """Run a DMRG calculation via the ``block2main`` subprocess.
 
     Parameters
@@ -169,11 +166,9 @@ def run_dmrg_subprocess(
         DMRG ground-state energy.
     soe1 : np.ndarray or None
         Single-orbital entropies (``None`` if *get_qmi* is ``False``).
-    soe2 : None
-        Always ``None``; two-orbital entropies require 3/4-body PDMs not
-        available from ``1pdm`` + ``1npc`` alone.
-    minfo : None
-        Always ``None`` for the same reason as *soe2*.
+        Two-orbital entropies and mutual information are not available from
+        the ``1pdm`` + ``1npc`` output; pass them from an external source to
+        any downstream plotting functions if needed.
     """
     if symm_type not in _VALID_SYMM_TYPES:
         raise ValueError(
@@ -255,11 +250,7 @@ def run_dmrg_subprocess(
     logger.info("DMRG Energy (%s)\t : %.8f", symm_type, energy)
 
     if not get_qmi:
-        return energy, None, None, None
+        return energy, None
 
     soe1 = _compute_soe(pdm1, npc1)
-    logger.info(
-        "soe2 and minfo are None for subprocess backend "
-        "(two-orbital entropy requires 3/4-body PDMs unavailable from 1pdm+1npc)"
-    )
-    return energy, soe1, None, None
+    return energy, soe1

@@ -107,36 +107,18 @@ class TestRunDmrgSubprocessBehavior:
     """Return-value contract."""
 
     def test_energy_returned(self) -> None:
-        e, *_ = run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
+        e, _ = run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
         assert e == _FAKE_ENERGY
 
-    def test_get_qmi_false_returns_three_nones(self) -> None:
-        _, s1, s2, mi = run_dmrg_subprocess(
-            mf=None, ncas=_NCAS, nelecas=2, get_qmi=False
-        )
+    def test_get_qmi_false_returns_none_soe1(self) -> None:
+        _, s1 = run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
         assert s1 is None
-        assert s2 is None
-        assert mi is None
 
     def test_get_qmi_true_returns_soe1_array(self) -> None:
-        _, s1, _s2, _mi = run_dmrg_subprocess(
-            mf=None, ncas=_NCAS, nelecas=2, get_qmi=True
-        )
+        _, s1 = run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=True)
         assert s1 is not None
         assert s1.shape == (_NCAS,)
         np.testing.assert_allclose(s1, _EXPECTED_SOE, atol=1e-12)
-
-    def test_get_qmi_true_soe2_is_none(self) -> None:
-        _, _s1, _s2, _mi = run_dmrg_subprocess(
-            mf=None, ncas=_NCAS, nelecas=2, get_qmi=True
-        )
-        assert _s2 is None
-
-    def test_get_qmi_true_minfo_is_none(self) -> None:
-        _, _s1, _s2, _mi = run_dmrg_subprocess(
-            mf=None, ncas=_NCAS, nelecas=2, get_qmi=True
-        )
-        assert _mi is None
 
 
 class TestRunDmrgSubprocessSymmTypeValidation:

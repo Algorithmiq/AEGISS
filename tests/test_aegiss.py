@@ -63,7 +63,7 @@ def pipeline_patches():
         ),
         patch(
             "aegiss.active_space.aegiss.run_dmrg_subprocess",
-            return_value=(-75.0, np.ones(3), None, None),
+            return_value=(-75.0, np.ones(3)),
         ),
         patch(
             f"{_MODULE}.select_by_entropy",
@@ -435,7 +435,7 @@ class TestEntropyScreeningEarlyReturn:
             ),
             patch(
                 "aegiss.active_space.aegiss.run_dmrg_subprocess",
-                return_value=(-75.0, np.ones(3), None, None),
+                return_value=(-75.0, np.ones(3)),
             ),
             patch(f"{_MODULE}.select_by_entropy", return_value=([], [])),
             patch(f"{_MODULE}.select_by_ao_projection") as mock_proj,
@@ -470,7 +470,7 @@ class TestEntropyScreeningEarlyReturn:
             ),
             patch(
                 "aegiss.active_space.aegiss.run_dmrg_subprocess",
-                return_value=(-75.0, np.ones(3), None, None),
+                return_value=(-75.0, np.ones(3)),
             ),
             patch(f"{_MODULE}.select_by_entropy", return_value=([], [(5, 0.4)])),
             patch(
@@ -508,7 +508,7 @@ class TestEntropyScreeningEarlyReturn:
             ),
             patch(
                 "aegiss.active_space.aegiss.run_dmrg_subprocess",
-                return_value=(-75.0, np.ones(3), None, None),
+                return_value=(-75.0, np.ones(3)),
             ),
             patch(f"{_MODULE}.select_by_entropy", return_value=([(2, 0.8)], [])),
             patch(
