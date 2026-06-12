@@ -139,7 +139,7 @@ class TestRunDmrgSubprocessSymmTypeValidation:
 
 @pytest.mark.usefixtures("mocked_run_dmrg_subprocess")
 class TestRunDmrgSubprocessEnvVars:
-    """Environment variable handling mirrors the pyblock2 backend."""
+    """Environment variable handling for the subprocess backend."""
 
     def test_omp_num_threads(self, monkeypatch) -> None:
         monkeypatch.setenv("OMP_NUM_THREADS", "8")
@@ -160,21 +160,21 @@ class TestRunDmrgSubprocessEnvVars:
         with patch("aegiss.wavefunction.dmrg_subprocess._write_input") as mock_wi:
             run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
         mem_gb_arg = mock_wi.call_args[0][9]  # positional: stack_mem_gb
-        assert mem_gb_arg == 4.0
+        assert mem_gb_arg == pytest.approx(4.0)
 
     def test_mem_env_var(self, monkeypatch) -> None:
         monkeypatch.setenv("MEM", "16")
         with patch("aegiss.wavefunction.dmrg_subprocess._write_input") as mock_wi:
             run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
         mem_gb_arg = mock_wi.call_args[0][9]
-        assert mem_gb_arg == 16.0
+        assert mem_gb_arg == pytest.approx(16.0)
 
     def test_mem_env_var_non_integer_falls_back_to_default(self, monkeypatch) -> None:
         monkeypatch.setenv("MEM", "not_an_int")
         with patch("aegiss.wavefunction.dmrg_subprocess._write_input") as mock_wi:
             run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
         mem_gb_arg = mock_wi.call_args[0][9]
-        assert mem_gb_arg == 4.0
+        assert mem_gb_arg == pytest.approx(4.0)
 
 
 class TestWriteInput:

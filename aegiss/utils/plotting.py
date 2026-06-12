@@ -853,8 +853,7 @@ def _make_soe_plots(
         are appended.
     minfo : np.ndarray or None
         Mutual information matrix for all CAS orbitals.  When ``None``, the
-        entanglement diagram and MI heatmap are skipped — pass *minfo* from an
-        external source (e.g. a separate pyblock2 run) to produce those plots.
+        entanglement diagram and MI heatmap are skipped.
     """
     tagged = [(orb_id, soe1[idx]) for idx, orb_id in enumerate(active_orbs)]
     tagged += [

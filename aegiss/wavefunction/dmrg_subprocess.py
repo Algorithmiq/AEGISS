@@ -116,8 +116,6 @@ def _compute_soe(pdm1: np.ndarray, npc1: np.ndarray) -> np.ndarray:
     """Compute single-orbital von Neumann entropy from 1-PDM and 1-NPC.
 
     ``npc1[0,i,i] = n_i + 2*d_i``  →  ``d_i = (npc1[0,i,i] - n_i) / 2``.
-    Validated to machine precision (1e-15) against pyblock2's
-    ``get_orbital_entropies`` when applied to the same MPS.
     """
     ncas = pdm1.shape[-1]
     soe = np.zeros(ncas)
