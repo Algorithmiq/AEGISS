@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 from aegiss.utils.dmrg_utils import _default_dmrg_schedule
 from aegiss.wavefunction.dmrg_subprocess import (
     _compute_soe,
+    _read_outputs,
+    _write_fcidump,
     _write_input,
     run_dmrg_subprocess,
 )
@@ -255,3 +257,122 @@ class TestComputeSOE:
         pdm1, npc1 = self._make_pdm_npc(0.5, 0.5, 0.25, ncas=4)
         soe = _compute_soe(pdm1, npc1)
         assert soe.shape == (4,)
+
+
+class TestReadOutputs:
+    """Unit-test _read_outputs by writing fake .npy files to a tmp directory."""
+
+    def _write_fake_outputs(
+        self,
+        tmp_path,
+        ncas: int,
+        energy: float = -1.0,
+        pdm_ncas: int | None = None,
+        npc_ncas: int | None = None,
+    ) -> None:
+        node0 = tmp_path / "node0"
+        node0.mkdir(parents=True)
+        np.save(node0 / "E_dmrg.npy", np.array(energy))
+        np.save(node0 / "1pdm.npy", np.zeros((2, pdm_ncas or ncas, pdm_ncas or ncas)))
+        np.save(node0 / "1npc.npy", np.zeros((2, npc_ncas or ncas, npc_ncas or ncas)))
+
+    def test_pdm_shape_is_2_ncas_ncas(self, tmp_path) -> None:
+        self._write_fake_outputs(tmp_path, ncas=4)
+        _, pdm1, _ = _read_outputs(tmp_path, ncas=4)
+        assert pdm1.shape == (2, 4, 4)
+
+    def test_pdm_values_match_saved_array(self, tmp_path) -> None:
+        node0 = tmp_path / "node0"
+        node0.mkdir()
+        expected = np.arange(8, dtype=float).reshape(2, 2, 2)
+        np.save(node0 / "E_dmrg.npy", np.array(-1.0))
+        np.save(node0 / "1pdm.npy", expected)
+        np.save(node0 / "1npc.npy", np.zeros((2, 2, 2)))
+        _, pdm1, _ = _read_outputs(tmp_path, ncas=2)
+        np.testing.assert_array_equal(pdm1, expected)
+
+    def test_npc_shape_is_2_ncas_ncas(self, tmp_path) -> None:
+        self._write_fake_outputs(tmp_path, ncas=3)
+        _, _, npc1 = _read_outputs(tmp_path, ncas=3)
+        assert npc1.shape == (2, 3, 3)
+
+    def test_npc_values_match_saved_array(self, tmp_path) -> None:
+        node0 = tmp_path / "node0"
+        node0.mkdir()
+        expected = np.arange(8, dtype=float).reshape(2, 2, 2) + 10
+        np.save(node0 / "E_dmrg.npy", np.array(-1.0))
+        np.save(node0 / "1pdm.npy", np.zeros((2, 2, 2)))
+        np.save(node0 / "1npc.npy", expected)
+        _, _, npc1 = _read_outputs(tmp_path, ncas=2)
+        np.testing.assert_array_equal(npc1, expected)
+
+    def test_ncas_mismatch_pdm_raises_value_error(self, tmp_path) -> None:
+        self._write_fake_outputs(tmp_path, ncas=4, pdm_ncas=3)
+        with pytest.raises(ValueError, match="Unexpected block2main output shapes"):
+            _read_outputs(tmp_path, ncas=4)
+
+    def test_ncas_mismatch_npc_raises_value_error(self, tmp_path) -> None:
+        self._write_fake_outputs(tmp_path, ncas=4, npc_ncas=3)
+        with pytest.raises(ValueError, match="Unexpected block2main output shapes"):
+            _read_outputs(tmp_path, ncas=4)
+
+    def test_missing_energy_file_raises_file_not_found(self, tmp_path) -> None:
+        node0 = tmp_path / "node0"
+        node0.mkdir()
+        np.save(node0 / "1pdm.npy", np.zeros((2, 2, 2)))
+        np.save(node0 / "1npc.npy", np.zeros((2, 2, 2)))
+        with pytest.raises(FileNotFoundError):
+            _read_outputs(tmp_path, ncas=2)
+
+    def test_missing_pdm_file_raises_file_not_found(self, tmp_path) -> None:
+        node0 = tmp_path / "node0"
+        node0.mkdir()
+        np.save(node0 / "E_dmrg.npy", np.array(-1.0))
+        np.save(node0 / "1npc.npy", np.zeros((2, 2, 2)))
+        with pytest.raises(FileNotFoundError):
+            _read_outputs(tmp_path, ncas=2)
+
+    def test_missing_npc_file_raises_file_not_found(self, tmp_path) -> None:
+        node0 = tmp_path / "node0"
+        node0.mkdir()
+        np.save(node0 / "E_dmrg.npy", np.array(-1.0))
+        np.save(node0 / "1pdm.npy", np.zeros((2, 2, 2)))
+        with pytest.raises(FileNotFoundError):
+            _read_outputs(tmp_path, ncas=2)
+
+
+class TestWriteFcidump:
+    """Unit-test _write_fcidump — verify ms is derived from spin (nalpha - nbeta)."""
+
+    def _call_write_fcidump(self, tmp_path, nelecas):
+        ncas = 3
+        mock_casci = MagicMock()
+        mock_casci.get_h1eff.return_value = (np.zeros((ncas, ncas)), 0.0)
+        mock_casci.get_h2eff.return_value = np.zeros((4,))
+        with (
+            patch(
+                "aegiss.wavefunction.dmrg_subprocess.mcscf.CASCI",
+                return_value=mock_casci,
+            ),
+            patch(
+                "aegiss.wavefunction.dmrg_subprocess.ao2mo.restore",
+                return_value=np.zeros((ncas, ncas, ncas, ncas)),
+            ),
+            patch(
+                "aegiss.wavefunction.dmrg_subprocess.tools.fcidump.from_integrals"
+            ) as mock_fcidump,
+        ):
+            _write_fcidump(tmp_path / "FCIDUMP", mf=None, ncas=ncas, nelecas=nelecas)
+        return mock_fcidump.call_args
+
+    def test_ms_equals_nalpha_minus_nbeta_closed_shell(self, tmp_path) -> None:
+        call_args = self._call_write_fcidump(tmp_path, nelecas=(2, 2))
+        assert call_args.kwargs["ms"] == 0
+
+    def test_ms_equals_nalpha_minus_nbeta_doublet(self, tmp_path) -> None:
+        call_args = self._call_write_fcidump(tmp_path, nelecas=(2, 1))
+        assert call_args.kwargs["ms"] == 1
+
+    def test_ms_equals_nalpha_minus_nbeta_triplet(self, tmp_path) -> None:
+        call_args = self._call_write_fcidump(tmp_path, nelecas=(3, 1))
+        assert call_args.kwargs["ms"] == 2
