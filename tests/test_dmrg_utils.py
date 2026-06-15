@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from aegiss.utils.dmrg_utils import _default_dmrg_schedule, compute_qmi
+from aegiss.utils.dmrg_utils import _default_dmrg_schedule
 
 
 class TestDefaultDmrgSchedule:
@@ -79,95 +79,3 @@ class TestDefaultDmrgSchedule:
     def test_non_multiple_of_4_raises(self) -> None:
         with pytest.raises(ValueError, match="max_bond_dim"):
             _default_dmrg_schedule(max_bond_dim=250)
-
-
-class TestComputeQmi:
-    def test_returns_three_arrays(self) -> None:
-        soe1 = np.array([0.1, 0.5, 0.4, 0.2])
-        soe2 = np.outer(soe1, soe1) * 2.0
-
-        driver = type("FakeDriver", (), {})()
-
-        def _get_orbital_entropies(_ket: object, orb_type: int) -> np.ndarray:
-            return soe1 if orb_type == 1 else soe2
-
-        driver.get_orbital_entropies = _get_orbital_entropies  # type: ignore[attr-defined]
-
-        ordm1, ordm2, minfo = compute_qmi(driver, ket=None)
-
-        assert ordm1.shape == (4,)
-        assert ordm2.shape == (4, 4)
-        assert minfo.shape == (4, 4)
-
-    def test_minfo_diagonal_is_zero(self) -> None:
-        soe1 = np.array([0.1, 0.5, 0.4, 0.2])
-        soe2 = np.outer(soe1, soe1) * 2.0
-
-        driver = type("FakeDriver", (), {})()
-
-        def _get_orbital_entropies(_ket: object, orb_type: int) -> np.ndarray:
-            return soe1 if orb_type == 1 else soe2
-
-        driver.get_orbital_entropies = _get_orbital_entropies  # type: ignore[attr-defined]
-
-        _, _, minfo = compute_qmi(driver, ket=None)
-        np.testing.assert_allclose(np.diag(minfo), 0.0, atol=1e-12)
-
-    def test_minfo_non_negative(self) -> None:
-        """QMI values should be >= 0 for physically sensible inputs."""
-        n = 3
-        soe1 = np.array([0.3, 0.6, 0.1])
-        # soe2[i,j] <= soe1[i] + soe1[j] ensures non-negative QMI
-        soe2 = np.zeros((n, n))
-        for i in range(n):
-            for j in range(n):
-                soe2[i, j] = soe1[i] + soe1[j]
-        np.fill_diagonal(soe2, 0.0)
-
-        driver = type("FakeDriver", (), {})()
-
-        def _get_orbital_entropies(_ket: object, orb_type: int) -> np.ndarray:
-            return soe1 if orb_type == 1 else soe2
-
-        driver.get_orbital_entropies = _get_orbital_entropies  # type: ignore[attr-defined]
-
-        _, _, minfo = compute_qmi(driver, ket=None)
-        assert np.all(minfo >= -1e-14)
-
-    def test_minfo_symmetric(self) -> None:
-        soe1 = np.array([0.1, 0.5, 0.4, 0.2])
-        soe2 = np.outer(soe1, soe1) * 1.5
-
-        driver = type("FakeDriver", (), {})()
-        driver.get_orbital_entropies = (  # type: ignore[attr-defined]
-            lambda _ket, orb_type: soe1 if orb_type == 1 else soe2
-        )
-
-        _, _, minfo = compute_qmi(driver, ket=None)
-        np.testing.assert_allclose(minfo, minfo.T, atol=1e-14)
-
-    def test_minfo_single_orbital_is_zero(self) -> None:
-        soe1 = np.array([0.5])
-        soe2 = np.array([[0.0]])
-
-        driver = type("FakeDriver", (), {})()
-        driver.get_orbital_entropies = (  # type: ignore[attr-defined]
-            lambda _ket, orb_type: soe1 if orb_type == 1 else soe2
-        )
-
-        _, _, minfo = compute_qmi(driver, ket=None)
-        np.testing.assert_allclose(minfo, [[0.0]], atol=1e-14)
-
-    def test_minfo_exact_values_n2(self) -> None:
-        # minfo[i,j] = 0.5 * (soe1[i] + soe1[j] - soe2[i,j]) for i != j
-        soe1 = np.array([0.2, 0.4])
-        soe2 = np.array([[0.0, 0.3], [0.3, 0.0]])
-
-        driver = type("FakeDriver", (), {})()
-        driver.get_orbital_entropies = (  # type: ignore[attr-defined]
-            lambda _ket, orb_type: soe1 if orb_type == 1 else soe2
-        )
-
-        _, _, minfo = compute_qmi(driver, ket=None)
-        expected = np.array([[0.0, 0.15], [0.15, 0.0]])
-        np.testing.assert_allclose(minfo, expected, atol=1e-14)
