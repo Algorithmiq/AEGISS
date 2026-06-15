@@ -32,7 +32,7 @@ workflows.
   - [Configuration dataclasses](#configuration-dataclasses)
   - [build_mol](#build_mol)
   - [run_scf](#run_scf)
-  - [run_dmrg](#run_dmrg)
+  - [run_dmrg_subprocess](#run_dmrg_subprocess)
   - [select_by_entropy](#select_by_entropy)
   - [select_by_ao_projection](#select_by_ao_projection)
   - [localize](#localize)
@@ -158,7 +158,7 @@ mf = run_scf(mol, method="RHF")
 from aegiss.active_space.aegiss import select_aegiss
 from aegiss.config_dataclasses import DMRGConfig, EntropyConfig, ProjectionConfig, OutputConfig
 
-dmrg_config = DMRGConfig(ncas=20, nelecas=20, init_bond_dim=10, symm_type="SZ")
+dmrg_config = DMRGConfig(ncas=20, nelecas=20, max_bond_dim=500, symm_type="SZ")
 
 entropy_config = EntropyConfig(
     fraction=0.1,
@@ -196,7 +196,7 @@ entropy before the 10 % threshold is applied, so only the most entangled orbital
 across the full CAS survive. Narrowing `ao_labels` to `["C 2pz"]` targets the
 benzene π manifold exclusively.
 
-For custom workflows that call individual steps directly, see `run_dmrg`,
+For custom workflows that call individual steps directly, see `run_dmrg_subprocess`,
 `select_by_entropy`, and `select_by_ao_projection` in the API reference below.
 
 ---
@@ -248,16 +248,16 @@ from aegiss.config_dataclasses import DMRGConfig, EntropyConfig, ProjectionConfi
 #### `DMRGConfig`
 
 ```python
-DMRGConfig(ncas, nelecas, init_bond_dim=10, symm_type="SZ", verbosity=0)
+DMRGConfig(ncas, nelecas, max_bond_dim=500, symm_type="SZ", verbosity=0)
 ```
 
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `ncas` | `int` | — | Number of active orbitals |
 | `nelecas` | `int` or `tuple[int, int]` | — | Number of active electrons. An integer total count or an explicit `(nalpha, nbeta)` pair — same convention as PySCF's CASCI. Odd integers are treated as high-spin doublets. |
-| `init_bond_dim` | `int` | `10` | Initial DMRG bond dimension; grows automatically during the sweep schedule |
+| `max_bond_dim` | `int` | `500` | Target DMRG bond dimension; must be a positive multiple of 4 |
 | `symm_type` | `"SZ"` or `"SU2"` | `"SZ"` | Spin symmetry: `"SZ"` is required for entropy calculations; `"SU2"` is faster |
-| `verbosity` | `int` | `0` | block2 output verbosity |
+| `verbosity` | `int` | `0` | block2main output verbosity |
 
 Open-shell example: `DMRGConfig(ncas=10, nelecas=(5, 4))` sets up a doublet CAS with 5α and 4β electrons.
 
@@ -344,15 +344,15 @@ Returns the converged PySCF mean-field object.
 
 ---
 
-### `run_dmrg`
+### `run_dmrg_subprocess`
 
 ```python
-from aegiss.wavefunction.dmrg import run_dmrg
+from aegiss.wavefunction.dmrg_subprocess import run_dmrg_subprocess
 
-energy, soe1, soe2, minfo = run_dmrg(
+energy, soe1 = run_dmrg_subprocess(
     mf, ncas, nelecas,
-    init_bond_dim=10,
-    symm_type="SU2",
+    max_bond_dim=500,
+    symm_type="SZ",
     verbosity=0,
     get_qmi=False,
 )
@@ -363,12 +363,12 @@ energy, soe1, soe2, minfo = run_dmrg(
 | `mf` | SCF object | — | Converged mean-field |
 | `ncas` | `int` | — | Number of active orbitals |
 | `nelecas` | `int` or `tuple[int, int]` | — | Number of active electrons. An integer total count or an explicit `(nalpha, nbeta)` pair. Odd integers are treated as high-spin doublets. |
-| `init_bond_dim` | `int` | `10` | Initial DMRG bond dimension; the schedule grows to a larger final dimension automatically |
-| `symm_type` | `str` | `"SU2"` | Spin symmetry: `"SU2"` (faster) or `"SZ"` (required for entropy calculation without MPS conversion) |
-| `verbosity` | `int` | `0` | block2 output verbosity |
-| `get_qmi` | `bool` | `False` | If `True`, compute and return single- and two-orbital entropies and the quantum mutual information matrix |
+| `max_bond_dim` | `int` | `500` | Target DMRG bond dimension; must be a positive multiple of 4 |
+| `symm_type` | `str` | `"SZ"` | Spin symmetry: `"SZ"` or `"SU2"` |
+| `verbosity` | `int` | `0` | block2main output verbosity |
+| `get_qmi` | `bool` | `False` | If `True`, compute and return single-orbital entropies |
 
-Returns `(energy, soe1, soe2, minfo)`. The last three are `None` when `get_qmi=False`.
+Returns `(energy, soe1)`. `soe1` is `None` when `get_qmi=False`.
 
 `OMP_NUM_THREADS`, `SCRATCH_DIR`, and `MEM` environment variables are read at call time (see [Environment variables](#environment-variables) for details).
 
