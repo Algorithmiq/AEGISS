@@ -400,7 +400,6 @@ energy, soe1 = run_dmrg_subprocess(
     max_bond_dim=500,
     symm_type="SZ",
     verbosity=0,
-    get_qmi=False,
 )
 ```
 
@@ -412,7 +411,7 @@ energy, soe1 = run_dmrg_subprocess(
 | `max_bond_dim` | `int` | `500` | Target DMRG bond dimension. The schedule starts at `max_bond_dim // 2` and ramps to `max_bond_dim`. Must be a positive multiple of 4. |
 | `symm_type` | `str` | `"SZ"` | Spin symmetry: `"SZ"` or `"SU2"` |
 | `verbosity` | `int` | `0` | block2main output verbosity |
-| `get_qmi` | `bool` | `False` | If `True`, compute and return single-orbital entropies |
+| `get_qmi` | `bool` | `True` | If `True`, compute and return single-orbital entropies |
 
 Returns `(energy, soe1)`. `soe1` is `None` when `get_qmi=False`.
 
