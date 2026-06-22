@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import string
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
@@ -224,25 +224,122 @@ def plot_pie_contribution(
         _save_contributions(**common, mo=mf.mo_coeff, filename=filename + "_alpha")
 
 
+def _ao_group_label(
+    group_idx: int,
+    position: int,
+    ao_labels: dict[int, str | list[str]] | None,
+) -> str:
+    """Resolve the y-tick label for one AO group."""
+    if ao_labels is not None:
+        raw = ao_labels.get(group_idx, str(group_idx))
+        return "\n".join(raw) if isinstance(raw, list) else raw
+    if position < 26:
+        return string.ascii_uppercase[position]
+    return (
+        string.ascii_uppercase[position // 26 - 1]
+        + string.ascii_uppercase[position % 26]
+    )
+
+
+def _normalise_row(vals: np.ndarray, norm: float) -> np.ndarray:
+    """Scale *vals* to [0, 1] by *norm*, leaving them unchanged when norm is 0."""
+    return vals if norm == 0 else vals / norm
+
+
+def _build_ao_heatmap_matrix(
+    ao_contributions: dict[int, list[tuple[int, float]]],
+    ao_contributions_beta: dict[int, list[tuple[int, float]]] | None,
+    ao_labels: dict[int, str | list[str]] | None,
+    normalization: Literal["global", "relative"] = "global",
+) -> tuple[np.ndarray, list[str], list[int]]:
+    """Assemble the heatmap matrix, y-tick labels, and inter-group boundaries.
+
+    Rows are scaled to [0, 1]. For the unrestricted case each non-empty group
+    yields an alpha row followed by a beta row; *boundaries* holds the row index
+    just after each group (for drawing separators).
+
+    *normalization* controls the scaling reference:
+
+    - ``"global"``: every row is divided by the single maximum across the whole
+      matrix, so weaker AO groups stay dim relative to dominant ones.
+    - ``"relative"``: each group is divided by its own maximum (jointly over
+      alpha and beta), so within-group patterns and spin asymmetry are
+      emphasised at the cost of cross-group magnitude comparison.
+    """
+    raw_rows: list[np.ndarray] = []
+    yticks: list[str] = []
+    boundaries: list[int] = []
+    group_spans: list[tuple[int, int]] = []
+    for position, group_idx in enumerate(ao_contributions):
+        weights = ao_contributions[group_idx]
+        if not weights:
+            continue
+        label = _ao_group_label(group_idx, position, ao_labels)
+        a_vals = np.array([w for _, w in weights], dtype=float)
+        start = len(raw_rows)
+        if ao_contributions_beta is None:
+            raw_rows.append(a_vals)
+            yticks.append(label)
+        else:
+            beta = ao_contributions_beta.get(group_idx, [])
+            b_vals = (
+                np.array([w for _, w in beta], dtype=float)
+                if beta
+                else np.zeros_like(a_vals)
+            )
+            raw_rows.append(a_vals)
+            yticks.append(rf"{label} ($\alpha$)")
+            raw_rows.append(b_vals)
+            yticks.append(rf"{label} ($\beta$)")
+        boundaries.append(len(raw_rows))
+        group_spans.append((start, len(raw_rows)))
+
+    if not raw_rows:
+        return np.empty((0, 0)), yticks, boundaries
+
+    if normalization == "global":
+        gmax = max(r.max(initial=0.0) for r in raw_rows)
+        norm_rows = [_normalise_row(r, gmax) for r in raw_rows]
+    else:
+        norm_rows = []
+        for span_start, span_end in group_spans:
+            block = raw_rows[span_start:span_end]
+            block_max = max(r.max(initial=0.0) for r in block)
+            norm_rows.extend(_normalise_row(r, block_max) for r in block)
+
+    return np.array(norm_rows), yticks, boundaries
+
+
 def plot_ao_contribution(
     ao_contributions: dict[int, list[tuple[int, float]]],
+    ao_contributions_beta: dict[int, list[tuple[int, float]]] | None = None,
     folder: str = "./",
     filename: str = "ao_contribution",
     ao_labels: dict[int, str | list[str]] | None = None,
     mo_labels: list[int] | np.ndarray | None = None,
     mos_per_plot: int = 200,
     fmt: str | None = "pdf",
+    normalization: Literal["global", "relative"] = "global",
 ) -> None:
     """Plot AO contributions as a heatmap, one row per AO group.
 
-    Each row is the contribution array for one AO group, normalised by its own
-    maximum so all rows share the same [0, 1] colour scale.
+    Rows share a common [0, 1] colour scale; *normalization* sets the reference
+    (see below).
+
+    When *ao_contributions_beta* is supplied (unrestricted case), each AO group
+    is shown as a pair of interleaved rows — alpha above beta — and a thin white
+    line separates consecutive groups.
 
     Parameters
     ----------
     ao_contributions:
         Dict mapping integer group index to a list of (orbital_index, weight)
-        pairs covering all orbitals in the search space.
+        pairs covering all orbitals in the search space. For unrestricted
+        calculations these are the alpha-spin contributions.
+    ao_contributions_beta:
+        Optional beta-spin contributions with the same structure and group keys
+        as *ao_contributions*. When ``None`` (default), a single row per group
+        is drawn (restricted case).
     folder:
         Directory where the file is saved.
     filename:
@@ -260,35 +357,18 @@ def plot_ao_contribution(
     fmt:
         Output format for the figure (e.g., ``"pdf"``, ``"png"``). If ``None``,
         matplotlib infers the format from the filename.
+    normalization:
+        ``"global"`` (default) divides every row by the single maximum across
+        the whole matrix, preserving magnitude differences between AO groups.
+        ``"relative"`` normalises each group by its own maximum (jointly over
+        alpha and beta), emphasising within-group patterns instead.
     """
-    keys = list(ao_contributions.keys())
-
-    def _ytick(group_idx: int, position: int) -> str:
-        if ao_labels is not None:
-            raw = ao_labels.get(group_idx, str(group_idx))
-            return "\n".join(raw) if isinstance(raw, list) else raw
-        return (
-            string.ascii_uppercase[position]
-            if position < 26
-            else string.ascii_uppercase[position // 26 - 1]
-            + string.ascii_uppercase[position % 26]
-        )
-
-    heat_map_matrix: list[np.ndarray] = []
-    valid_yticks: list[str] = []
-    for i, group_idx in enumerate(keys):
-        weights = ao_contributions[group_idx]
-        if not weights:
-            continue
-        vals = np.array([w for _, w in weights])
-        max_val = np.max(vals)
-        heat_map_matrix.append(vals if max_val == 0 else vals / max_val)
-        valid_yticks.append(_ytick(group_idx, i))
-
-    if not heat_map_matrix:
+    matrix, valid_yticks, boundaries = _build_ao_heatmap_matrix(
+        ao_contributions, ao_contributions_beta, ao_labels, normalization
+    )
+    if matrix.size == 0:
         return
 
-    matrix = np.array(heat_map_matrix)  # (n_groups, n_mos)
     n_mos = matrix.shape[1]
     n_plots = int(np.ceil(n_mos / mos_per_plot))
     vmin, vmax = 0.0, 1.0
@@ -315,6 +395,9 @@ def plot_ao_contribution(
         ax.set_xticks(np.arange(end - start) + 0.5)
         if mo_labels is not None:
             ax.set_xticklabels([str(m) for m in mo_labels[start:end]], rotation=90)
+        if ao_contributions_beta is not None:
+            for boundary in boundaries[:-1]:
+                ax.axhline(boundary, color="white", linewidth=2)
 
     cbar_ax = fig.add_axes((0.92, 0.15, 0.02, 0.7))
     sm = plt.cm.ScalarMappable(
