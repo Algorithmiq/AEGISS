@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any, Literal
 
 import numpy as np
@@ -362,9 +363,11 @@ def select_by_ao_projection(
             projected_total_weights[loop_idx] = projected_weights
 
     if save_path is not None and projected_total_weights:
+        _p = Path(save_path)
         plot_ao_contribution(
             ao_contributions=projected_total_weights,
-            save_path=save_path,
+            folder=str(_p.parent),
+            filename=_p.name,
             ao_labels=labels_idx,
             mo_labels=[orb_idx for orb_idx, _ in space],
         )

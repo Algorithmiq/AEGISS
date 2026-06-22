@@ -292,18 +292,18 @@ class TestPlotAoContribution:
         tmp_path: pytest.FixturePath,
         simple_contributions: dict,
     ) -> None:
-        plot_ao_contribution(simple_contributions, save_path=str(tmp_path / "ao"))
+        plot_ao_contribution(simple_contributions, folder=str(tmp_path), filename="ao")
         assert (tmp_path / "ao_heatmap.pdf").exists()
 
     def test_empty_contributions_returns_silently(
         self, tmp_path: pytest.FixturePath
     ) -> None:
-        plot_ao_contribution({}, save_path=str(tmp_path / "ao"))
+        plot_ao_contribution({}, folder=str(tmp_path), filename="ao")
         assert not (tmp_path / "ao_heatmap.pdf").exists()
 
     def test_empty_group_is_skipped(self, tmp_path: pytest.FixturePath) -> None:
         contributions = {0: [(0, 0.5), (1, 0.3)], 1: []}
-        plot_ao_contribution(contributions, save_path=str(tmp_path / "ao"))
+        plot_ao_contribution(contributions, folder=str(tmp_path), filename="ao")
         assert (tmp_path / "ao_heatmap.pdf").exists()
 
     def test_default_letter_labels(
@@ -313,7 +313,7 @@ class TestPlotAoContribution:
     ) -> None:
         """No ao_labels → should complete without error using A/B/C labels."""
         plot_ao_contribution(
-            simple_contributions, save_path=str(tmp_path / "ao"), ao_labels=None
+            simple_contributions, folder=str(tmp_path), filename="ao", ao_labels=None
         )
         assert (tmp_path / "ao_heatmap.pdf").exists()
 
@@ -325,7 +325,8 @@ class TestPlotAoContribution:
         labels = {0: "Fe 3d", 1: "C 2pz", 2: "C 2px"}
         plot_ao_contribution(
             simple_contributions,
-            save_path=str(tmp_path / "ao"),
+            folder=str(tmp_path),
+            filename="ao",
             ao_labels=labels,
         )
         assert (tmp_path / "ao_heatmap.pdf").exists()
@@ -338,7 +339,8 @@ class TestPlotAoContribution:
         labels = {0: ["Fe 3d", "Fe 4d"], 1: "C 2pz", 2: "C 2px"}
         plot_ao_contribution(
             simple_contributions,
-            save_path=str(tmp_path / "ao"),
+            folder=str(tmp_path),
+            filename="ao",
             ao_labels=labels,
         )
         assert (tmp_path / "ao_heatmap.pdf").exists()
@@ -350,7 +352,8 @@ class TestPlotAoContribution:
     ) -> None:
         plot_ao_contribution(
             simple_contributions,
-            save_path=str(tmp_path / "ao"),
+            folder=str(tmp_path),
+            filename="ao",
             mo_labels=[10, 11, 12, 13, 14],
         )
         assert (tmp_path / "ao_heatmap.pdf").exists()
@@ -360,7 +363,8 @@ class TestPlotAoContribution:
         contributions = {0: [(j, float(j) / 5) for j in range(5)]}
         plot_ao_contribution(
             contributions,
-            save_path=str(tmp_path / "ao"),
+            folder=str(tmp_path),
+            filename="ao",
             mos_per_plot=3,
         )
         assert (tmp_path / "ao_heatmap.pdf").exists()
