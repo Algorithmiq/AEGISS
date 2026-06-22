@@ -129,10 +129,104 @@ def localize_pipek_mezey(
     return np.hstack((loc_occ, loc_virt))
 
 
+def localize_ibos(
+    mol: gto.Mole,
+    mf: Any,
+    n_occ: int | None = None,
+    *,
+    minao: str = "minao",
+    exponent: int = 4,
+) -> np.ndarray:
+    """Intrinsic Bond Orbital (IBO) localization.
+
+    Localizes occupied MOs by maximising their population on intrinsic atomic
+    orbitals (IAOs). IBOs tend to give chemically intuitive bond and lone-pair
+    orbitals, and handle systems with mixed ionic/covalent character well.
+
+    Parameters
+    ----------
+    mol : pyscf.gto.Mole
+        Molecular geometry and basis set.
+    mf : pyscf.scf.hf.SCF
+        Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
+    n_occ : int, optional
+        Number of occupied orbitals. Inferred from *mf* if not given.
+    minao : str
+        Reference minimal basis used for IAO construction (default ``"minao"``).
+    exponent : int
+        Exponent in the IBO localization criterion (default ``4``).
+
+    Returns:
+    -------
+    new_mos : np.ndarray, shape (nao, nmo)
+        IBO coefficients for the occupied block; virtual block is unchanged.
+    """
+    from pyscf.lo import ibo as _ibo  # noqa: PLC0415
+
+    if mol.natm == 1:
+        logger.warning(
+            "IBO localization skipped: single-atom molecule has no bonds to localize."
+        )
+        return np.array(mf.mo_coeff)
+    if n_occ is None:
+        n_occ = int(np.count_nonzero(mf.mo_occ > 0))
+    loc_occ = _ibo.ibo(mol, mf.mo_coeff[:, :n_occ], minao=minao, exponent=exponent)
+    return np.hstack((loc_occ, mf.mo_coeff[:, n_occ:]))
+
+
+def localize_iaos(
+    mol: gto.Mole,
+    mf: Any,
+    n_occ: int | None = None,
+    *,
+    minao: str = "minao",
+) -> np.ndarray:
+    """Intrinsic Atomic Orbital (IAO) construction.
+
+    Constructs orthonormal IAOs that closely resemble minimal-basis atomic
+    orbitals while spanning the occupied MO space. IAOs are useful as a
+    chemically meaningful occupied basis for population analysis and as a
+    starting point for IBO construction.
+
+    Parameters
+    ----------
+    mol : pyscf.gto.Mole
+        Molecular geometry and basis set.
+    mf : pyscf.scf.hf.SCF
+        Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
+    n_occ : int, optional
+        Number of occupied orbitals. Inferred from *mf* if not given.
+    minao : str
+        Reference minimal basis (default ``"minao"``).
+
+    Returns:
+    -------
+    new_mos : np.ndarray, shape (nao, nmo)
+        Löwdin-orthogonalized IAOs for the occupied block; virtual block is
+        unchanged.
+    """
+    from pyscf.lo import iao as _iao  # noqa: PLC0415
+    from pyscf.lo import orth as _orth  # noqa: PLC0415
+
+    if mol.natm == 1:
+        logger.warning(
+            "IAO localization skipped: single-atom molecule has no off-site contributions."
+        )
+        return np.array(mf.mo_coeff)
+    if n_occ is None:
+        n_occ = int(np.count_nonzero(mf.mo_occ > 0))
+    iaos = _iao.iao(mol, mf.mo_coeff[:, :n_occ], minao=minao)
+    s = mol.intor_symmetric("int1e_ovlp")
+    loc_occ = _orth.vec_lowdin(iaos, s)
+    return np.hstack((loc_occ, mf.mo_coeff[:, n_occ:]))
+
+
 def localize_fnos(
     mf: Any,
     correlated_method: Literal["mp2", "cisd", "ccsd"],
     active: bool | list[int] = True,  # noqa: FBT001, FBT002
+    *,
+    frozen: list[int] | None = None,
 ) -> np.ndarray:
     """Frozen natural orbital (FNO) transformation.
 
@@ -145,11 +239,14 @@ def localize_fnos(
         Converged mean-field object.
     correlated_method : {'mp2', 'cisd', 'ccsd'}
         Correlated method used to build the 1-RDM for the NO transformation.
-    active : bool or list of int
+    active : True or list of int
         Controls which occupied orbitals enter the correlated calculation.
         ``True`` uses all occupied orbitals (no freezing). A list of integers
-        specifies the indices of orbitals to freeze; all other occupied orbitals
-        are treated as active.
+        specifies the indices of the active occupied orbitals; all others
+        are frozen. Ignored when *frozen* is provided.
+    frozen : list of int, optional
+        Indices of occupied orbitals to freeze (0-based). Takes precedence over
+        *active* when provided.
 
     Returns:
     -------
@@ -160,9 +257,24 @@ def localize_fnos(
 
     logger.info("Computing FNOs using %s", correlated_method.upper())
 
+    orbital_list: list[int]
+    if frozen is not None:
+        # frozen names the orbitals to exclude; active for get_orbital_spaces is the complement
+        frozen_set = set(frozen)
+        orbital_list = [
+            int(i) for i in np.nonzero(mf.mo_occ > 0)[0] if i not in frozen_set
+        ]
+    elif isinstance(active, list):
+        orbital_list = active
+    elif active is True:
+        orbital_list = []
+    else:
+        raise ValueError(
+            "active=False is not supported; pass True to use all occupied orbitals or a list of active orbital indices."
+        )
     frozen_orbs, active_orbs, _, frozen_virt = get_orbital_spaces(
         mf,
-        orbital_list=active if isinstance(active, list) else [],
+        orbital_list=orbital_list,
         unique_virt_space=True,
     )
     wfn_obj = build_correlated_wfn(mf, correlated_method, frozen=frozen_orbs)
@@ -185,6 +297,9 @@ def localize_nos(
 ) -> np.ndarray:
     """Natural orbital (NO) transformation from a correlated 1-RDM.
 
+    Always uses the full molecular orbital space. To freeze core orbitals use
+    :func:`localize_fnos` instead.
+
     Parameters
     ----------
     mf : pyscf.scf.hf.SCF
@@ -204,10 +319,7 @@ def localize_nos(
 
     logger.info("Computing NOs using %s", correlated_method.upper())
     wfn_obj = build_correlated_wfn(mf, correlated_method)
-    logger.info(
-        "Using standard NOs without freezing. %s",
-        "With Splitted NOs." if split else "Without Split NOs.",
-    )
+    logger.info("%s NOs over the full orbital space.", "Split" if split else "Standard")
     result: np.ndarray = compute_nos(wfn_obj, split_nos=split)
     return result
 
@@ -218,6 +330,10 @@ _METHODS: dict[str, Any] = {
     "er": localize_edmiston,
     "pm": localize_pipek_mezey,
     "pipek": localize_pipek_mezey,
+    "ibos": localize_ibos,
+    "ibo": localize_ibos,
+    "iaos": localize_iaos,
+    "iao": localize_iaos,
     "nos": localize_nos,
     "fnos": localize_fnos,
 }
@@ -230,7 +346,7 @@ def localize(method: str, *args: Any, **kwargs: Any) -> Any:
     ----------
     method : str
         One of ``'boys'``, ``'edmiston'`` / ``'er'``, ``'pm'`` / ``'pipek'``,
-        ``'nos'``, ``'fnos'``.
+        ``'ibos'`` / ``'ibo'``, ``'iaos'`` / ``'iao'``, ``'nos'``, ``'fnos'``.
     *args
         Positional arguments forwarded to the selected method.
     **kwargs
@@ -239,7 +355,9 @@ def localize(method: str, *args: Any, **kwargs: Any) -> Any:
     Examples:
     --------
     >>> localize('pm', mol, mf, on_virtual=True)
-    >>> localize('nos', wfn, frozen=True)
+    >>> localize('ibos', mol, mf)
+    >>> localize('iaos', mol, mf, minao='minao')
+    >>> localize('nos', mf, correlated_method='mp2', frozen=[0])
     >>> localize('boys', mol, mf, n_occ=5, on_virtual=False)
     """
     if method not in _METHODS:

@@ -27,6 +27,10 @@ workflows.
 - [Environment variables](#environment-variables)
 - [Logging](#logging)
 - [Tutorial — benzene π system](#tutorial--benzene-π-system)
+  - [1. Build the molecule](#1-build-the-molecule)
+  - [2. Run a mean-field calculation](#2-run-a-mean-field-calculation)
+  - [3. Configure and run the full pipeline](#3-configure-and-run-the-full-pipeline)
+  - [4. Localize orbitals before the pipeline (optional)](#4-localize-orbitals-before-the-pipeline-optional)
 - [API reference](#api-reference)
   - [select_aegiss](#select_aegiss)
   - [Configuration dataclasses](#configuration-dataclasses)
@@ -199,6 +203,48 @@ benzene π manifold exclusively.
 For custom workflows that call individual steps directly, see `run_dmrg_subprocess`,
 `select_by_entropy`, and `select_by_ao_projection` in the API reference below.
 
+### 4. Localize orbitals before the pipeline (optional)
+
+Orbital localization can improve DMRG convergence by making the orbitals more
+spatially compact. Pass the localized coefficients back into `mf` before calling
+`select_aegiss`.
+
+```python
+from aegiss.localization.orbital_localization import localize
+
+# Boys localization of occupied orbitals only
+mf.mo_coeff = localize("boys", mol, mf)
+
+# Pipek-Mezey including virtuals
+mf.mo_coeff = localize("pm", mol, mf, on_virtual=True)
+
+# Intrinsic Bond Orbitals — good for transition metals and mixed bonding
+mf.mo_coeff = localize("ibos", mol, mf)
+
+# Intrinsic Atomic Orbitals — atom-centred, useful for population analysis
+mf.mo_coeff = localize("iaos", mol, mf)
+
+# Natural orbitals from an MP2 density matrix
+mf.mo_coeff = localize("nos", mf, "mp2")
+```
+
+#### Freezing core orbitals (FNOs only)
+
+For heavier atoms it is common to exclude chemically inert core orbitals from the
+correlated calculation. This is supported by `"fnos"` via the `frozen` keyword
+(NOs always use the full orbital space):
+
+```python
+import numpy as np
+
+# Freeze the two lowest-energy (core) occupied orbitals
+mf.mo_coeff = localize("fnos", mf, "mp2", frozen=[0, 1])
+```
+
+The frozen orbitals are excluded from the MP2/CISD/CCSD density matrix but are
+kept in the output coefficient matrix, so `mf.mo_coeff` retains its original
+shape and the rest of the pipeline is unaffected.
+
 ---
 
 ## API reference
@@ -354,7 +400,6 @@ energy, soe1 = run_dmrg_subprocess(
     max_bond_dim=500,
     symm_type="SZ",
     verbosity=0,
-    get_qmi=False,
 )
 ```
 
@@ -366,7 +411,7 @@ energy, soe1 = run_dmrg_subprocess(
 | `max_bond_dim` | `int` | `500` | Target DMRG bond dimension. The schedule starts at `max_bond_dim // 2` and ramps to `max_bond_dim`. Must be a positive multiple of 4. |
 | `symm_type` | `str` | `"SZ"` | Spin symmetry: `"SZ"` or `"SU2"` |
 | `verbosity` | `int` | `0` | block2main output verbosity |
-| `get_qmi` | `bool` | `False` | If `True`, compute and return single-orbital entropies |
+| `get_qmi` | `bool` | `True` | If `True`, compute and return single-orbital entropies |
 
 Returns `(energy, soe1)`. `soe1` is `None` when `get_qmi=False`.
 
@@ -456,6 +501,8 @@ Dispatches to a localization method by name.
 | `"boys"` | — | Foster-Boys localization (minimises orbital spread) |
 | `"edmiston"` | `"er"` | Edmiston-Ruedenberg localization (maximises self-repulsion) |
 | `"pm"` | `"pipek"` | Pipek-Mezey localization (maximises partial charges) |
+| `"ibos"` | `"ibo"` | Intrinsic Bond Orbital localization (maximises IAO population) |
+| `"iaos"` | `"iao"` | Intrinsic Atomic Orbital construction (Löwdin-orthogonalized) |
 | `"nos"` | — | Natural orbitals from a correlated wavefunction |
 | `"fnos"` | — | Frozen natural orbitals |
 
@@ -474,6 +521,15 @@ Additional keyword for `"pm"`:
 |---|---|---|---|
 | `pop_method` | `str` | `"becke"` | Population analysis scheme for the virtual block |
 
+Additional keywords for `"ibos"` / `"iaos"`:
+
+| Keyword | Type | Default | Description |
+|---|---|---|---|
+| `minao` | `str` | `"minao"` | Reference minimal basis for IAO construction |
+| `exponent` | `int` | `4` | Exponent in the IBO cost function (`"ibos"` only) |
+
+Both methods transform only the occupied block; the virtual block is unchanged.
+
 Arguments for `"nos"` and `"fnos"`:
 
 | Keyword | Type | Default | Description |
@@ -481,14 +537,18 @@ Arguments for `"nos"` and `"fnos"`:
 | `mf` | SCF object | — | First positional argument |
 | `correlated_method` | `"mp2"`, `"cisd"`, `"ccsd"` | — | Method used to build the correlated density matrix |
 | `split` *(nos only)* | `bool` | `False` | Diagonalise occupied and virtual blocks of the 1-RDM separately |
-| `active` *(fnos only)* | `bool` or `list[int]` | `True` | `True`: use all occupied orbitals; list of indices: freeze those orbitals |
+| `frozen` *(fnos only)* | `list[int]` or `None` | `None` | Indices of occupied orbitals to freeze (0-based). Excluded from the correlated calculation but kept in the output. |
+| `active` *(fnos only)* | `True` or `list[int]` | `True` | `True`: use all occupied orbitals; list of indices: the active occupied set (the complement is frozen). Ignored when `frozen` is provided. |
 
 ```python
 # Examples
 localize("boys", mol, mf, on_virtual=True)
 localize("pm", mol, mf, n_occ=10)
-localize("nos", mf, correlated_method="mp2", split=True)
-localize("fnos", mf, correlated_method="ccsd", active=[0, 1, 2])
+localize("ibos", mol, mf)                                         # IBO localization
+localize("iaos", mol, mf, minao="minao")                          # IAO construction
+localize("nos", mf, correlated_method="mp2", split=True)          # full space, split blocks
+localize("fnos", mf, correlated_method="ccsd", frozen=[0, 1, 2]) # freeze core orbitals
+localize("fnos", mf, correlated_method="ccsd", active=[3, 4, 5]) # equivalent: keep 3,4,5 active
 ```
 
 ---
