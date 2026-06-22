@@ -34,7 +34,9 @@ def _write_fcidump(
     h1e, ecore = mycas.get_h1eff()
     g2e = ao2mo.restore(1, mycas.get_h2eff(), ncas)
     nalpha, nbeta = resolve_nelecas(nelecas)
-    tools.fcidump.from_integrals(str(path), h1e, g2e, ncas, nelecas, ecore, orbsym=[1] * ncas, ms=nalpha - nbeta)
+    tools.fcidump.from_integrals(
+        str(path), h1e, g2e, ncas, nelecas, ecore, orbsym=[1] * ncas, ms=nalpha - nbeta
+    )
 
 
 def _write_input(
