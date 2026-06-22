@@ -40,6 +40,7 @@ workflows.
   - [select_by_entropy](#select_by_entropy)
   - [select_by_ao_projection](#select_by_ao_projection)
   - [plot_ao_contribution](#plot_ao_contribution)
+  - [mo_ao_contributions](#mo_ao_contributions)
   - [localize](#localize)
   - [save_orbitals](#save_orbitals)
 - [Development](#development)
@@ -528,6 +529,70 @@ plot_ao_contribution(
 
 > **Note** Combining alpha and beta adds *rows*, not columns, so it never worsens
 > the horizontal crowding of wide orbital ranges — the figure just grows taller.
+
+---
+
+### `mo_ao_contributions`
+
+```python
+from aegiss.utils.mo_composition import mo_ao_contributions
+
+composition = mo_ao_contributions(mf, [4, 5, 6], top_n=10)
+```
+
+The drill-down companion to `plot_ao_contribution`: when an MO shows only a
+faint weight in the heatmap, this reports **which AOs that orbital is actually
+built from**. For each requested MO the AO basis functions are ranked by the
+magnitude of their expansion coefficient `mo_coeff[μ, i]`, and the `top_n`
+largest are printed — signed, so the orbital phase is preserved — as a table
+with one column per orbital, grouped four orbitals per row:
+
+```
+Top-4 AO contributions per MO (signed mo_coeff entries):
+MO 1                   |  MO 2                   |  MO 3                   |  MO 4
+-----------------------+-------------------------+-------------------------+-----------------------
+0 O 2s        +0.4429  |  0 O 2py       +0.4900  |  0 O 2pz       +0.5455  |  0 O 2px       +0.6312
+0 O 3s        +0.3757  |  1 H 1s        +0.3280  |  0 O 3pz       +0.3653  |  0 O 3px       +0.4957
+1 H 1s        +0.1936  |  2 H 1s        -0.3280  |  0 O 3s        -0.3498  |  2 H 2px       +0.0311
+2 H 1s        +0.1936  |  0 O 3py       +0.2219  |  2 H 1s        +0.2064  |  1 H 2px       +0.0311
+```
+
+For an unrestricted `mf` (`mo_coeff` shape `(2, n_ao, n_mo)`), the alpha and
+beta channels are printed as adjacent columns per orbital.
+
+Set `group_by_element=True` to collapse the atom index and merge every AO that
+shares an element symbol and basis label (e.g. all `C 2pz` across the molecule)
+into a single group, weighted by the **sum of `|coefficient|`** over its
+members and ranked by that weight:
+
+```
+Top-4 AO contributions per MO (summed |mo_coeff| per element+label):
+MO 4              |  MO 5              |  MO 6              |  MO 7
+------------------+--------------------+--------------------+------------------
+H 1s     +1.2781  |  H 1s     +1.3234  |  H 1s     +0.8674  |  O 2px    +1.3405
+O 2py    +0.6054  |  O 2py    +0.6483  |  O 2s     +0.7885  |  O 2s     +0.2387
+O 2pz    +0.6054  |  O 2pz    +0.6483  |  O 2pz    +0.6881  |  H 1s     +0.1161
+O 2s     +0.0000  |  O 2s     +0.0000  |  O 2py    +0.6881  |  O 2py    +0.1043
+```
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `mf` | SCF object | — | Converged mean-field exposing `mo_coeff` and `mol`. Restricted or unrestricted. |
+| `mo_indices` | `int` or `Sequence[int]` | — | Orbital index, or indices, to decompose. |
+| `top_n` | `int` | `10` | Number of largest AO contributions (or element groups) kept per orbital. |
+| `group_by_element` | `bool` | `False` | Sum `|coefficient|` over all atoms of the same element sharing a basis label, ranking the groups instead of individual AOs. |
+
+Returns `dict[int, dict[str, list[tuple[int, str, float]]]]` — each MO maps to a
+`{spin: entries}` dict (`spin` is `"alpha"`, plus `"beta"` when unrestricted),
+where each entry is `(key, label, weight)` ordered by descending weight.
+Ungrouped, `key` is the AO index and `weight` is the signed coefficient;
+grouped, `key` is the number of AOs in the group and `weight` is the summed
+`|coefficient|`. The table is always logged.
+
+> Raw coefficients (not Mulliken populations) are used deliberately: they answer
+> "which AOs is this orbital built from" directly and need no overlap matrix.
+> They are *not* a normalised partition — in a non-orthogonal AO basis the
+> values do not sum to 1 — but they give the same ranking of dominant AOs.
 
 ---
 
