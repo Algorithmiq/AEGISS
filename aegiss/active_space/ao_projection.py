@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import numpy as np
 from pyscf import gto
@@ -157,7 +157,8 @@ def select_by_label(
 
 def _resolve_space(
     mf: Any,
-    restricted_space: list[tuple[int, float]]
+    restricted_space: list[int]
+    | list[tuple[int, float]]
     | tuple[list[tuple[int, float]], list[tuple[int, float]]]
     | None,
 ) -> list[tuple[int, float]]:
@@ -168,8 +169,9 @@ def _resolve_space(
     mf : pyscf.scf.hf.SCF
         Converged mean-field object; used to determine the total number of MOs
         when *restricted_space* is ``None``.
-    restricted_space : list of tuple, tuple of lists, or None
+    restricted_space : list of int, list of tuple, tuple of lists, or None
         If ``None``, all MOs are returned with a placeholder entropy of 0.0.
+        If a list of plain integers, converted to ``(index, 0.0)`` pairs.
         If a flat list of ``(index, entropy)`` pairs, returned unchanged.
         If a ``(occ_list, virt_list)`` tuple (as returned by
         ``select_by_entropy``), the two lists are merged with
@@ -192,7 +194,9 @@ def _resolve_space(
             [int(idx[0]) for idx in space],
         )
         return space
-    return restricted_space
+    if restricted_space and not isinstance(restricted_space[0], tuple):
+        return [(i, 0.0) for i in cast("list[int]", restricted_space)]
+    return cast("list[tuple[int, float]]", restricted_space)
 
 
 def _resolve_contribution(
@@ -278,7 +282,8 @@ def select_by_ao_projection(
     contribution_type: Literal["r", "a"] = "a",
     contribution: float | list[float] = 0.0,
     top_n: int | list[int] | None = None,
-    restricted_space: list[tuple[int, float]]
+    restricted_space: list[int]
+    | list[tuple[int, float]]
     | tuple[list[tuple[int, float]], list[tuple[int, float]]]
     | None = None,
     save_path: str | None = None,
@@ -308,8 +313,10 @@ def select_by_ao_projection(
     top_n : int or list of int, optional
         Alternative to *contribution* thresholding. Selects the top N orbitals
         per AO group. A list specifies per-group counts.
-    restricted_space : list of tuple or tuple of lists, optional
-        Orbital indices (with entropy scores) to restrict selection to.
+    restricted_space : list of int, list of tuple, or tuple of lists, optional
+        Orbital indices to restrict selection to. Can be a plain list of
+        integers (e.g. ``list(range(34, 131))``), a list of ``(index, entropy)``
+        pairs, or a ``(occ_list, virt_list)`` tuple from ``select_by_entropy``.
         ``None`` considers all orbitals.
     save_path : str or None, optional
         If provided, saves a heatmap of AO contributions to the specified path.
