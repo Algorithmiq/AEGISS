@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import string
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
@@ -250,25 +250,35 @@ def _build_ao_heatmap_matrix(
     ao_contributions: dict[int, list[tuple[int, float]]],
     ao_contributions_beta: dict[int, list[tuple[int, float]]] | None,
     ao_labels: dict[int, str | list[str]] | None,
+    normalization: Literal["global", "relative"] = "global",
 ) -> tuple[np.ndarray, list[str], list[int]]:
     """Assemble the heatmap matrix, y-tick labels, and inter-group boundaries.
 
-    Rows are normalised to [0, 1]. For the unrestricted case each non-empty
-    group yields an alpha row followed by a beta row, jointly normalised by
-    their shared maximum so spin asymmetry stays visible; *boundaries* holds the
-    row index just after each group (for drawing separators).
+    Rows are scaled to [0, 1]. For the unrestricted case each non-empty group
+    yields an alpha row followed by a beta row; *boundaries* holds the row index
+    just after each group (for drawing separators).
+
+    *normalization* controls the scaling reference:
+
+    - ``"global"``: every row is divided by the single maximum across the whole
+      matrix, so weaker AO groups stay dim relative to dominant ones.
+    - ``"relative"``: each group is divided by its own maximum (jointly over
+      alpha and beta), so within-group patterns and spin asymmetry are
+      emphasised at the cost of cross-group magnitude comparison.
     """
-    rows: list[np.ndarray] = []
+    raw_rows: list[np.ndarray] = []
     yticks: list[str] = []
     boundaries: list[int] = []
+    group_spans: list[tuple[int, int]] = []
     for position, group_idx in enumerate(ao_contributions):
         weights = ao_contributions[group_idx]
         if not weights:
             continue
         label = _ao_group_label(group_idx, position, ao_labels)
         a_vals = np.array([w for _, w in weights], dtype=float)
+        start = len(raw_rows)
         if ao_contributions_beta is None:
-            rows.append(_normalise_row(a_vals, a_vals.max(initial=0.0)))
+            raw_rows.append(a_vals)
             yticks.append(label)
         else:
             beta = ao_contributions_beta.get(group_idx, [])
@@ -277,15 +287,27 @@ def _build_ao_heatmap_matrix(
                 if beta
                 else np.zeros_like(a_vals)
             )
-            norm = max(a_vals.max(initial=0.0), b_vals.max(initial=0.0))
-            rows.append(_normalise_row(a_vals, norm))
+            raw_rows.append(a_vals)
             yticks.append(rf"{label} ($\alpha$)")
-            rows.append(_normalise_row(b_vals, norm))
+            raw_rows.append(b_vals)
             yticks.append(rf"{label} ($\beta$)")
-        boundaries.append(len(rows))
+        boundaries.append(len(raw_rows))
+        group_spans.append((start, len(raw_rows)))
 
-    matrix = np.array(rows) if rows else np.empty((0, 0))
-    return matrix, yticks, boundaries
+    if not raw_rows:
+        return np.empty((0, 0)), yticks, boundaries
+
+    if normalization == "global":
+        gmax = max(r.max(initial=0.0) for r in raw_rows)
+        norm_rows = [_normalise_row(r, gmax) for r in raw_rows]
+    else:
+        norm_rows = []
+        for span_start, span_end in group_spans:
+            block = raw_rows[span_start:span_end]
+            block_max = max(r.max(initial=0.0) for r in block)
+            norm_rows.extend(_normalise_row(r, block_max) for r in block)
+
+    return np.array(norm_rows), yticks, boundaries
 
 
 def plot_ao_contribution(
@@ -297,16 +319,16 @@ def plot_ao_contribution(
     mo_labels: list[int] | np.ndarray | None = None,
     mos_per_plot: int = 200,
     fmt: str | None = "pdf",
+    normalization: Literal["global", "relative"] = "global",
 ) -> None:
     """Plot AO contributions as a heatmap, one row per AO group.
 
-    Each row is the contribution array for one AO group, normalised by its own
-    maximum so all rows share the same [0, 1] colour scale.
+    Rows share a common [0, 1] colour scale; *normalization* sets the reference
+    (see below).
 
     When *ao_contributions_beta* is supplied (unrestricted case), each AO group
-    is shown as a pair of interleaved rows — alpha above beta — and the two
-    spins are normalised jointly by their shared per-group maximum so that spin
-    asymmetry remains visible. A thin white line separates consecutive groups.
+    is shown as a pair of interleaved rows — alpha above beta — and a thin white
+    line separates consecutive groups.
 
     Parameters
     ----------
@@ -335,9 +357,14 @@ def plot_ao_contribution(
     fmt:
         Output format for the figure (e.g., ``"pdf"``, ``"png"``). If ``None``,
         matplotlib infers the format from the filename.
+    normalization:
+        ``"global"`` (default) divides every row by the single maximum across
+        the whole matrix, preserving magnitude differences between AO groups.
+        ``"relative"`` normalises each group by its own maximum (jointly over
+        alpha and beta), emphasising within-group patterns instead.
     """
     matrix, valid_yticks, boundaries = _build_ao_heatmap_matrix(
-        ao_contributions, ao_contributions_beta, ao_labels
+        ao_contributions, ao_contributions_beta, ao_labels, normalization
     )
     if matrix.size == 0:
         return
