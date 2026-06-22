@@ -47,9 +47,7 @@ def _format_composition_table(
     label_w = max(
         (len(label) for _, entries in flat for _, label, _ in entries), default=1
     )
-    cell_w = max(
-        label_w + 2 + _COEFF_WIDTH, max((len(h) for h, _ in flat), default=0)
-    )
+    cell_w = max(label_w + 2 + _COEFF_WIDTH, max((len(h) for h, _ in flat), default=0))
 
     def cell(entry: tuple[int, str, float] | None) -> str:
         if entry is None:
