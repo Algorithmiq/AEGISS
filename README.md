@@ -39,6 +39,7 @@ workflows.
   - [run_dmrg_subprocess](#run_dmrg_subprocess)
   - [select_by_entropy](#select_by_entropy)
   - [select_by_ao_projection](#select_by_ao_projection)
+  - [plot_ao_contribution](#plot_ao_contribution)
   - [localize](#localize)
   - [save_orbitals](#save_orbitals)
 - [Development](#development)
@@ -483,6 +484,50 @@ Labels follow PySCF's `search_ao_label` convention:
 "Element.N AtomicOrbital"        # N-th atom of this element (1-indexed)
 ["Fe 3dxz", "Fe 3dyz", "Fe 3dz^2"]  # multiple orbitals at once
 ```
+
+---
+
+### `plot_ao_contribution`
+
+```python
+from aegiss.utils.plotting import plot_ao_contribution
+```
+
+Renders the per-orbital AO projection weights as a heatmap — one row per AO
+group, columns are MOs, colour is the (normalised) projection weight. Wide
+orbital ranges are paginated into stacked panels (`mos_per_plot`).
+`select_by_ao_projection(..., save_path=...)` calls this internally for the
+restricted case; call it directly for finer control or to combine spin channels.
+
+```python
+# Restricted: one row per AO group
+plot_ao_contribution(alpha_contributions, folder="./", filename="ao")
+
+# Unrestricted: alpha and beta interleaved (alpha above beta) within each
+# group, with a thin white line separating consecutive groups
+plot_ao_contribution(
+    alpha_contributions,
+    beta_contributions,
+    folder="./",
+    filename="ao",
+    normalization="global",
+)
+```
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `ao_contributions` | `dict[int, list[tuple[int, float]]]` | — | Per-group `(orbital_index, weight)` lists covering the search space. For unrestricted calculations, the alpha-spin contributions. |
+| `ao_contributions_beta` | `dict[int, list[tuple[int, float]]]` or `None` | `None` | Optional beta-spin contributions sharing the same group keys. When given, each group is drawn as an interleaved alpha-above-beta row pair. |
+| `folder` | `str` | `"./"` | Output directory. |
+| `filename` | `str` | `"ao_contribution"` | Base name; `_heatmap` and the format suffix are appended automatically. |
+| `ao_labels` | `dict[int, str \| list[str]]` or `None` | `None` | Row labels per group (a list is joined with newlines). `None` falls back to letter identifiers A, B, C, … |
+| `mo_labels` | `list[int]` or `None` | `None` | x-tick labels (orbital indices). Defaults to sequential integers. |
+| `mos_per_plot` | `int` | `200` | Maximum MOs per panel; wider ranges paginate into stacked panels. |
+| `fmt` | `str` or `None` | `"pdf"` | Output format (`"pdf"`, `"png"`, …). `None` lets matplotlib infer from the filename. |
+| `normalization` | `"global"` or `"relative"` | `"global"` | `"global"`: divide the whole matrix by a single maximum, preserving magnitude differences between AO groups. `"relative"`: divide each group by its own maximum (jointly over alpha and beta), emphasising within-group patterns and spin asymmetry instead. |
+
+> **Note** Combining alpha and beta adds *rows*, not columns, so it never worsens
+> the horizontal crowding of wide orbital ranges — the figure just grows taller.
 
 ---
 
