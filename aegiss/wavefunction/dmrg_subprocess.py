@@ -58,7 +58,7 @@ def _write_input(
 
     sched_rows: list[str] = []
     prev = None
-    for i, (m, thr, noise) in enumerate(zip(bond_dims, thrds, noises)):
+    for i, (m, thr, noise) in enumerate(zip(bond_dims, thrds, noises, strict=True)):
         if prev is None or (m, thr, noise) != prev:
             sched_rows.append(f"{i}  {m}  {thr}  {noise}")
             prev = (m, thr, noise)
@@ -105,7 +105,7 @@ def _read_outputs(scratch_dir: Path, ncas: int) -> tuple[float, np.ndarray, np.n
             "Check block2main stderr for errors."
         )
     energy = float(np.load(node0 / "E_dmrg.npy"))
-    pdm1 = np.load(node0 / "1pdm.npy")  # (2, ncas, ncas): [0]=α, [1]=β
+    pdm1 = np.load(node0 / "1pdm.npy")  # (2, ncas, ncas): [0]=alpha, [1]=beta
     npc1 = np.load(node0 / "1npc.npy")  # (2, ncas, ncas)
     if pdm1.shape != (2, ncas, ncas) or npc1.shape != (2, ncas, ncas):
         raise ValueError(
@@ -160,7 +160,7 @@ def run_dmrg_subprocess(
     get_qmi : bool
         If ``True``, compute and return single-orbital entropies.
 
-    Returns
+    Returns:
     -------
     energy : float
         DMRG ground-state energy.
@@ -239,7 +239,7 @@ def run_dmrg_subprocess(
 
     logger.info("Running block2main: %s %s", block2main_path, input_path)
     t = time.time()
-    subprocess.run(
+    subprocess.run(  # noqa: S603
         [block2main_path, str(input_path)],
         capture_output=(verbosity == 0),
         check=True,

@@ -75,7 +75,7 @@ def _save_contributions(
     folder: str = "./",
     filename: str = "major_composition",
     min_pct: float = 0.01,
-    format: str | None = "pdf",
+    fmt: str | None = "pdf",
 ) -> None:
     """Compute AO compositions and save a grid of pie charts as a PDF.
 
@@ -103,7 +103,7 @@ def _save_contributions(
     min_pct : float
         Minimum fractional contribution below which the slice label and
         percentage are hidden.
-    format : str or None
+    fmt : str or None
         Output format for the figure (e.g., "pdf", "png"). If None, the default (`pdf`) is used.
     """
     n_orbs, n_labels = len(orbs), len(ao_labels)
@@ -137,10 +137,10 @@ def _save_contributions(
                 min_pct=min_pct,
             )
 
-    full_filename = f"{filename}.{format}" if format else filename
+    full_filename = f"{filename}.{fmt}" if fmt else filename
     logger.info("Saving %s", full_filename)
     fig.tight_layout()
-    fig.savefig(Path(folder) / full_filename, format=format, bbox_inches="tight")
+    fig.savefig(Path(folder) / full_filename, format=fmt, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -154,7 +154,7 @@ def plot_pie_contribution(
     folder: str = "./",
     orb_for_row: int = 4,
     min_pct: float = 0.01,
-    format: str | None = "pdf",
+    fmt: str | None = "pdf",
 ) -> None:
     """Plot per-orbital AO composition as a grid of pie charts.
 
@@ -188,7 +188,7 @@ def plot_pie_contribution(
     min_pct:
         Minimum fractional contribution (0-1) below which the slice label
         and percentage are hidden. Default is 0.01 (1 %).
-    format:
+    fmt:
         Output format for the figure (e.g., "pdf", "png"). If None, the default (`pdf`) is used.
     """
     if isinstance(ao_labels, str):
@@ -213,7 +213,7 @@ def plot_pie_contribution(
         "labels_names": str_labels_names,
         "folder": folder,
         "min_pct": min_pct,
-        "format": format,
+        "fmt": fmt,
     }
 
     if np.ndim(mf.mo_coeff) == 3:
@@ -231,7 +231,7 @@ def plot_ao_contribution(
     ao_labels: dict[int, str | list[str]] | None = None,
     mo_labels: list[int] | np.ndarray | None = None,
     mos_per_plot: int = 200,
-    format: str | None = "pdf",
+    fmt: str | None = "pdf",
 ) -> None:
     """Plot AO contributions as a heatmap, one row per AO group.
 
@@ -257,7 +257,7 @@ def plot_ao_contribution(
         integers when *None*.
     mos_per_plot:
         Maximum number of MOs shown in each subplot panel.
-    format:
+    fmt:
         Output format for the figure (e.g., ``"pdf"``, ``"png"``). If ``None``,
         matplotlib infers the format from the filename.
     """
@@ -324,9 +324,9 @@ def plot_ao_contribution(
     fig.colorbar(sm, cax=cbar_ax)
 
     stem = f"{filename}_heatmap"
-    full_filename = f"{stem}.{format}" if format else stem
+    full_filename = f"{stem}.{fmt}" if fmt else stem
     plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
-    fig.savefig(Path(folder) / full_filename, format=format, bbox_inches="tight")
+    fig.savefig(Path(folder) / full_filename, format=fmt, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -335,7 +335,7 @@ def soe_heatmap(
     n_occ: int = 0,
     folder: str = "./",
     filename: str = "SOE_plot",
-    format: str | None = "pdf",
+    fmt: str | None = "pdf",
 ) -> None:
     """Plot a single-orbital entropy (SOE) heatmap.
 
@@ -355,7 +355,7 @@ def soe_heatmap(
         Directory where the PDF is saved.
     filename:
         Base name of the output file (without extension).
-    format:
+    fmt:
         Output format for the figure (e.g., ``"pdf"``, ``"png"``). If ``None``,
         matplotlib infers the format from the filename.
     """
@@ -399,9 +399,9 @@ def soe_heatmap(
     ax.axhline(y=3.5, color="red", linewidth=2)
 
     ax.set_title(f"Max SOE: {max_so1:.5f}", fontsize=16)
-    full_filename = f"{filename}.{format}" if format else filename
+    full_filename = f"{filename}.{fmt}" if fmt else filename
     fig.tight_layout()
-    fig.savefig(Path(folder) / full_filename, format=format, bbox_inches="tight")
+    fig.savefig(Path(folder) / full_filename, format=fmt, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -498,7 +498,7 @@ def th_plots(
     occ_index: int = 0,
     plateau_size: int = 10,
     filename: str = "TH_plot",
-    format: str | None = "pdf",
+    fmt: str | None = "pdf",
 ) -> None:
     """Plot the threshold curve for single-orbital entropy (TH) analysis.
 
@@ -520,7 +520,7 @@ def th_plots(
         flat region to be considered a plateau and annotated on the plot.
     filename:
         Base name of the output file (without extension).
-    format:
+    fmt:
         Output format for the figure (e.g., ``"pdf"``, ``"png"``). If ``None``,
         matplotlib infers the format from the filename.
     """
@@ -610,9 +610,9 @@ def th_plots(
             indices_above[idx],
         )
 
-    full_filename = f"{filename}.{format}" if format else filename
+    full_filename = f"{filename}.{fmt}" if fmt else filename
     fig.tight_layout()
-    fig.savefig(Path(folder) / full_filename, format=format)
+    fig.savefig(Path(folder) / full_filename, format=fmt)
     plt.close(fig)
 
 
@@ -641,7 +641,7 @@ def mi_plot(
     soe1: list[tuple[int, float]],
     folder: str = "./",
     filename: str = "MI_plot",
-    format: str | None = "pdf",
+    fmt: str | None = "pdf",
 ) -> None:
     """Plot an entanglement diagram based on mutual information (MI) and single-orbital entropy (SOE).
 
@@ -655,7 +655,7 @@ def mi_plot(
         Directory where the PDF is saved.
     filename:
         Base name of the output file (without extension).
-    format:
+    fmt:
         Output format for the figure (e.g., ``"pdf"``, ``"png"``). If ``None``,
         matplotlib infers the format from the filename.
     """
@@ -673,9 +673,9 @@ def mi_plot(
     ax.set_xlabel("Orbital Index", fontsize=12)
     ax.set_ylabel("Orbital Index", fontsize=12)
 
-    full_filename = f"{filename}.{format}" if format else filename
+    full_filename = f"{filename}.{fmt}" if fmt else filename
     fig.tight_layout()
-    fig.savefig(Path(folder) / full_filename, format=format, bbox_inches="tight")
+    fig.savefig(Path(folder) / full_filename, format=fmt, bbox_inches="tight")
     logger.info("Saved %s", full_filename)
     plt.close(fig)
 
@@ -807,7 +807,7 @@ def entanglement_diagrams(
     minfo: np.ndarray,
     folder: str = "./",
     filename: str = "entanglement_diagrams",
-    format: str | None = "pdf",
+    fmt: str | None = "pdf",
 ) -> None:
     """Plot entanglement diagrams for active and virtual orbitals.
 
@@ -853,9 +853,9 @@ def entanglement_diagrams(
 
     leg = plt.legend(handles=handles, loc="center")
     leg.get_frame().set_alpha(None)
-    full_filename = f"{filename}.{format}" if format else filename
+    full_filename = f"{filename}.{fmt}" if fmt else filename
     fig.tight_layout()
-    fig.savefig(Path(folder) / full_filename, format=format, bbox_inches="tight")
+    fig.savefig(Path(folder) / full_filename, format=fmt, bbox_inches="tight")
     logger.info("Saved %s", full_filename)
     plt.close(fig)
 
@@ -867,7 +867,7 @@ def _make_soe_plots(
     saving_folder: str,
     saving_prefix: str,
     minfo: np.ndarray | None = None,
-    format: str | None = "pdf",
+    fmt: str | None = "pdf",
 ) -> None:
     """Generate and save single-orbital entropy diagnostic plots.
 
@@ -893,7 +893,7 @@ def _make_soe_plots(
     minfo : np.ndarray or None
         Mutual information matrix for all CAS orbitals.  When ``None``, the
         entanglement diagram and MI heatmap are skipped.
-    format : str or None
+    fmt : str or None
         Output format for all figures (e.g., ``"pdf"``, ``"png"``). If ``None``,
         matplotlib infers the format from the filename.
     """
@@ -906,14 +906,14 @@ def _make_soe_plots(
         n_occ=len(active_orbs),
         folder=saving_folder,
         filename=saving_prefix + "_SOE_heatmap",
-        format=format,
+        fmt=fmt,
     )
     th_plots(
         so1_entropies=tagged,
         occ_index=max(active_orbs) + 1,
         folder=saving_folder,
         filename=saving_prefix + "_TH_plot",
-        format=format,
+        fmt=fmt,
     )
     if minfo is not None:
         entanglement_diagrams(
@@ -921,12 +921,12 @@ def _make_soe_plots(
             minfo=minfo,
             folder=saving_folder,
             filename=saving_prefix + "_entanglement_diagram",
-            format=format,
+            fmt=fmt,
         )
         mi_plot(
             minfo=minfo,
             soe1=tagged,
             folder=saving_folder,
             filename=saving_prefix + "_MI_heatmap",
-            format=format,
+            fmt=fmt,
         )
