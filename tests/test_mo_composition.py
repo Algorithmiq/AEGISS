@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import pytest
@@ -124,9 +125,7 @@ class TestMoAoContributions:
 
     def test_clusters_and_group_by_element_are_exclusive(self, h2o_rhf: Any) -> None:
         with pytest.raises(ValueError, match="at most one"):
-            mo_ao_contributions(
-                h2o_rhf, 4, group_by_element=True, clusters={0: [0]}
-            )
+            mo_ao_contributions(h2o_rhf, 4, group_by_element=True, clusters={0: [0]})
 
     def test_clusters_out_of_range_raises(self, h2o_rhf: Any) -> None:
         n_atoms = h2o_rhf.mol.natm
@@ -137,32 +136,32 @@ class TestMoAoContributions:
         with pytest.raises(ValueError, match="appears in clusters"):
             mo_ao_contributions(h2o_rhf, 4, clusters={0: [0], 1: [0]})
 
-    def test_clustered_labels_list_member_symbols(self, h2o_rhf: Any) -> None:
-        """Cluster labels list 'Sym<id>' members joined with the basis label."""
+    def test_clustered_labels_use_cluster_id_and_elements(self, h2o_rhf: Any) -> None:
+        """Labels read '(<id>) <elements> <ao_label>' (no per-atom indices)."""
         # H2O: atom 0 = O, atoms 1,2 = H.
-        entries = mo_ao_contributions(
-            h2o_rhf, 4, top_n=99, clusters={0: [1, 2]}
-        )[4]["alpha"]
+        entries = mo_ao_contributions(h2o_rhf, 4, top_n=99, clusters={0: [1, 2]})[4][
+            "alpha"
+        ]
         labels = [lbl for _, lbl, _ in entries]
-        assert any(lbl.startswith("H1,H2 ") for lbl in labels)
+        assert any(lbl.startswith("(0) H ") for lbl in labels)
 
     def test_clustered_unassigned_group(self, h2o_rhf: Any) -> None:
         """Atoms in no cluster fall into an 'unassigned' group."""
-        entries = mo_ao_contributions(
-            h2o_rhf, 4, top_n=99, clusters={0: [1, 2]}
-        )[4]["alpha"]
+        entries = mo_ao_contributions(h2o_rhf, 4, top_n=99, clusters={0: [1, 2]})[4][
+            "alpha"
+        ]
         labels = [lbl for _, lbl, _ in entries]
-        assert any(lbl.startswith("unassigned ") for lbl in labels)
+        assert any(lbl.startswith("(U) ") for lbl in labels)
 
     def test_clustered_weights_are_summed_magnitudes(self, h2o_rhf: Any) -> None:
         """Each cluster group sums |coeff| over its atoms sharing a basis label."""
         clusters = {0: [0], 1: [1, 2]}
-        atom_cluster = {0: "O0", 1: "H1,H2", 2: "H1,H2"}
+        prefix_of = {0: "(0) O", 1: "(1) H", 2: "(1) H"}
         struct = h2o_rhf.mol.ao_labels(fmt=False)
         coeff = h2o_rhf.mo_coeff[:, 4]
         expected: dict[str, float] = {}
         for c, (atom_id, _, nl, m) in zip(coeff, struct, strict=True):
-            key = f"{atom_cluster[atom_id]} {nl}{m}"
+            key = f"{prefix_of[atom_id]} {nl}{m}"
             expected[key] = expected.get(key, 0.0) + abs(c)
         for count, label, weight in mo_ao_contributions(
             h2o_rhf, 4, top_n=99, clusters=clusters
@@ -170,7 +169,55 @@ class TestMoAoContributions:
             assert weight == pytest.approx(expected[label])
             assert count >= 1
 
+    def test_clustered_mixed_cluster_lists_distinct_elements(self) -> None:
+        """A mixed cluster lists its distinct elements in order: 'C,O'."""
+        mol = gto.M(
+            atom="C 0 0 0; C 1.4 0 0; O 2.8 0 0; H 3.8 0 0; H -1.0 0 0",
+            basis="sto-3g",
+        )
+        mf = scf.RHF(mol).run(verbose=0)
+        # Cluster 0 mixes two C and one O; the two H atoms are left unassigned.
+        entries = mo_ao_contributions(mf, 5, top_n=99, clusters={0: [0, 1, 2]})[5][
+            "alpha"
+        ]
+        labels = [lbl for _, lbl, _ in entries]
+        assert any(lbl.startswith("(0) C,O ") for lbl in labels)
+        assert any(lbl.startswith("(U) H ") for lbl in labels)
+
     def test_clustered_entries_ranked_descending(self, h2o_rhf: Any) -> None:
         entries = mo_ao_contributions(h2o_rhf, 4, top_n=5, clusters={0: [0]})
         weights = [w for _, _, w in entries[4]["alpha"]]
         assert weights == sorted(weights, reverse=True)
+
+    def test_clustered_logs_membership(
+        self, h2o_rhf: Any, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Cluster membership (assigned + unassigned) is logged before the table."""
+        with caplog.at_level(logging.INFO, logger="aegiss.utils.mo_composition"):
+            mo_ao_contributions(h2o_rhf, 4, clusters={0: [0], 1: [1, 2]})
+        text = caplog.text
+        assert "Cluster membership:" in text
+        assert "cluster 0: O(0)" in text
+        assert "cluster 1: H(1,2)" in text
+
+    def test_clustered_logs_unassigned_members(
+        self, h2o_rhf: Any, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        with caplog.at_level(logging.INFO, logger="aegiss.utils.mo_composition"):
+            mo_ao_contributions(h2o_rhf, 4, clusters={0: [1, 2]})
+        assert "unassigned: O(0)" in caplog.text
+
+    def test_pyscf_atom_tags_kept_with_paren_index(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Tagged atoms keep their tag with the index in parens, e.g. 'H.1(1)'."""
+        mol = gto.M(atom="O 0 0 0; H.1 0 0 1; H.2 0 1 0", basis="sto-3g")
+        mf = scf.RHF(mol).run(verbose=0)
+        with caplog.at_level(logging.INFO, logger="aegiss.utils.mo_composition"):
+            entries = mo_ao_contributions(mf, 4, top_n=99, clusters={0: [1, 2]})
+        # Membership log keeps the tag and parenthesises the atom index.
+        # Distinct tags ('H.1' vs 'H.2') are different symbols, so no collapse.
+        assert "cluster 0: H.1(1),H.2(2)" in caplog.text
+        # Table labels list the distinct tagged element symbols (no indices).
+        labels = [lbl for _, lbl, _ in entries[4]["alpha"]]
+        assert any(lbl.startswith("(0) H.1,H.2 ") for lbl in labels)

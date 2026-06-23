@@ -8,12 +8,24 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Callable, Mapping, Sequence
 
 logger = logging.getLogger(__name__)
 
 
 _UNASSIGNED = object()  # sentinel cluster key for atoms in no cluster
+
+
+def _atom_group_str(atom_ids: Sequence[int], symbol_of: Callable[[int], str]) -> str:
+    """List atoms, collapsing those of the same element: ``"C(0,1,2),N(3)"``."""
+    by_symbol: dict[str, list[int]] = {}
+    for a in sorted(atom_ids):
+        by_symbol.setdefault(symbol_of(a), []).append(a)
+    return ",".join(
+        f"{sym}({','.join(str(i) for i in ids)})" for sym, ids in by_symbol.items()
+    )
+
+
 _MOS_PER_ROW = 4
 _COEFF_WIDTH = 9
 _COL_SEP = "  |  "
@@ -103,13 +115,16 @@ def _clustered_entries(
 ) -> list[tuple[int, str, float]]:
     """Collapse AOs by cluster + basis label, summing ``|coeff|``.
 
-    Each atom is mapped to the cluster containing it (or a catch-all
-    ``unassigned`` group); AOs are then merged by ``(cluster, basis label)`` and
-    weighted by the sum of the absolute coefficients of their members. The
-    cluster part of the label lists its member atoms as ``"<symbol><id>"`` (for
-    example ``"C0,C1 2pz"``), so the same basis function on different clusters
-    stays separate. Groups are ranked by summed magnitude and the *top_n*
-    largest returned; the leading tuple element is the number of AOs aggregated.
+    Each atom is mapped to the cluster containing it (or a catch-all group keyed
+    ``U`` for atoms in no cluster); AOs are then merged by
+    ``(cluster, basis label)`` and weighted by the sum of the absolute
+    coefficients of their members. Each group label reads
+    ``"(<cluster id>) <elements> <ao_label>"`` — for example ``"(0) C 2pz"`` (or
+    ``"(0) C,O 2pz"`` for a mixed cluster, ``"(U) H 1s"`` for unassigned atoms) —
+    listing the distinct element symbols of the cluster, so the same basis
+    function on different clusters stays separate. Groups are ranked by summed
+    magnitude and the *top_n* largest returned; the leading tuple element is the
+    number of AOs aggregated.
     """
     atom_cluster: dict[int, object] = {}
     for cid, atom_ids in clusters.items():
@@ -118,24 +133,29 @@ def _clustered_entries(
 
     atom_symbol: dict[int, str] = {}
     for atom_id, symbol, _, _ in ao_struct:
-        atom_symbol.setdefault(atom_id, f"{symbol}{atom_id}")
-
-    def cluster_label(cluster: object) -> str:
-        if cluster is _UNASSIGNED:
-            return "unassigned"
-        members = sorted(clusters[cluster])  # type: ignore[index]
-        return ",".join(atom_symbol.get(a, str(a)) for a in members)
+        atom_symbol.setdefault(atom_id, symbol)
 
     weights: dict[tuple[object, str], float] = {}
     counts: dict[tuple[object, str], int] = {}
+    members: dict[object, set[int]] = {}
     for c, (atom_id, _, nl, m) in zip(coeff, ao_struct, strict=True):
-        key = (atom_cluster.get(atom_id, _UNASSIGNED), f"{nl}{m}")
+        cluster = atom_cluster.get(atom_id, _UNASSIGNED)
+        key = (cluster, f"{nl}{m}")
         weights[key] = weights.get(key, 0.0) + abs(float(c))
         counts[key] = counts.get(key, 0) + 1
+        members.setdefault(cluster, set()).add(atom_id)
+
+    def group_label(cluster: object, basis: str) -> str:
+        elements: list[str] = []
+        for a in sorted(members[cluster]):
+            if atom_symbol[a] not in elements:
+                elements.append(atom_symbol[a])
+        cid = "U" if cluster is _UNASSIGNED else cluster
+        return f"({cid}) {','.join(elements)} {basis}"
+
     ranked = sorted(weights.items(), key=lambda kv: kv[1], reverse=True)[:top_n]
     return [
-        (counts[key], f"{cluster_label(key[0])} {key[1]}", weight)
-        for key, weight in ranked
+        (counts[key], group_label(key[0], key[1]), weight) for key, weight in ranked
     ]
 
 
@@ -154,6 +174,21 @@ def _entries_for_coeff(
     if clusters is not None:
         return _clustered_entries(coeff, ao_struct, clusters, top_n)
     return _grouped_entries(coeff, ao_struct, top_n)
+
+
+def _log_cluster_membership(mol: Any, clusters: Mapping[int, Sequence[int]]) -> None:
+    """Log each cluster's member atoms, collapsing those of the same element."""
+    symbol_of = mol.atom_symbol
+    assigned: set[int] = set()
+    lines: list[str] = []
+    for cid in sorted(clusters):
+        members = list(clusters[cid])
+        assigned.update(members)
+        lines.append(f"  cluster {cid}: {_atom_group_str(members, symbol_of)}")
+    unassigned = [a for a in range(mol.natm) if a not in assigned]
+    if unassigned:
+        lines.append(f"  unassigned: {_atom_group_str(unassigned, symbol_of)}")
+    logger.info("Cluster membership:\n%s", "\n".join(lines))
 
 
 def _validate_clusters(clusters: Mapping[int, Sequence[int]], n_atoms: int) -> None:
@@ -197,10 +232,12 @@ def mo_ao_contributions(
 
     When *clusters* is given, contributions are collapsed by cluster and basis
     label instead: each atom is mapped to the cluster containing it (atoms in no
-    cluster fall into a catch-all ``unassigned`` group), and ``|coefficient|``
-    is summed over all atoms of a cluster sharing a basis label. The group label
-    lists the cluster's member atoms, e.g. ``"C0,C1 2pz"``. *clusters* and
-    *group_by_element* are mutually exclusive.
+    cluster fall into a catch-all group keyed ``U``), and ``|coefficient|`` is
+    summed over all atoms of a cluster sharing a basis label. The group label
+    reads ``"(<cluster id>) <elements> <ao_label>"``, e.g. ``"(0) C 2pz"`` (or
+    ``"(U) H 1s"`` for unassigned atoms). The cluster membership — each cluster's
+    atoms with indices — is logged first. *clusters* and *group_by_element* are
+    mutually exclusive.
 
     The result is always logged as a table with one column per orbital
     (restricted) or a pair of alpha/beta columns per orbital (unrestricted).
@@ -223,7 +260,8 @@ def mo_ao_contributions(
     clusters : mapping of int to sequence of int, optional
         Maps a cluster id to the atom indices it contains. When given, sum
         ``|coefficient|`` over the atoms of each cluster sharing a basis label.
-        Mutually exclusive with *group_by_element*.
+        Atoms must each belong to at most one cluster; any not listed fall into
+        the catch-all ``U`` group. Mutually exclusive with *group_by_element*.
 
     Returns:
     -------
@@ -231,9 +269,10 @@ def mo_ao_contributions(
         Maps each requested MO index to a ``{spin: entries}`` dict, where
         *spin* is ``"alpha"`` (and ``"beta"`` for unrestricted inputs) and
         *entries* is a list of ``(key, label, weight)`` triples ordered from
-        largest to smallest weight. Ungrouped: ``key`` is the AO index and
-        ``weight`` is the signed coefficient. Grouped: ``key`` is the number of
-        AOs in the group and ``weight`` is the summed ``|coefficient|``.
+        largest to smallest weight. Ungrouped: ``key`` is the AO index, *label*
+        the PySCF AO label and ``weight`` the signed coefficient. Grouped (by
+        element or cluster): ``key`` is the number of AOs in the group and
+        ``weight`` the summed ``|coefficient|``.
     """
     if clusters is not None and group_by_element:
         raise ValueError("Pass at most one of `group_by_element` and `clusters`.")
@@ -254,6 +293,7 @@ def mo_ao_contributions(
 
     if clusters is not None:
         _validate_clusters(clusters, mf.mol.natm)
+        _log_cluster_membership(mf.mol, clusters)
 
     composition: dict[int, dict[str, list[tuple[int, str, float]]]] = {}
     for mo_idx in indices:

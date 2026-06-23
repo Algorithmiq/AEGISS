@@ -577,20 +577,26 @@ O 2s     +0.0000  |  O 2s     +0.0000  |  O 2py    +0.6881  |  O 2py    +0.1043
 
 Pass `clusters={cluster_id: [atom_idx, ...]}` to instead collapse by **cluster
 and basis label**. Each atom is mapped to the cluster containing it (atoms in no
-cluster fall into a catch-all `unassigned` group), `|coefficient|` is summed over
-the atoms of a cluster sharing a basis label, and the group label lists its
-member atoms as `<symbol><id>`. `clusters` and `group_by_element` are mutually
-exclusive:
+cluster fall into a catch-all group keyed `U`), and `|coefficient|` is summed
+over the atoms of a cluster sharing a basis label. Each group label reads
+`(<cluster id>) <elements> <ao_label>`, listing the cluster's distinct element
+symbols (e.g. `(0) C 2pz`, or `(0) C,O 2pz` for a mixed cluster, `(U) H 1s` for
+unassigned atoms). The membership log (printed first) lists each cluster's atoms
+with indices as `<symbol>(<ids>)`, collapsing same-element atoms and preserving
+any PySCF atom tag. `clusters` and `group_by_element` are mutually exclusive.
 
 ```
 # clusters={0: [0], 1: [1, 2]} on a water molecule
+Cluster membership:
+  cluster 0: O(0)
+  cluster 1: H(1,2)
 Top-4 AO contributions per MO (summed |mo_coeff| per cluster+label):
-MO 4                 |  ...
----------------------+-----
-O0 2px      +0.9876  |  ...
-H1,H2 1s    +0.4521  |  ...
-O0 2s       +0.1203  |  ...
-O0 2pz      +0.0000  |  ...
+MO 4               |  ...
+-------------------+-----
+(0) O 2px +0.9876  |  ...
+(1) H 1s  +0.4521  |  ...
+(0) O 2s  +0.1203  |  ...
+(0) O 2pz +0.0000  |  ...
 ```
 
 | Parameter | Type | Default | Description |
