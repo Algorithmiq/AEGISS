@@ -121,3 +121,56 @@ class TestMoAoContributions:
         entries = mo_ao_contributions(h2o_rhf, 4, top_n=5, group_by_element=True)
         weights = [w for _, _, w in entries[4]["alpha"]]
         assert weights == sorted(weights, reverse=True)
+
+    def test_clusters_and_group_by_element_are_exclusive(self, h2o_rhf: Any) -> None:
+        with pytest.raises(ValueError, match="at most one"):
+            mo_ao_contributions(
+                h2o_rhf, 4, group_by_element=True, clusters={0: [0]}
+            )
+
+    def test_clusters_out_of_range_raises(self, h2o_rhf: Any) -> None:
+        n_atoms = h2o_rhf.mol.natm
+        with pytest.raises(ValueError, match="out of range"):
+            mo_ao_contributions(h2o_rhf, 4, clusters={0: [n_atoms]})
+
+    def test_clusters_overlap_raises(self, h2o_rhf: Any) -> None:
+        with pytest.raises(ValueError, match="appears in clusters"):
+            mo_ao_contributions(h2o_rhf, 4, clusters={0: [0], 1: [0]})
+
+    def test_clustered_labels_list_member_symbols(self, h2o_rhf: Any) -> None:
+        """Cluster labels list 'Sym<id>' members joined with the basis label."""
+        # H2O: atom 0 = O, atoms 1,2 = H.
+        entries = mo_ao_contributions(
+            h2o_rhf, 4, top_n=99, clusters={0: [1, 2]}
+        )[4]["alpha"]
+        labels = [lbl for _, lbl, _ in entries]
+        assert any(lbl.startswith("H1,H2 ") for lbl in labels)
+
+    def test_clustered_unassigned_group(self, h2o_rhf: Any) -> None:
+        """Atoms in no cluster fall into an 'unassigned' group."""
+        entries = mo_ao_contributions(
+            h2o_rhf, 4, top_n=99, clusters={0: [1, 2]}
+        )[4]["alpha"]
+        labels = [lbl for _, lbl, _ in entries]
+        assert any(lbl.startswith("unassigned ") for lbl in labels)
+
+    def test_clustered_weights_are_summed_magnitudes(self, h2o_rhf: Any) -> None:
+        """Each cluster group sums |coeff| over its atoms sharing a basis label."""
+        clusters = {0: [0], 1: [1, 2]}
+        atom_cluster = {0: "O0", 1: "H1,H2", 2: "H1,H2"}
+        struct = h2o_rhf.mol.ao_labels(fmt=False)
+        coeff = h2o_rhf.mo_coeff[:, 4]
+        expected: dict[str, float] = {}
+        for c, (atom_id, _, nl, m) in zip(coeff, struct, strict=True):
+            key = f"{atom_cluster[atom_id]} {nl}{m}"
+            expected[key] = expected.get(key, 0.0) + abs(c)
+        for count, label, weight in mo_ao_contributions(
+            h2o_rhf, 4, top_n=99, clusters=clusters
+        )[4]["alpha"]:
+            assert weight == pytest.approx(expected[label])
+            assert count >= 1
+
+    def test_clustered_entries_ranked_descending(self, h2o_rhf: Any) -> None:
+        entries = mo_ao_contributions(h2o_rhf, 4, top_n=5, clusters={0: [0]})
+        weights = [w for _, _, w in entries[4]["alpha"]]
+        assert weights == sorted(weights, reverse=True)

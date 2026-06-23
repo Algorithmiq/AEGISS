@@ -575,12 +575,31 @@ O 2pz    +0.6054  |  O 2pz    +0.6483  |  O 2pz    +0.6881  |  H 1s     +0.1161
 O 2s     +0.0000  |  O 2s     +0.0000  |  O 2py    +0.6881  |  O 2py    +0.1043
 ```
 
+Pass `clusters={cluster_id: [atom_idx, ...]}` to instead collapse by **cluster
+and basis label**. Each atom is mapped to the cluster containing it (atoms in no
+cluster fall into a catch-all `unassigned` group), `|coefficient|` is summed over
+the atoms of a cluster sharing a basis label, and the group label lists its
+member atoms as `<symbol><id>`. `clusters` and `group_by_element` are mutually
+exclusive:
+
+```
+# clusters={0: [0], 1: [1, 2]} on a water molecule
+Top-4 AO contributions per MO (summed |mo_coeff| per cluster+label):
+MO 4                 |  ...
+---------------------+-----
+O0 2px      +0.9876  |  ...
+H1,H2 1s    +0.4521  |  ...
+O0 2s       +0.1203  |  ...
+O0 2pz      +0.0000  |  ...
+```
+
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `mf` | SCF object | — | Converged mean-field exposing `mo_coeff` and `mol`. Restricted or unrestricted. |
 | `mo_indices` | `int` or `Sequence[int]` | — | Orbital index, or indices, to decompose. |
-| `top_n` | `int` | `10` | Number of largest AO contributions (or element groups) kept per orbital. |
+| `top_n` | `int` | `10` | Number of largest AO contributions (or groups) kept per orbital. |
 | `group_by_element` | `bool` | `False` | Sum `|coefficient|` over all atoms of the same element sharing a basis label, ranking the groups instead of individual AOs. |
+| `clusters` | `Mapping[int, Sequence[int]]` | `None` | Map of cluster id to its atom indices. Sum `|coefficient|` over each cluster's atoms sharing a basis label. Mutually exclusive with `group_by_element`. |
 
 Returns `dict[int, dict[str, list[tuple[int, str, float]]]]` — each MO maps to a
 `{spin: entries}` dict (`spin` is `"alpha"`, plus `"beta"` when unrestricted),

@@ -8,11 +8,12 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
 
 logger = logging.getLogger(__name__)
 
 
+_UNASSIGNED = object()  # sentinel cluster key for atoms in no cluster
 _MOS_PER_ROW = 4
 _COEFF_WIDTH = 9
 _COL_SEP = "  |  "
@@ -94,12 +95,90 @@ def _grouped_entries(
     return [(counts[label], label, weight) for label, weight in ranked]
 
 
+def _clustered_entries(
+    coeff: np.ndarray,
+    ao_struct: Sequence[tuple[int, str, str, str]],
+    clusters: Mapping[int, Sequence[int]],
+    top_n: int,
+) -> list[tuple[int, str, float]]:
+    """Collapse AOs by cluster + basis label, summing ``|coeff|``.
+
+    Each atom is mapped to the cluster containing it (or a catch-all
+    ``unassigned`` group); AOs are then merged by ``(cluster, basis label)`` and
+    weighted by the sum of the absolute coefficients of their members. The
+    cluster part of the label lists its member atoms as ``"<symbol><id>"`` (for
+    example ``"C0,C1 2pz"``), so the same basis function on different clusters
+    stays separate. Groups are ranked by summed magnitude and the *top_n*
+    largest returned; the leading tuple element is the number of AOs aggregated.
+    """
+    atom_cluster: dict[int, object] = {}
+    for cid, atom_ids in clusters.items():
+        for aid in atom_ids:
+            atom_cluster[aid] = cid
+
+    atom_symbol: dict[int, str] = {}
+    for atom_id, symbol, _, _ in ao_struct:
+        atom_symbol.setdefault(atom_id, f"{symbol}{atom_id}")
+
+    def cluster_label(cluster: object) -> str:
+        if cluster is _UNASSIGNED:
+            return "unassigned"
+        members = sorted(clusters[cluster])  # type: ignore[index]
+        return ",".join(atom_symbol.get(a, str(a)) for a in members)
+
+    weights: dict[tuple[object, str], float] = {}
+    counts: dict[tuple[object, str], int] = {}
+    for c, (atom_id, _, nl, m) in zip(coeff, ao_struct, strict=True):
+        key = (atom_cluster.get(atom_id, _UNASSIGNED), f"{nl}{m}")
+        weights[key] = weights.get(key, 0.0) + abs(float(c))
+        counts[key] = counts.get(key, 0) + 1
+    ranked = sorted(weights.items(), key=lambda kv: kv[1], reverse=True)[:top_n]
+    return [
+        (counts[key], f"{cluster_label(key[0])} {key[1]}", weight)
+        for key, weight in ranked
+    ]
+
+
+def _entries_for_coeff(
+    coeff: np.ndarray,
+    top_n: int,
+    *,
+    ao_labels: Sequence[str],
+    ao_struct: Sequence[tuple[int, str, str, str]] | None,
+    clusters: Mapping[int, Sequence[int]] | None,
+) -> list[tuple[int, str, float]]:
+    """Rank one MO's contributions, optionally collapsed by cluster/element."""
+    if ao_struct is None:
+        order = np.argsort(np.abs(coeff))[::-1][:top_n]
+        return [(int(i), ao_labels[i], float(coeff[i])) for i in order]
+    if clusters is not None:
+        return _clustered_entries(coeff, ao_struct, clusters, top_n)
+    return _grouped_entries(coeff, ao_struct, top_n)
+
+
+def _validate_clusters(clusters: Mapping[int, Sequence[int]], n_atoms: int) -> None:
+    """Check cluster atom indices are in range and assigned to one cluster."""
+    seen: dict[int, int] = {}
+    for cid, atom_ids in clusters.items():
+        for aid in atom_ids:
+            if not 0 <= aid < n_atoms:
+                raise ValueError(
+                    f"Atom index {aid} in cluster {cid} out of range [0, {n_atoms})."
+                )
+            if aid in seen:
+                raise ValueError(
+                    f"Atom index {aid} appears in clusters {seen[aid]} and {cid}."
+                )
+            seen[aid] = cid
+
+
 def mo_ao_contributions(
     mf: Any,
     mo_indices: int | Sequence[int],
     *,
     top_n: int = 10,
     group_by_element: bool = False,
+    clusters: Mapping[int, Sequence[int]] | None = None,
 ) -> dict[int, dict[str, list[tuple[int, str, float]]]]:
     """Print the top-N atomic-orbital contributions to one or more MOs.
 
@@ -115,6 +194,13 @@ def mo_ao_contributions(
     ``C 2pz`` across the molecule is merged into one ``"C 2pz"`` group whose
     weight is the sum of the absolute coefficients of its members. Groups are
     ranked by that summed magnitude.
+
+    When *clusters* is given, contributions are collapsed by cluster and basis
+    label instead: each atom is mapped to the cluster containing it (atoms in no
+    cluster fall into a catch-all ``unassigned`` group), and ``|coefficient|``
+    is summed over all atoms of a cluster sharing a basis label. The group label
+    lists the cluster's member atoms, e.g. ``"C0,C1 2pz"``. *clusters* and
+    *group_by_element* are mutually exclusive.
 
     The result is always logged as a table with one column per orbital
     (restricted) or a pair of alpha/beta columns per orbital (unrestricted).
@@ -134,6 +220,10 @@ def mo_ao_contributions(
         If ``True``, sum ``|coefficient|`` over all atoms of the same element
         sharing a basis label, ranking the resulting groups instead of
         individual AOs.
+    clusters : mapping of int to sequence of int, optional
+        Maps a cluster id to the atom indices it contains. When given, sum
+        ``|coefficient|`` over the atoms of each cluster sharing a basis label.
+        Mutually exclusive with *group_by_element*.
 
     Returns:
     -------
@@ -145,6 +235,9 @@ def mo_ao_contributions(
         ``weight`` is the signed coefficient. Grouped: ``key`` is the number of
         AOs in the group and ``weight`` is the summed ``|coefficient|``.
     """
+    if clusters is not None and group_by_element:
+        raise ValueError("Pass at most one of `group_by_element` and `clusters`.")
+
     indices = [mo_indices] if isinstance(mo_indices, int) else list(mo_indices)
 
     mo_coeff = mf.mo_coeff
@@ -155,30 +248,35 @@ def mo_ao_contributions(
         else (("alpha", mo_coeff),)
     )
     ao_labels = mf.mol.ao_labels()
-    ao_struct = mf.mol.ao_labels(fmt=False) if group_by_element else None
+    grouped = group_by_element or clusters is not None
+    ao_struct = mf.mol.ao_labels(fmt=False) if grouped else None
     n_mo = channels[0][1].shape[1]
+
+    if clusters is not None:
+        _validate_clusters(clusters, mf.mol.natm)
 
     composition: dict[int, dict[str, list[tuple[int, str, float]]]] = {}
     for mo_idx in indices:
         if not 0 <= mo_idx < n_mo:
             raise ValueError(f"MO index {mo_idx} out of range [0, {n_mo}).")
-        per_spin: dict[str, list[tuple[int, str, float]]] = {}
-        for spin, coeff_matrix in channels:
-            coeff = coeff_matrix[:, mo_idx]
-            if ao_struct is not None:
-                per_spin[spin] = _grouped_entries(coeff, ao_struct, top_n)
-            else:
-                order = np.argsort(np.abs(coeff))[::-1][:top_n]
-                per_spin[spin] = [
-                    (int(i), ao_labels[i], float(coeff[i])) for i in order
-                ]
+        per_spin = {
+            spin: _entries_for_coeff(
+                coeff_matrix[:, mo_idx],
+                top_n,
+                ao_labels=ao_labels,
+                ao_struct=ao_struct,
+                clusters=clusters,
+            )
+            for spin, coeff_matrix in channels
+        }
         composition[mo_idx] = per_spin
 
-    detail = (
-        "summed |mo_coeff| per element+label"
-        if group_by_element
-        else "signed mo_coeff entries"
-    )
+    if clusters is not None:
+        detail = "summed |mo_coeff| per cluster+label"
+    elif group_by_element:
+        detail = "summed |mo_coeff| per element+label"
+    else:
+        detail = "signed mo_coeff entries"
     logger.info(
         "Top-%d AO contributions per MO (%s):\n%s",
         top_n,
