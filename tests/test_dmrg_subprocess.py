@@ -2,21 +2,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 
-if TYPE_CHECKING:
-    from pathlib import Path
-
-from aegiss.utils.dmrg_utils import _default_dmrg_schedule
 from aegiss.wavefunction.dmrg_subprocess import (
     _compute_soe,
     _read_outputs,
-    _write_fcidump,
-    _write_input,
     run_dmrg_subprocess,
 )
 
@@ -54,14 +47,14 @@ def mocked_run_dmrg_subprocess():
             return_value=(_FAKE_ENERGY, _FAKE_PDM1, _FAKE_NPC1),
         ) as mock_read,
         patch(
-            "aegiss.wavefunction.dmrg_subprocess.mcscf.CASCI",
+            "aegiss.utils.dmrg_utils.mcscf.CASCI",
             return_value=mock_casci,
         ) as MockCASCI,
         patch(
-            "aegiss.wavefunction.dmrg_subprocess.ao2mo.restore",
+            "aegiss.utils.dmrg_utils.ao2mo.restore",
             return_value=np.zeros((_NCAS, _NCAS, _NCAS, _NCAS)),
         ),
-        patch("aegiss.wavefunction.dmrg_subprocess.tools.fcidump.from_integrals"),
+        patch("aegiss.utils.dmrg_utils.tools.fcidump.from_integrals"),
         patch(
             "aegiss.wavefunction.dmrg_subprocess.resolve_nelecas",
             return_value=(1, 1),
@@ -175,48 +168,6 @@ class TestRunDmrgSubprocessEnvVars:
             run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
         mem_gb_arg = mock_wi.call_args[0][9]
         assert mem_gb_arg == pytest.approx(4.0)
-
-
-class TestWriteInput:
-    """Unit-test _write_input in isolation by inspecting the written file."""
-
-    def _make_input(self, tmp_path: Path, symm_type: str = "SZ") -> str:
-
-        bond_dims, noises, thrds = _default_dmrg_schedule(max_bond_dim=500)
-        path = tmp_path / "dmrg.conf"
-        fcidump = tmp_path / "FCIDUMP"
-        _write_input(
-            path, fcidump, 2, 0, tmp_path, bond_dims, noises, thrds, 4, 4.0, symm_type
-        )
-        return path.read_text()
-
-    def test_sz_mode_has_nonspinadapted(self, tmp_path) -> None:
-        content = self._make_input(tmp_path, symm_type="SZ")
-        assert "nonspinadapted" in content
-
-    def test_su2_mode_no_nonspinadapted(self, tmp_path) -> None:
-        content = self._make_input(tmp_path, symm_type="SU2")
-        assert "nonspinadapted" not in content
-
-    def test_required_keywords_present(self, tmp_path) -> None:
-        content = self._make_input(tmp_path)
-        for keyword in (
-            "hf_occ integral",
-            "noreorder",
-            "onepdm",
-            "correlation",
-            "sym c1",
-        ):
-            assert keyword in content, f"Missing keyword: {keyword!r}"
-
-    def test_schedule_block_present(self, tmp_path) -> None:
-        content = self._make_input(tmp_path)
-        lines = content.splitlines()
-        assert "schedule" in lines
-        assert "end" in lines
-        sched_start = lines.index("schedule")
-        sched_end = lines.index("end")
-        assert sched_end > sched_start + 1, "schedule block contains no rows"
 
 
 class TestComputeSOE:
@@ -339,40 +290,3 @@ class TestReadOutputs:
         np.save(node0 / "1pdm.npy", np.zeros((2, 2, 2)))
         with pytest.raises(FileNotFoundError):
             _read_outputs(tmp_path, ncas=2)
-
-
-class TestWriteFcidump:
-    """Unit-test _write_fcidump — verify ms is derived from spin (nalpha - nbeta)."""
-
-    def _call_write_fcidump(self, tmp_path, nelecas):
-        ncas = 3
-        mock_casci = MagicMock()
-        mock_casci.get_h1eff.return_value = (np.zeros((ncas, ncas)), 0.0)
-        mock_casci.get_h2eff.return_value = np.zeros((4,))
-        with (
-            patch(
-                "aegiss.wavefunction.dmrg_subprocess.mcscf.CASCI",
-                return_value=mock_casci,
-            ),
-            patch(
-                "aegiss.wavefunction.dmrg_subprocess.ao2mo.restore",
-                return_value=np.zeros((ncas, ncas, ncas, ncas)),
-            ),
-            patch(
-                "aegiss.wavefunction.dmrg_subprocess.tools.fcidump.from_integrals"
-            ) as mock_fcidump,
-        ):
-            _write_fcidump(tmp_path / "FCIDUMP", mf=None, ncas=ncas, nelecas=nelecas)
-        return mock_fcidump.call_args
-
-    def test_ms_equals_nalpha_minus_nbeta_closed_shell(self, tmp_path) -> None:
-        call_args = self._call_write_fcidump(tmp_path, nelecas=(2, 2))
-        assert call_args.kwargs["ms"] == 0
-
-    def test_ms_equals_nalpha_minus_nbeta_doublet(self, tmp_path) -> None:
-        call_args = self._call_write_fcidump(tmp_path, nelecas=(2, 1))
-        assert call_args.kwargs["ms"] == 1
-
-    def test_ms_equals_nalpha_minus_nbeta_triplet(self, tmp_path) -> None:
-        call_args = self._call_write_fcidump(tmp_path, nelecas=(3, 1))
-        assert call_args.kwargs["ms"] == 2

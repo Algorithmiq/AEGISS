@@ -11,10 +11,12 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from pyscf import ao2mo, mcscf, tools
-from pyscf.tools.fcidump import TOL, _convert_orbsym, write_eri, write_hcore
 
-from aegiss.utils.dmrg_utils import _default_dmrg_schedule
+from aegiss.utils.dmrg_utils import (
+    _default_dmrg_schedule,
+    _write_fcidump,
+    _write_input,
+)
 from aegiss.utils.env import mem, omp_num_threads
 from aegiss.utils.env import scratch_dir as get_scratch_dir
 from aegiss.utils.orbital_indices import resolve_nelecas
@@ -22,146 +24,6 @@ from aegiss.utils.orbital_indices import resolve_nelecas
 logger = logging.getLogger(__name__)
 
 _VALID_SYMM_TYPES = ("SU2", "SZ")
-DEFAULT_FLOAT_FORMAT = "%24.16f"
-
-
-def _write_fcidump(
-    path: Path,
-    mf: Any,
-    ncas: int,
-    nelecas: int | tuple[int, int],
-) -> None:
-    """Write a PySCF FCIDUMP for the CAS active space to *path*."""
-    mycas = mcscf.CASCI(mf, ncas, nelecas)
-    h1e, ecore = mycas.get_h1eff()
-    g2e = ao2mo.restore(1, mycas.get_h2eff(), ncas)
-    nalpha, nbeta = resolve_nelecas(nelecas)
-    tools.fcidump.from_integrals(
-        str(path), h1e, g2e, ncas, nelecas, ecore, orbsym=[1] * ncas, ms=nalpha - nbeta
-    )
-
-
-def _write_header(orb_sym: list[int], ncas: int, na: int, nb: int) -> str:
-    """Helper function to write the FCIDUMP header for UHF integrals."""
-    header = f" &FCI NORB= {ncas:3d},NELEC= {na + nb:4d},MS2= {na - nb:4d},\n"
-    header += f"  ORBSYM={','.join(str(i) for i in orb_sym)},\n"
-    header += "  ISYM=   1,\n"
-    header += "  IUHF=1,\n"
-    header += " &END\n"
-    return header
-
-
-def _write_uhf_fcidump(
-    path: Path,
-    mf: Any,
-    ncas: int,
-    nelecas: tuple[int, int],
-    orb_sym: list[int] | None = None,
-    tol: float | Any = TOL,
-) -> None:
-    """Write a PySCF FCIDUMP for the Unrestricted CAS active space to *path*."""
-    na, nb = nelecas
-    mycas = mcscf.UCASCI(mf, ncas, nelecas)
-    h1e, ecore = mycas.get_h1eff()
-    g2e = mycas.get_h2eff()
-
-    if not isinstance(h1e, tuple) or len(h1e) != 2:
-        raise TypeError("expected UHF h1e as a 2-tuple (alpha, beta)")
-    if not isinstance(g2e, tuple) or len(g2e) != 3:
-        raise TypeError("expected UHF g2e as a 3-tuple (aa, ab, bb)")
-
-    mh1e_a = h1e[0]
-    mh1e_b = h1e[1]
-    mh1e_a[np.abs(mh1e_a) < tol] = 0.0
-    mh1e_b[np.abs(mh1e_b) < tol] = 0.0
-
-    g2e_aa = ao2mo.restore(8, g2e[0], ncas)
-    g2e_ab = ao2mo.restore(4, g2e[1], ncas)
-    g2e_bb = ao2mo.restore(8, g2e[2], ncas)
-
-    g2e_aa[np.abs(g2e_aa) < tol] = 0.0
-    g2e_ab[np.abs(g2e_ab) < tol] = 0.0
-    g2e_bb[np.abs(g2e_bb) < tol] = 0.0
-
-    orb_sym = (
-        _convert_orbsym(mf.mol, orb_sym, molpro_orbsym=True)
-        if orb_sym is not None
-        else [1] * ncas
-    )
-
-    header = _write_header(orb_sym, ncas, na, nb)
-    with path.open("w") as f:
-        f.write(header)
-        output_format = DEFAULT_FLOAT_FORMAT + "  0  0  0  0\n"
-        # block2's UHF reader uses a "0.0  0 0 0 0" sentinel line to advance from
-        # one spin sector to the next, so each block MUST be followed by one.
-        # Omitting them makes block2 dump everything into the aa sector (segfault /
-        # zero bb/ab/h1e) even though the per-value text diff looks identical.
-        write_eri(f, g2e_aa, ncas, tol=tol, float_format=DEFAULT_FLOAT_FORMAT)
-        f.write(output_format % 0.0)
-        write_eri(f, g2e_bb, ncas, tol=tol, float_format=DEFAULT_FLOAT_FORMAT)
-        f.write(output_format % 0.0)
-        write_eri(f, g2e_ab, ncas, tol=tol, float_format=DEFAULT_FLOAT_FORMAT)
-        f.write(output_format % 0.0)
-        write_hcore(f, mh1e_a, ncas, tol=tol, float_format=DEFAULT_FLOAT_FORMAT)
-        f.write(output_format % 0.0)
-        write_hcore(f, mh1e_b, ncas, tol=tol, float_format=DEFAULT_FLOAT_FORMAT)
-        f.write(output_format % 0.0)
-        f.write(output_format % ecore)
-
-
-def _write_input(
-    path: Path,
-    fcidump_path: Path,
-    n_elec: int,
-    spin: int,
-    scratch_dir: Path,
-    bond_dims: list[int],
-    noises: list[float],
-    thrds: list[float],
-    n_threads: int,
-    stack_mem_gb: float,
-    symm_type: str = "SZ",
-) -> None:
-    """Write a StackBlock-compatible block2main input file to *path*."""
-    n_sweeps = len(bond_dims)
-    twosite_to_onesite = max(n_sweeps - 2, 0)
-
-    sched_rows: list[str] = []
-    prev = None
-    for i, (m, thr, noise) in enumerate(zip(bond_dims, thrds, noises, strict=True)):
-        if prev is None or (m, thr, noise) != prev:
-            sched_rows.append(f"{i}  {m}  {thr}  {noise}")
-            prev = (m, thr, noise)
-
-    mem_gb = int(stack_mem_gb) if stack_mem_gb == int(stack_mem_gb) else stack_mem_gb
-
-    lines: list[str] = [
-        f"orbitals {fcidump_path}",
-        f"nelec {n_elec}",
-        f"spin {spin}",
-        "hf_occ integral",
-    ]
-    if symm_type == "SZ":
-        lines.append("nonspinadapted")
-    lines += [
-        "sym c1",
-        "noreorder",
-        f"prefix {scratch_dir}/",
-        f"num_thrds {n_threads}",
-        f"mem {mem_gb}G",
-        "",
-        "schedule",
-        *sched_rows,
-        "end",
-        f"twodot_to_onedot {twosite_to_onesite}",
-        f"maxiter {n_sweeps + 2}",
-        f"sweep_tol {thrds[-1]}",
-        "",
-        "onepdm",
-        "correlation",
-    ]
-    path.write_text("\n".join(lines))
 
 
 def _read_outputs(scratch_dir: Path, ncas: int) -> tuple[float, np.ndarray, np.ndarray]:
