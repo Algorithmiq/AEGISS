@@ -129,9 +129,9 @@ def _write_uhf_fcidump(
     mh1e_a[np.abs(mh1e_a) < tol] = 0.0
     mh1e_b[np.abs(mh1e_b) < tol] = 0.0
 
-    g2e_aa = ao2mo.restore(8, g2e[0], ncas)
-    g2e_ab = ao2mo.restore(4, g2e[1], ncas)
-    g2e_bb = ao2mo.restore(8, g2e[2], ncas)
+    g2e_aa = ao2mo.restore(8, g2e[0], ncas).copy()
+    g2e_ab = ao2mo.restore(4, g2e[1], ncas).copy()
+    g2e_bb = ao2mo.restore(8, g2e[2], ncas).copy()
 
     g2e_aa[np.abs(g2e_aa) < tol] = 0.0
     g2e_ab[np.abs(g2e_ab) < tol] = 0.0
