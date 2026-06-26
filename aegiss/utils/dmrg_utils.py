@@ -124,8 +124,8 @@ def _write_uhf_fcidump(
     if not isinstance(g2e, tuple) or len(g2e) != 3:
         raise TypeError("expected UHF g2e as a 3-tuple (aa, ab, bb)")
 
-    mh1e_a = h1e[0]
-    mh1e_b = h1e[1]
+    mh1e_a = h1e[0].copy()
+    mh1e_b = h1e[1].copy()
     mh1e_a[np.abs(mh1e_a) < tol] = 0.0
     mh1e_b[np.abs(mh1e_b) < tol] = 0.0
 
