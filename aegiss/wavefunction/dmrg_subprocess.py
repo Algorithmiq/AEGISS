@@ -11,11 +11,13 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+from pyscf import scf
 
 from aegiss.utils.dmrg_utils import (
     _default_dmrg_schedule,
     _write_fcidump,
     _write_input,
+    _write_uhf_fcidump,
 )
 from aegiss.utils.env import mem, omp_num_threads
 from aegiss.utils.env import scratch_dir as get_scratch_dir
@@ -51,6 +53,10 @@ def _compute_soe(pdm1: np.ndarray, npc1: np.ndarray) -> np.ndarray:
     """Compute single-orbital von Neumann entropy from 1-PDM and 1-NPC.
 
     ``npc1[0,i,i] = n_i + 2*d_i``  →  ``d_i = (npc1[0,i,i] - n_i) / 2``.
+
+    Each *spatial* orbital is a 4-state subsystem (empty, alpha, beta, double),
+    so this is the spin-summed entropy. For separate per-spin entropies see
+    :func:`_compute_spin_soe`.
     """
     ncas = pdm1.shape[-1]
     soe = np.zeros(ncas)
@@ -63,6 +69,32 @@ def _compute_soe(pdm1: np.ndarray, npc1: np.ndarray) -> np.ndarray:
     return soe
 
 
+def _compute_spin_soe(pdm1: np.ndarray) -> np.ndarray:
+    """Compute spin-resolved single spin-orbital entropies from the 1-PDM.
+
+    A single spin-orbital is a 2-state mode (occupied / empty). For a
+    particle-number-conserving state its reduced density matrix is diagonal with
+    eigenvalues ``{n_sigma, 1 - n_sigma}`` where ``n_sigma = pdm1[sigma, i, i]``
+    is the spin-orbital occupation, so the entropy is the binary entropy of the
+    occupation — this needs only the 1-PDM diagonal (no 1-NPC).
+
+    Returns an array of shape ``(2, ncas)``: row 0 is alpha, row 1 is beta.
+
+    Note: by subadditivity the spin-summed orbital entropy from
+    :func:`_compute_soe` is at most ``S_alpha + S_beta``, with equality only when
+    the two spin modes of an orbital are uncorrelated.
+    """
+    ncas = pdm1.shape[-1]
+    soe = np.zeros((2, ncas))
+    for spin in (0, 1):
+        n = np.clip(np.diagonal(pdm1[spin]), 0.0, 1.0)
+        w = np.stack([n, 1.0 - n])  # (2, ncas)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            terms = np.where(w > 1e-14, -w * np.log(w), 0.0)
+        soe[spin] = terms.sum(axis=0)
+    return soe
+
+
 def run_dmrg_subprocess(
     mf: Any,
     ncas: int,
@@ -71,7 +103,9 @@ def run_dmrg_subprocess(
     symm_type: str = "SZ",
     verbosity: int = 0,
     *,
+    unrestricted: bool | None = None,
     get_qmi: bool = True,
+    spin_resolved: bool = False,
 ) -> tuple[float, np.ndarray | None]:
     """Run a DMRG calculation via the ``block2main`` subprocess.
 
@@ -90,15 +124,27 @@ def run_dmrg_subprocess(
         block2main runs without spin adaptation; ``'SU2'`` omits it.
     verbosity : int
         If non-zero, block2main stdout/stderr are forwarded to the terminal.
+    unrestricted : bool or None
+        Whether to emit an unrestricted (UHF, ``IUHF=1``) FCIDUMP with separate
+        aa/bb/ab and alpha/beta blocks. If ``None`` (default), autodetected from
+        ``isinstance(mf, scf.uhf.UHF)``; pass ``True``/``False`` to override.
+        UHF requires ``symm_type='SZ'``.
     get_qmi : bool
         If ``True``, compute and return single-orbital entropies.
+    spin_resolved : bool
+        If ``True``, return separate alpha/beta spin-orbital entropies as a
+        ``(2, ncas)`` array (row 0 = alpha, row 1 = beta) instead of the
+        spin-summed ``(ncas,)`` vector. Only meaningful with *get_qmi*; the
+        spin-summed default feeds the entropy-screening pipeline, so callers
+        that screen orbitals should leave this ``False``.
 
     Returns:
     -------
     energy : float
         DMRG ground-state energy.
     soe1 : np.ndarray or None
-        Single-orbital entropies (``None`` if *get_qmi* is ``False``).
+        Single-orbital entropies (``None`` if *get_qmi* is ``False``). Shape
+        ``(ncas,)`` by default, or ``(2, ncas)`` if *spin_resolved* is ``True``.
         Two-orbital entropies and mutual information are not available from
         the ``1pdm`` + ``1npc`` output; pass them from an external source to
         any downstream plotting functions if needed.
@@ -106,6 +152,14 @@ def run_dmrg_subprocess(
     if symm_type not in _VALID_SYMM_TYPES:
         raise ValueError(
             f"Unsupported symmetry type: {symm_type!r}. Expected one of {list(_VALID_SYMM_TYPES)}."
+        )
+
+    if unrestricted is None:
+        unrestricted = isinstance(mf, scf.uhf.UHF)
+    if unrestricted and symm_type != "SZ":
+        raise ValueError(
+            f"Unrestricted (UHF) integrals require symm_type='SZ', got {symm_type!r}. "
+            "block2 cannot read an IUHF=1 FCIDUMP in a spin-adapted (SU2) run."
         )
 
     scratch = get_scratch_dir()
@@ -120,7 +174,10 @@ def run_dmrg_subprocess(
     logger.info(
         "----------------DMRG Calculation (symmetry: %s)----------------\n", symm_type
     )
-    logger.info("Using pyscf.CASCI to obtain integrals for DMRG...")
+    logger.info(
+        "Using pyscf.%s to obtain integrals for DMRG...",
+        "UCASCI" if unrestricted else "CASCI",
+    )
     logger.info("CAS (ncas=%d, nelecas=%s)", ncas, nelecas)
     logger.info(
         "System parameters: n_sites=%d, n_elec=%d, spin=%d, symm_type=%s",
@@ -143,7 +200,10 @@ def run_dmrg_subprocess(
     work_dir = Path(scratch) / f"dmrg_subprocess_{time.time_ns()}"
     work_dir.mkdir(parents=True, exist_ok=False)
     fcidump_path = work_dir / "FCIDUMP"
-    _write_fcidump(fcidump_path, mf, ncas, nelecas)
+    if unrestricted:
+        _write_uhf_fcidump(fcidump_path, mf, ncas, (nalpha, nbeta))
+    else:
+        _write_fcidump(fcidump_path, mf, ncas, nelecas)
 
     input_path = work_dir / "dmrg.conf"
     _write_input(
@@ -151,6 +211,7 @@ def run_dmrg_subprocess(
         fcidump_path,
         nalpha + nbeta,
         nalpha - nbeta,
+        ncas,
         work_dir,
         bond_dims,
         noises,
@@ -185,5 +246,5 @@ def run_dmrg_subprocess(
     if not get_qmi:
         return energy, None
 
-    soe1 = _compute_soe(pdm1, npc1)
+    soe1 = _compute_spin_soe(pdm1) if spin_resolved else _compute_soe(pdm1, npc1)
     return energy, soe1

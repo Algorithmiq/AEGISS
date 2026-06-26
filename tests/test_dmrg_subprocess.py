@@ -6,9 +6,11 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
+from pyscf import scf
 
 from aegiss.wavefunction.dmrg_subprocess import (
     _compute_soe,
+    _compute_spin_soe,
     _read_outputs,
     run_dmrg_subprocess,
 )
@@ -131,6 +133,66 @@ class TestRunDmrgSubprocessSymmTypeValidation:
 
 
 @pytest.mark.usefixtures("mocked_run_dmrg_subprocess")
+class TestRunDmrgSubprocessUnrestrictedDispatch:
+    """`unrestricted` selects the UHF writer; autodetect + override + SZ guard."""
+
+    @staticmethod
+    def _run_with_patched_writers(**kwargs):
+        with (
+            patch("aegiss.wavefunction.dmrg_subprocess._write_uhf_fcidump") as mock_uhf,
+            patch("aegiss.wavefunction.dmrg_subprocess._write_fcidump") as mock_rhf,
+        ):
+            run_dmrg_subprocess(ncas=_NCAS, get_qmi=False, **kwargs)
+        return mock_uhf, mock_rhf
+
+    def test_unrestricted_true_calls_uhf_writer(self) -> None:
+        mock_uhf, mock_rhf = self._run_with_patched_writers(
+            mf=None, nelecas=2, unrestricted=True
+        )
+        mock_uhf.assert_called_once()
+        mock_rhf.assert_not_called()
+
+    def test_unrestricted_false_calls_restricted_writer(self) -> None:
+        mock_uhf, mock_rhf = self._run_with_patched_writers(
+            mf=None, nelecas=2, unrestricted=False
+        )
+        mock_rhf.assert_called_once()
+        mock_uhf.assert_not_called()
+
+    def test_default_none_autodetects_uhf_from_mf(self) -> None:
+        mock_uhf, mock_rhf = self._run_with_patched_writers(
+            mf=MagicMock(spec=scf.uhf.UHF), nelecas=2
+        )
+        mock_uhf.assert_called_once()
+        mock_rhf.assert_not_called()
+
+    def test_default_none_uses_restricted_for_non_uhf_mf(self) -> None:
+        mock_uhf, mock_rhf = self._run_with_patched_writers(mf=None, nelecas=2)
+        mock_rhf.assert_called_once()
+        mock_uhf.assert_not_called()
+
+    def test_explicit_false_overrides_uhf_mf(self) -> None:
+        mock_uhf, mock_rhf = self._run_with_patched_writers(
+            mf=MagicMock(spec=scf.uhf.UHF), nelecas=2, unrestricted=False
+        )
+        mock_rhf.assert_called_once()
+        mock_uhf.assert_not_called()
+
+    def test_uhf_writer_receives_nalpha_nbeta_tuple(self) -> None:
+        # resolve_nelecas is patched to return (1, 1) by the fixture.
+        mock_uhf, _ = self._run_with_patched_writers(
+            mf=None, nelecas=2, unrestricted=True
+        )
+        assert mock_uhf.call_args[0][3] == (1, 1)
+
+    def test_unrestricted_with_su2_raises_value_error(self) -> None:
+        with pytest.raises(ValueError, match="require symm_type='SZ'"):
+            run_dmrg_subprocess(
+                mf=None, ncas=_NCAS, nelecas=2, symm_type="SU2", unrestricted=True
+            )
+
+
+@pytest.mark.usefixtures("mocked_run_dmrg_subprocess")
 class TestRunDmrgSubprocessEnvVars:
     """Environment variable handling for the subprocess backend."""
 
@@ -138,35 +200,35 @@ class TestRunDmrgSubprocessEnvVars:
         monkeypatch.setenv("OMP_NUM_THREADS", "8")
         with patch("aegiss.wavefunction.dmrg_subprocess._write_input") as mock_wi:
             run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
-        n_threads_arg = mock_wi.call_args[0][8]  # positional: n_threads
+        n_threads_arg = mock_wi.call_args[0][9]  # positional: n_threads
         assert n_threads_arg == 8
 
     def test_scratch_dir(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setenv("SCRATCH_DIR", str(tmp_path))
         with patch("aegiss.wavefunction.dmrg_subprocess._write_input") as mock_wi:
             run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
-        scratch_arg = mock_wi.call_args[0][4]  # positional: scratch_dir (Path)
+        scratch_arg = mock_wi.call_args[0][5]  # positional: scratch_dir (Path)
         assert str(scratch_arg).startswith(str(tmp_path))
 
     def test_mem_default(self, monkeypatch) -> None:
         monkeypatch.delenv("MEM", raising=False)
         with patch("aegiss.wavefunction.dmrg_subprocess._write_input") as mock_wi:
             run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
-        mem_gb_arg = mock_wi.call_args[0][9]  # positional: stack_mem_gb
+        mem_gb_arg = mock_wi.call_args[0][10]  # positional: stack_mem_gb
         assert mem_gb_arg == pytest.approx(4.0)
 
     def test_mem_env_var(self, monkeypatch) -> None:
         monkeypatch.setenv("MEM", "16")
         with patch("aegiss.wavefunction.dmrg_subprocess._write_input") as mock_wi:
             run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
-        mem_gb_arg = mock_wi.call_args[0][9]
+        mem_gb_arg = mock_wi.call_args[0][10]
         assert mem_gb_arg == pytest.approx(16.0)
 
     def test_mem_env_var_non_integer_falls_back_to_default(self, monkeypatch) -> None:
         monkeypatch.setenv("MEM", "not_an_int")
         with patch("aegiss.wavefunction.dmrg_subprocess._write_input") as mock_wi:
             run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
-        mem_gb_arg = mock_wi.call_args[0][9]
+        mem_gb_arg = mock_wi.call_args[0][10]
         assert mem_gb_arg == pytest.approx(4.0)
 
 
@@ -208,6 +270,48 @@ class TestComputeSOE:
         pdm1, npc1 = self._make_pdm_npc(0.5, 0.5, 0.25, ncas=4)
         soe = _compute_soe(pdm1, npc1)
         assert soe.shape == (4,)
+
+
+class TestComputeSpinSOE:
+    """Unit-test _compute_spin_soe: per-spin entropy = binary entropy of occupation."""
+
+    @staticmethod
+    def _pdm(n_alpha: float, n_beta: float, ncas: int = 1) -> np.ndarray:
+        pdm1 = np.zeros((2, ncas, ncas))
+        for i in range(ncas):
+            pdm1[0, i, i] = n_alpha
+            pdm1[1, i, i] = n_beta
+        return pdm1
+
+    def test_shape_is_two_by_ncas(self) -> None:
+        soe = _compute_spin_soe(self._pdm(0.5, 0.5, ncas=4))
+        assert soe.shape == (2, 4)
+
+    def test_empty_and_full_spin_orbitals_are_zero(self) -> None:
+        soe = _compute_spin_soe(self._pdm(1.0, 0.0))
+        # alpha fully occupied, beta empty -> both binary entropies vanish
+        assert soe[0, 0] == pytest.approx(0.0)
+        assert soe[1, 0] == pytest.approx(0.0)
+
+    def test_half_filled_spin_orbital_is_log2(self) -> None:
+        soe = _compute_spin_soe(self._pdm(0.5, 0.5))
+        assert soe[0, 0] == pytest.approx(np.log(2.0))
+        assert soe[1, 0] == pytest.approx(np.log(2.0))
+
+    def test_alpha_and_beta_independent(self) -> None:
+        # alpha half-filled (log2), beta fully occupied (0)
+        soe = _compute_spin_soe(self._pdm(0.5, 1.0))
+        assert soe[0, 0] == pytest.approx(np.log(2.0))
+        assert soe[1, 0] == pytest.approx(0.0)
+
+    def test_subadditive_vs_spin_summed(self) -> None:
+        # spin-summed orbital entropy must not exceed S_alpha + S_beta
+        pdm1 = self._pdm(0.5, 0.5)
+        npc1 = np.zeros((2, 1, 1))
+        npc1[0, 0, 0] = (0.5 + 0.5) + 2 * 0.25  # d = 0.25 -> equal-weight 4 states
+        summed = _compute_soe(pdm1, npc1)
+        spin = _compute_spin_soe(pdm1)
+        assert summed[0] <= spin.sum(axis=0)[0] + 1e-12
 
 
 class TestReadOutputs:

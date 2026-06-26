@@ -164,11 +164,34 @@ def _write_uhf_fcidump(
         f.write(output_format % ecore)
 
 
+def _aufbau_hf_occ(n_elec: int, spin: int, ncas: int) -> str:
+    """Spin-summed aufbau occupation string for block2main's ``occ`` warmup.
+
+    Returns ``ncas`` space-separated integers (each 0/1/2): the lowest
+    ``min(na, nb)`` orbitals doubly occupied, the next ``|na - nb|`` singly
+    occupied, the rest empty (built by adding one per alpha and one per beta
+    electron from the lowest orbital up).
+
+    Fed to block2main's ``occ`` keyword (with ``warmup occ``), this seeds the
+    initial MPS bond-dimension distribution at the reference determinant, which
+    avoids a local-minimum trap that the bare random init falls into for
+    near-degenerate / multireference active spaces. The ``occ`` line must have
+    exactly ``ncas`` *spatial* values; the per-spin (2*ncas) form is not used by
+    this path, so the spin-summed spatial form is required.
+    """
+    na = (n_elec + spin) // 2
+    nb = (n_elec - spin) // 2
+    return " ".join(
+        str((1 if i < na else 0) + (1 if i < nb else 0)) for i in range(ncas)
+    )
+
+
 def _write_input(
     path: Path,
     fcidump_path: Path,
     n_elec: int,
     spin: int,
+    ncas: int,
     scratch_dir: Path,
     bond_dims: list[int],
     noises: list[float],
@@ -194,7 +217,17 @@ def _write_input(
         f"orbitals {fcidump_path}",
         f"nelec {n_elec}",
         f"spin {spin}",
+        # Keep hf_occ=integral so block2main stays in StackBlock-compatible mode
+        # (it writes outputs under node0/, which _read_outputs reads). Drive the
+        # occupation warmup explicitly instead: seed the initial MPS at the
+        # reference determinant (warmup occ) plus the full-FCI quantum-number
+        # distribution (full_fci_space). Both guard against a local-minimum trap
+        # the bare random init hits on near-degenerate active spaces.
         "hf_occ integral",
+        "warmup occ",
+        f"occ {_aufbau_hf_occ(n_elec, spin, ncas)}",
+        "cbias 0.2",
+        "full_fci_space",
     ]
     if symm_type == "SZ":
         lines.append("nonspinadapted")

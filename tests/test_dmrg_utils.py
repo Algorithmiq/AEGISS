@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 from aegiss.utils.dmrg_utils import (
+    _aufbau_hf_occ,
     _default_dmrg_schedule,
     _write_fcidump,
     _write_header,
@@ -93,15 +94,55 @@ class TestDefaultDmrgSchedule:
             _default_dmrg_schedule(max_bond_dim=250)
 
 
+class TestAufbauHfOcc:
+    """Unit-test the spin-summed aufbau occupation string builder."""
+
+    def test_closed_shell_doubly_occupied_then_empty(self) -> None:
+        # n_elec=6, spin=0 -> na=nb=3 -> three doubly occupied
+        assert _aufbau_hf_occ(6, 0, 6) == "2 2 2 0 0 0"
+
+    def test_open_shell_high_spin_has_singly_occupied(self) -> None:
+        # n_elec=8, spin=2 -> na=5, nb=3 -> 3 doubly, 2 singly, 1 empty
+        assert _aufbau_hf_occ(8, 2, 6) == "2 2 2 1 1 0"
+
+    def test_open_shell_doublet(self) -> None:
+        # n_elec=5, spin=1 -> na=3, nb=2 -> 2 doubly, 1 singly
+        assert _aufbau_hf_occ(5, 1, 6) == "2 2 1 0 0 0"
+
+    def test_length_equals_ncas(self) -> None:
+        assert len(_aufbau_hf_occ(4, 0, 8).split()) == 8
+
+    def test_electron_count_preserved(self) -> None:
+        occ = _aufbau_hf_occ(7, 1, 6)
+        assert sum(int(x) for x in occ.split()) == 7
+
+    def test_values_are_zero_one_or_two(self) -> None:
+        occ = _aufbau_hf_occ(8, 2, 6)
+        assert all(int(x) in (0, 1, 2) for x in occ.split())
+
+
 class TestWriteInput:
     """Unit-test _write_input in isolation by inspecting the written file."""
 
-    def _make_input(self, tmp_path: Path, symm_type: str = "SZ") -> str:
+    def _make_input(
+        self, tmp_path: Path, symm_type: str = "SZ", n_elec: int = 2, ncas: int = 4
+    ) -> str:
         bond_dims, noises, thrds = _default_dmrg_schedule(max_bond_dim=500)
         path = tmp_path / "dmrg.conf"
         fcidump = tmp_path / "FCIDUMP"
         _write_input(
-            path, fcidump, 2, 0, tmp_path, bond_dims, noises, thrds, 4, 4.0, symm_type
+            path,
+            fcidump,
+            n_elec,
+            0,
+            ncas,
+            tmp_path,
+            bond_dims,
+            noises,
+            thrds,
+            4,
+            4.0,
+            symm_type,
         )
         return path.read_text()
 
@@ -116,13 +157,21 @@ class TestWriteInput:
     def test_required_keywords_present(self, tmp_path) -> None:
         content = self._make_input(tmp_path)
         for keyword in (
-            "hf_occ integral",
+            "hf_occ integral",  # kept for StackBlock-compatible node0/ output layout
             "noreorder",
             "onepdm",
             "correlation",
             "sym c1",
+            "full_fci_space",
         ):
             assert keyword in content, f"Missing keyword: {keyword!r}"
+
+    def test_occ_warmup_uses_aufbau_string(self, tmp_path) -> None:
+        # n_elec=2, spin=0, ncas=4 -> na=nb=1 -> "2 0 0 0"
+        content = self._make_input(tmp_path, n_elec=2, ncas=4)
+        assert "warmup occ" in content
+        assert "occ 2 0 0 0" in content
+        assert "cbias 0.2" in content
 
     def test_schedule_block_present(self, tmp_path) -> None:
         content = self._make_input(tmp_path)
