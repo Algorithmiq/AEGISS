@@ -6,12 +6,17 @@ aufbau ``hf_occ`` warmup + ``full_fci_space`` now written by ``_write_input``
 must recover the exact CASCI ground state on cases that previously got stuck
 ~0.04-0.14 Ha too high.
 
-Skipped automatically when pyscf/pyblock2/block2main are unavailable. Marked
-``slow`` (each case runs a real UHF + stability search + DMRG).
+Skipped automatically when pyscf/pyblock2/block2main are unavailable, and on CI:
+these spawn a real ``block2main`` subprocess, which does not run reliably in the
+CI container (OpenMPI/runtime constraints make it exit with status 2). The rest
+of the suite mocks ``block2main`` for that reason; these run locally as a
+regression guard. Marked ``slow`` (each case runs a real UHF + stability search
++ DMRG).
 """
 
 from __future__ import annotations
 
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -32,9 +37,16 @@ def _has_block2main() -> bool:
     return (Path(sys.executable).parent / "block2main").exists()
 
 
+# GitHub Actions (and most CI) set CI=true; block2main subprocess execution is
+# not portable to the CI container, so run these only in local dev.
+_ON_CI = os.environ.get("CI", "").lower() in ("1", "true")
+
 pytestmark = [
     pytest.mark.slow,
     pytest.mark.skipif(not _has_block2main(), reason="block2main not available"),
+    pytest.mark.skipif(
+        _ON_CI, reason="block2main subprocess not reliable on CI (exit status 2)"
+    ),
 ]
 
 

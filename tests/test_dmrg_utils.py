@@ -264,8 +264,10 @@ class TestWriteUhfFcidump:
 
     ``write_eri`` / ``write_hcore`` (pyscf's own, already tested upstream) are
     mocked out so the file contains only the header plus the sentinel/core lines
-    this function is responsible for; ``ao2mo.restore`` is the identity so the
-    arrays handed to ``write_eri`` keep their object identity for order checks.
+    this function is responsible for; ``ao2mo.restore`` is the identity. Each
+    block is filled with a distinct constant so the block *order* can be checked
+    by value (the writer copies arrays before zeroing, so identity is not
+    preserved).
     """
 
     def _call(
@@ -316,16 +318,16 @@ class TestWriteUhfFcidump:
         _, mock_eri, _, _h1e, g2e = self._call(tmp_path)
         written = [c.args[1] for c in mock_eri.call_args_list]
         assert len(written) == 3
-        assert written[0] is g2e[0]  # aa
-        assert written[1] is g2e[2]  # bb (before ab — matches block2's layout)
-        assert written[2] is g2e[1]  # ab
+        assert np.array_equal(written[0], g2e[0])  # aa
+        assert np.array_equal(written[1], g2e[2])  # bb (before ab — block2 layout)
+        assert np.array_equal(written[2], g2e[1])  # ab
 
     def test_one_electron_blocks_written_alpha_then_beta(self, tmp_path) -> None:
         _, _, mock_hcore, h1e, _g2e = self._call(tmp_path)
         written = [c.args[1] for c in mock_hcore.call_args_list]
         assert len(written) == 2
-        assert written[0] is h1e[0]  # alpha
-        assert written[1] is h1e[1]  # beta
+        assert np.array_equal(written[0], h1e[0])  # alpha
+        assert np.array_equal(written[1], h1e[1])  # beta
 
     def test_sentinel_after_every_block_plus_core_line(self, tmp_path) -> None:
         # 5 blocks (aa, bb, ab, alpha, beta) each followed by a 0-valued
