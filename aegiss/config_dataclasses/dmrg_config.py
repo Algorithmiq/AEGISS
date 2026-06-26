@@ -27,6 +27,14 @@ class DMRGConfig:
         calculations; ``'SU2'`` is faster but needs MPS conversion for entropies.
     verbosity : int, default 0
         Verbosity level for block2 output.  Higher values produce more detailed logs.
+    unrestricted : bool or None, default None
+        Whether to emit an unrestricted (UHF) FCIDUMP. ``None`` autodetects from
+        the mean-field type (``isinstance(mf, scf.uhf.UHF)``); pass ``True``/
+        ``False`` to override. UHF requires ``symm_type='SZ'``.
+    reorder : {'noreorder', 'fiedler'}, default 'noreorder'
+        Orbital ordering for block2main. ``'noreorder'`` keeps the FCIDUMP order
+        and enables ``full_fci_space``; ``'fiedler'`` reorders by the Fiedler
+        vector and disables ``full_fci_space``.
     """
 
     ncas: int
@@ -34,6 +42,8 @@ class DMRGConfig:
     max_bond_dim: int = 500
     symm_type: Literal["SZ", "SU2"] = "SZ"
     verbosity: int = 0
+    unrestricted: bool | None = None
+    reorder: Literal["noreorder", "fiedler"] = "noreorder"
 
     def __post_init__(self) -> None:
         """Validate the configuration parameters.
@@ -43,6 +53,11 @@ class DMRGConfig:
         ValueError
             If any of the parameters are out of their expected ranges or have invalid values.
         """
+        self._validate_cas()
+        self._validate_solver()
+
+    def _validate_cas(self) -> None:
+        """Validate the active-space size and electron count."""
         if self.ncas <= 0:
             raise ValueError(
                 f"DMRGConfig: Number of active orbitals (`ncas`) must be positive, got {self.ncas}."
@@ -60,6 +75,9 @@ class DMRGConfig:
             raise ValueError(
                 f"DMRGConfig: `nelecas` must satisfy nalpha >= nbeta >= 0, got {self.nelecas}."
             )
+
+    def _validate_solver(self) -> None:
+        """Validate the bond dimension, symmetry, verbosity, and ordering options."""
         if self.max_bond_dim <= 0:
             raise ValueError(
                 f"DMRGConfig: Target bond dimension (`max_bond_dim`) must be positive, got {self.max_bond_dim}."
@@ -75,4 +93,14 @@ class DMRGConfig:
         if self.verbosity < 0:
             raise ValueError(
                 f"DMRGConfig: `verbosity` must be non-negative, got {self.verbosity}."
+            )
+        if self.reorder not in ("noreorder", "fiedler"):
+            raise ValueError(
+                f"DMRGConfig: Invalid reorder {self.reorder!r}. "
+                "Must be 'noreorder' or 'fiedler'."
+            )
+        if self.unrestricted is True and self.symm_type != "SZ":
+            raise ValueError(
+                "DMRGConfig: `unrestricted=True` requires `symm_type='SZ'`, "
+                f"got {self.symm_type!r}."
             )

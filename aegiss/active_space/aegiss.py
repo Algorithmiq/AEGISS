@@ -75,6 +75,8 @@ def select_aegiss(
         symm_type=dmrg_config.symm_type,
         max_bond_dim=dmrg_config.max_bond_dim,
         verbosity=dmrg_config.verbosity,
+        unrestricted=dmrg_config.unrestricted,
+        reorder=dmrg_config.reorder,
     )
     if output_config.save_plots and soe1 is not None:
         _make_soe_plots(

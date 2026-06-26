@@ -20,6 +20,24 @@ class TestDMRGConfig:
         assert cfg.max_bond_dim == 500
         assert cfg.symm_type == "SZ"
         assert cfg.verbosity == 0
+        assert cfg.unrestricted is None
+        assert cfg.reorder == "noreorder"
+
+    def test_reorder_fiedler_valid(self) -> None:
+        cfg = DMRGConfig(ncas=4, nelecas=4, reorder="fiedler")
+        assert cfg.reorder == "fiedler"
+
+    def test_invalid_reorder_raises(self) -> None:
+        with pytest.raises(ValueError, match="reorder"):
+            DMRGConfig(ncas=4, nelecas=4, reorder="bogus")  # type: ignore[arg-type]
+
+    def test_unrestricted_override_valid(self) -> None:
+        cfg = DMRGConfig(ncas=4, nelecas=(3, 1), unrestricted=True)
+        assert cfg.unrestricted is True
+
+    def test_unrestricted_with_su2_raises(self) -> None:
+        with pytest.raises(ValueError, match="symm_type='SZ'"):
+            DMRGConfig(ncas=4, nelecas=4, unrestricted=True, symm_type="SU2")
 
     def test_zero_ncas_raises(self) -> None:
         with pytest.raises(ValueError, match="ncas"):
