@@ -41,13 +41,15 @@ pytestmark = [
 def _broken_symmetry_uhf(atom: str, spin: int, charge: int = 0):
     """Converge UHF, then follow the internal instability to the broken-symmetry
     (multireference) solution."""
-    mol = gto.M(atom=atom, basis="cc-pvdz", spin=spin, charge=charge,
-                symmetry=False, verbose=0)
+    mol = gto.M(
+        atom=atom, basis="cc-pvdz", spin=spin, charge=charge, symmetry=False, verbose=0
+    )
     mf = scf.UHF(mol).run()
     mo = mf.stability()[0]
     return mf.run(mf.make_rdm1(mo, mf.mo_occ))
 
 
+@pytest.mark.parametrize("reorder", ["noreorder", "fiedler"])
 @pytest.mark.parametrize(
     ("label", "atom", "spin", "charge", "ncas", "nelecas"),
     [
@@ -58,7 +60,7 @@ def _broken_symmetry_uhf(atom: str, spin: int, charge: int = 0):
     ],
 )
 def test_uhf_dmrg_recovers_exact_casci_on_trap(
-    label, atom, spin, charge, ncas, nelecas, monkeypatch, tmp_path
+    label, atom, spin, charge, ncas, nelecas, reorder, monkeypatch, tmp_path
 ) -> None:
     monkeypatch.setenv("SCRATCH_DIR", str(tmp_path))
     monkeypatch.setenv("OMP_NUM_THREADS", "1")  # deterministic
@@ -67,12 +69,19 @@ def test_uhf_dmrg_recovers_exact_casci_on_trap(
     e_exact = mcscf.UCASCI(mf, ncas, nelecas).kernel()[0]
 
     energy, _ = run_dmrg_subprocess(
-        mf, ncas=ncas, nelecas=nelecas, max_bond_dim=100,
-        symm_type="SZ", unrestricted=True, get_qmi=False,
+        mf,
+        ncas=ncas,
+        nelecas=nelecas,
+        max_bond_dim=100,
+        symm_type="SZ",
+        unrestricted=True,
+        get_qmi=False,
+        reorder=reorder,
     )
     # 6-orbital CAS at bond dim 100 is FCI-exact; the only way to miss the exact
-    # energy is the init trap this test guards against.
+    # energy is the init trap this test guards against. The occ warmup must
+    # recover it under both orbital orderings.
     assert energy == pytest.approx(e_exact, abs=1e-5), (
-        f"{label}: DMRG {energy:.8f} != exact CASCI {e_exact:.8f} "
+        f"{label}/{reorder}: DMRG {energy:.8f} != exact CASCI {e_exact:.8f} "
         f"(diff {energy - e_exact:+.2e}) — init trap regression"
     )

@@ -125,7 +125,12 @@ class TestWriteInput:
     """Unit-test _write_input in isolation by inspecting the written file."""
 
     def _make_input(
-        self, tmp_path: Path, symm_type: str = "SZ", n_elec: int = 2, ncas: int = 4
+        self,
+        tmp_path: Path,
+        symm_type: str = "SZ",
+        n_elec: int = 2,
+        ncas: int = 4,
+        reorder: str = "noreorder",
     ) -> str:
         bond_dims, noises, thrds = _default_dmrg_schedule(max_bond_dim=500)
         path = tmp_path / "dmrg.conf"
@@ -143,6 +148,7 @@ class TestWriteInput:
             4,
             4.0,
             symm_type,
+            reorder,
         )
         return path.read_text()
 
@@ -172,6 +178,19 @@ class TestWriteInput:
         assert "warmup occ" in content
         assert "occ 2 0 0 0" in content
         assert "cbias 0.2" in content
+
+    def test_noreorder_mode_has_noreorder_and_full_fci_space(self, tmp_path) -> None:
+        content = self._make_input(tmp_path, reorder="noreorder")
+        assert "noreorder" in content
+        assert "full_fci_space" in content
+
+    def test_fiedler_mode_drops_noreorder_and_full_fci_space(self, tmp_path) -> None:
+        content = self._make_input(tmp_path, reorder="fiedler")
+        lines = content.splitlines()
+        assert "noreorder" not in lines  # exact line match (avoid substring hits)
+        assert "full_fci_space" not in lines
+        # the occ warmup is still written under fiedler
+        assert "warmup occ" in content
 
     def test_schedule_block_present(self, tmp_path) -> None:
         content = self._make_input(tmp_path)

@@ -199,8 +199,19 @@ def _write_input(
     n_threads: int,
     stack_mem_gb: float,
     symm_type: str = "SZ",
+    reorder: str = "noreorder",
 ) -> None:
-    """Write a StackBlock-compatible block2main input file to *path*."""
+    """Write a StackBlock-compatible block2main input file to *path*.
+
+    ``reorder`` selects orbital ordering: ``'noreorder'`` (default) keeps the
+    FCIDUMP order and pairs with ``full_fci_space``; ``'fiedler'`` lets
+    block2main reorder by the Fiedler vector and omits ``full_fci_space``
+    (that combination can land in a higher local minimum). The ``occ`` warmup is
+    written in both cases, and block2main maps ``1pdm``/``1npc`` back to the
+    input orbital order regardless, so downstream per-orbital indexing is
+    unaffected by the choice.
+    """
+    no_reorder = reorder == "noreorder"
     n_sweeps = len(bond_dims)
     twosite_to_onesite = max(n_sweeps - 2, 0)
 
@@ -220,20 +231,24 @@ def _write_input(
         # Keep hf_occ=integral so block2main stays in StackBlock-compatible mode
         # (it writes outputs under node0/, which _read_outputs reads). Drive the
         # occupation warmup explicitly instead: seed the initial MPS at the
-        # reference determinant (warmup occ) plus the full-FCI quantum-number
-        # distribution (full_fci_space). Both guard against a local-minimum trap
-        # the bare random init hits on near-degenerate active spaces.
+        # reference determinant (warmup occ), which guards against a local-minimum
+        # trap the bare random init hits on near-degenerate active spaces.
         "hf_occ integral",
         "warmup occ",
         f"occ {_aufbau_hf_occ(n_elec, spin, ncas)}",
         "cbias 0.2",
-        "full_fci_space",
     ]
+    if no_reorder:
+        # full-FCI initial distribution; pairs with noreorder (omitted under
+        # fiedler, where it can drive convergence to a higher local minimum).
+        lines.append("full_fci_space")
     if symm_type == "SZ":
         lines.append("nonspinadapted")
+    lines.append("sym c1")
+    if no_reorder:
+        lines.append("noreorder")
+    # else: omit -> block2main defaults to fiedler reordering
     lines += [
-        "sym c1",
-        "noreorder",
         f"prefix {scratch_dir}/",
         f"num_thrds {n_threads}",
         f"mem {mem_gb}G",

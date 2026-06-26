@@ -26,6 +26,7 @@ from aegiss.utils.orbital_indices import resolve_nelecas
 logger = logging.getLogger(__name__)
 
 _VALID_SYMM_TYPES = ("SU2", "SZ")
+_VALID_REORDER = ("noreorder", "fiedler")
 
 
 def _read_outputs(scratch_dir: Path, ncas: int) -> tuple[float, np.ndarray, np.ndarray]:
@@ -106,6 +107,7 @@ def run_dmrg_subprocess(
     unrestricted: bool | None = None,
     get_qmi: bool = True,
     spin_resolved: bool = False,
+    reorder: str = "noreorder",
 ) -> tuple[float, np.ndarray | None]:
     """Run a DMRG calculation via the ``block2main`` subprocess.
 
@@ -137,6 +139,13 @@ def run_dmrg_subprocess(
         spin-summed ``(ncas,)`` vector. Only meaningful with *get_qmi*; the
         spin-summed default feeds the entropy-screening pipeline, so callers
         that screen orbitals should leave this ``False``.
+    reorder : {'noreorder', 'fiedler'}
+        Orbital ordering for block2main. ``'noreorder'`` (default) keeps the
+        FCIDUMP order and enables ``full_fci_space``; ``'fiedler'`` reorders by
+        the Fiedler vector and disables ``full_fci_space`` (that combination can
+        converge to a higher local minimum). Output ``1pdm``/``1npc`` are mapped
+        back to the input order either way, so per-orbital entropy indexing is
+        unaffected.
 
     Returns:
     -------
@@ -152,6 +161,10 @@ def run_dmrg_subprocess(
     if symm_type not in _VALID_SYMM_TYPES:
         raise ValueError(
             f"Unsupported symmetry type: {symm_type!r}. Expected one of {list(_VALID_SYMM_TYPES)}."
+        )
+    if reorder not in _VALID_REORDER:
+        raise ValueError(
+            f"Unsupported reorder: {reorder!r}. Expected one of {list(_VALID_REORDER)}."
         )
 
     if unrestricted is None:
@@ -219,6 +232,7 @@ def run_dmrg_subprocess(
         n_threads,
         stack_mem_gb,
         symm_type,
+        reorder,
     )
 
     _venv_bin = Path(sys.executable).parent
