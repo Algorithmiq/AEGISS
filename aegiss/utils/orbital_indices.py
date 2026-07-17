@@ -6,6 +6,7 @@ import logging
 from typing import Any
 
 import numpy as np
+from pyscf.data.elements import chemcore
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,43 @@ def combine_candidate_entropies(
     combined_space = occ_orbs + virt_orbs
     combined_space.sort(key=lambda x: x[0])
     return combined_space
+
+
+def valence_occupied_orbitals(mf: Any, *, exclude_core: bool = True) -> list[int]:
+    """Return the occupied MO indices, optionally excluding the chemical core.
+
+    Convenience helper for building a ``restricted_space`` of plain orbital
+    indices (see :func:`aegiss.active_space.ao_projection.select_by_ao_projection`)
+    without needing entropy scores.
+
+    Parameters
+    ----------
+    mf : PySCF SCF object
+        Converged mean-field object exposing ``mo_occ`` and ``mol``.
+    exclude_core : bool, keyword-only
+        If ``True`` (default), drop the frozen chemical-core orbitals as
+        defined by :func:`pyscf.data.elements.chemcore` (1s for first-row
+        atoms, 1s2s2p for second-row, and so on). The core is assumed to
+        occupy the lowest ``ncore`` orbital indices, following PySCF's
+        frozen-core convention; this holds for canonical SCF orbitals but
+        not necessarily for localized orbitals.
+
+    Returns:
+    -------
+    orbitals : list of int
+        Occupied orbital indices (0-based), sorted ascending.
+    """
+    occ = np.where(mf.mo_occ > 0)[0]
+    if not exclude_core:
+        return [int(i) for i in occ]
+    ncore = chemcore(mf.mol)
+    valence = occ[occ >= ncore]
+    logger.info(
+        "Excluding %d chemical-core orbital(s); %d valence occupied orbital(s) remain.",
+        ncore,
+        len(valence),
+    )
+    return [int(i) for i in valence]
 
 
 def get_orbital_spaces(

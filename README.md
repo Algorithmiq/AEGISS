@@ -476,6 +476,26 @@ active_indices = select_by_ao_projection(
 
 Returns `np.ndarray` of sorted orbital indices.
 
+**Restricting to occupied orbitals**
+
+To screen only the occupied space (optionally dropping the chemical core),
+build the index list with `valence_occupied_orbitals` and pass it as
+`restricted_space`:
+
+```python
+from aegiss.utils.orbital_indices import valence_occupied_orbitals
+
+# Valence occupied orbitals only (chemical core excluded — 1s for first-row
+# atoms, 1s2s2p for second-row, etc., via pyscf.data.elements.chemcore)
+restricted_space = valence_occupied_orbitals(mf)
+
+# All occupied orbitals, including the core
+restricted_space = valence_occupied_orbitals(mf, exclude_core=False)
+```
+
+The core is taken to be the lowest `ncore` orbital indices (PySCF's frozen-core
+convention), which holds for canonical SCF orbitals.
+
 **AO label format**
 
 Labels follow PySCF's `search_ao_label` convention:
