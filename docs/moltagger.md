@@ -39,7 +39,7 @@ print(tagger.export_tags())   # {atom_index: "Element.N", ...}
 ```
 
 The 3D viewport supports standard mouse navigation: rotate (left-drag), zoom (scroll), pan (middle-drag).
-Additional camera controls — fixed orientations and auto-alignment — are described in the [Camera / Navigation](#camera--navigation) section.
+Additional camera controls — fixed orientations and auto-alignment — are described in the [Camera / Navigation](#camera-navigation) section.
 
 ### Selecting atoms
 

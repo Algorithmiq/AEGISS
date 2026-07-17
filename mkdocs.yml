@@ -5,6 +5,10 @@ repo_url: https://github.com/Algorithmiq/AEGISS
 repo_name: Algorithmiq/AEGISS
 edit_uri: ""
 
+# Contributor-facing readme for the docs/ dir; not a site page (would clash with index.md).
+exclude_docs: |
+  README.md
+
 theme:
   icon:
       repo: fontawesome/brands/github
