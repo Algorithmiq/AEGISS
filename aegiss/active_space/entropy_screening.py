@@ -187,6 +187,14 @@ def select_by_entropy(
     if soe1 is None:
         logger.info("No single-orbital entropies provided. Returning empty selection.")
         return [], []
+    if np.ndim(soe1) != 1:
+        msg = (
+            "select_by_entropy expects a 1-D (spin-summed) single-orbital entropy "
+            f"array; got shape {np.shape(soe1)}. Spin-resolved (2, ncas) entropies "
+            "must be screened per channel with select_by_spin_entropy (the alpha "
+            "and beta channels are thresholded independently)."
+        )
+        raise ValueError(msg)
     if ranking == "global":
         logger.info("Using global ranking of orbitals by entropy values.")
         selected_occ, selected_virt = _global_entropy_ranking(
@@ -210,3 +218,63 @@ def select_by_entropy(
         logger.info("\tSelected virtual orbital %d:  S(1) = %.4f", i[0], i[1])
 
     return selected_occ, selected_virt
+
+
+def select_by_spin_entropy(
+    occ_orbs: np.ndarray,
+    virt_orbs: np.ndarray,
+    soe1: np.ndarray | None,
+    fraction: float = 0.1,
+    fraction_type: Literal["r", "a"] = "r",
+    ranking: Literal["global", "subset"] = "global",
+) -> dict[str, tuple[list[tuple[int, float]], list[tuple[int, float]]]]:
+    """Screen the alpha and beta channels independently from a spin-resolved SOE.
+
+    For a spin-polarised target the single spin-orbital entropies
+    ``H(n_alpha)`` and ``H(n_beta)`` differ between channels (e.g. an open-shell
+    SOMO is entangled in one spin channel and frozen in the other), so each
+    channel is thresholded on its own. This yields a *split* selection: the alpha
+    and beta active windows may contain different orbitals.
+
+    Parameters
+    ----------
+    occ_orbs, virt_orbs : np.ndarray
+        Occupied / virtual orbital indices of the screening window (shared by
+        both spin channels; the split is in which of them each channel keeps).
+    soe1 : np.ndarray, shape (2, n_occ + n_virt)
+        Spin-resolved single spin-orbital entropies (row 0 = alpha, row 1 =
+        beta), as returned by ``run_dmrg_subprocess(..., spin_resolved=True)``.
+    fraction, fraction_type, ranking
+        Same meaning as :func:`select_by_entropy`; applied independently to each
+        channel (a single ``fraction`` is used for both channels).
+
+    Returns:
+    -------
+    selection : dict[str, tuple[list, list]]
+        ``{"alpha": (occ_alpha, virt_alpha), "beta": (occ_beta, virt_beta)}``,
+        each entry an ``(index, entropy)`` list as from :func:`select_by_entropy`.
+    """
+    if soe1 is None:
+        logger.info("No single-orbital entropies provided. Returning empty selection.")
+        return {"alpha": ([], []), "beta": ([], [])}
+    soe = np.asarray(soe1, dtype=float)
+    if soe.ndim != 2 or soe.shape[0] != 2:
+        msg = (
+            "select_by_spin_entropy expects a spin-resolved (2, ncas) SOE array "
+            f"(row 0 = alpha, row 1 = beta); got shape {soe.shape}. For a "
+            "spin-summed 1-D array use select_by_entropy."
+        )
+        raise ValueError(msg)
+
+    selection: dict[str, tuple[list[tuple[int, float]], list[tuple[int, float]]]] = {}
+    for spin, channel in enumerate(("alpha", "beta")):
+        logger.info("=============== %s channel ===============", channel.upper())
+        selection[channel] = select_by_entropy(
+            occ_orbs=occ_orbs,
+            virt_orbs=virt_orbs,
+            soe1=soe[spin],
+            fraction=fraction,
+            fraction_type=fraction_type,
+            ranking=ranking,
+        )
+    return selection

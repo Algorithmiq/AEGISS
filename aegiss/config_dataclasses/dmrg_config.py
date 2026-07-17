@@ -35,6 +35,16 @@ class DMRGConfig:
         Orbital ordering for block2main. ``'noreorder'`` keeps the FCIDUMP order
         and enables ``full_fci_space``; ``'fiedler'`` reorders by the Fiedler
         vector and disables ``full_fci_space``.
+    spin_soe : {'auto', 'summed', 'resolved'}, default 'auto'
+        Whether single-orbital entropies (and the selection built on them) are
+        spin-summed or spin-resolved. ``'summed'`` uses the 4-state spatial
+        entropy and yields a single spatial active space. ``'resolved'`` uses the
+        per-spin-orbital entropies ``H(n_alpha)`` / ``H(n_beta)`` and screens the
+        alpha and beta channels independently, yielding a split
+        ``{'alpha', 'beta'}`` active space. ``'auto'`` picks ``'resolved'`` when
+        the target is spin-polarised (``nalpha != nbeta``) and ``symm_type='SZ'``,
+        else ``'summed'``. ``'resolved'`` requires ``symm_type='SZ'`` (the
+        spin-resolved 1-PDM is only available without spin adaptation).
     """
 
     ncas: int
@@ -44,6 +54,7 @@ class DMRGConfig:
     verbosity: int = 0
     unrestricted: bool | None = None
     reorder: Literal["noreorder", "fiedler"] = "noreorder"
+    spin_soe: Literal["auto", "summed", "resolved"] = "auto"
 
     def __post_init__(self) -> None:
         """Validate the configuration parameters.
@@ -104,3 +115,33 @@ class DMRGConfig:
                 "DMRGConfig: `unrestricted=True` requires `symm_type='SZ'`, "
                 f"got {self.symm_type!r}."
             )
+        if self.spin_soe not in ("auto", "summed", "resolved"):
+            raise ValueError(
+                f"DMRGConfig: Invalid spin_soe {self.spin_soe!r}. "
+                "Must be 'auto', 'summed', or 'resolved'."
+            )
+        if self.spin_soe == "resolved" and self.symm_type != "SZ":
+            raise ValueError(
+                "DMRGConfig: `spin_soe='resolved'` requires `symm_type='SZ'`, "
+                f"got {self.symm_type!r} (the spin-resolved 1-PDM is only "
+                "available without spin adaptation)."
+            )
+
+    def spin_resolved(self) -> bool:
+        """Resolve *spin_soe* to a concrete spin-resolved / spin-summed choice.
+
+        ``'auto'`` selects spin-resolved only for a spin-polarised target
+        (``nalpha != nbeta``) computed with ``symm_type='SZ'``; otherwise the
+        spin-summed spatial entropy is used.
+
+        Returns:
+        -------
+        bool
+            ``True`` if the single-orbital entropies should be spin-resolved.
+        """
+        if self.spin_soe == "resolved":
+            return True
+        if self.spin_soe == "summed":
+            return False
+        nalpha, nbeta = resolve_nelecas(self.nelecas)
+        return nalpha != nbeta and self.symm_type == "SZ"
