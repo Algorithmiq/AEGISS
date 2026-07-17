@@ -27,21 +27,19 @@ def localize_boys(
 ) -> np.ndarray:
     """Boys (Foster-Boys) localization — minimises the spatial spread of each orbital.
 
-    Parameters
-    ----------
-    mol : pyscf.gto.Mole
-        Molecular geometry and basis set.
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
-    n_occ : int, optional
-        Number of occupied orbitals. Inferred from *mf* if not given.
-    on_virtual : bool
-        Whether to also localize the virtual space.
+    Args:
+        mol (pyscf.gto.Mole):
+            Molecular geometry and basis set.
+        mf (pyscf.scf.hf.SCF):
+            Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
+        n_occ (int, optional):
+            Number of occupied orbitals. Inferred from *mf* if not given.
+        on_virtual (bool):
+            Whether to also localize the virtual space.
 
     Returns:
-    -------
-    new_mos : np.ndarray, shape (nao, nmo)
-        Localized MO coefficients.
+        new_mos (np.ndarray, shape (nao, nmo)):
+            Localized MO coefficients.
     """
     if n_occ is None:
         n_occ = int(np.count_nonzero(mf.mo_occ > 0))
@@ -63,21 +61,19 @@ def localize_edmiston(
 ) -> np.ndarray:
     """Edmiston-Ruedenberg localization — maximises orbital self-repulsion energy.
 
-    Parameters
-    ----------
-    mol : pyscf.gto.Mole
-        Molecular geometry and basis set.
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
-    n_occ : int, optional
-        Number of occupied orbitals. Inferred from *mf* if not given.
-    on_virtual : bool
-        Whether to also localize the virtual space.
+    Args:
+        mol (pyscf.gto.Mole):
+            Molecular geometry and basis set.
+        mf (pyscf.scf.hf.SCF):
+            Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
+        n_occ (int, optional):
+            Number of occupied orbitals. Inferred from *mf* if not given.
+        on_virtual (bool):
+            Whether to also localize the virtual space.
 
     Returns:
-    -------
-    new_mos : np.ndarray, shape (nao, nmo)
-        Localized MO coefficients.
+        new_mos (np.ndarray, shape (nao, nmo)):
+            Localized MO coefficients.
     """
     if n_occ is None:
         n_occ = int(np.count_nonzero(mf.mo_occ > 0))
@@ -100,23 +96,21 @@ def localize_pipek_mezey(
 ) -> np.ndarray:
     """Pipek-Mezey localization — maximises orbital partial charges on atoms.
 
-    Parameters
-    ----------
-    mol : pyscf.gto.Mole
-        Molecular geometry and basis set.
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
-    n_occ : int, optional
-        Number of occupied orbitals. Inferred from *mf* if not given.
-    on_virtual : bool
-        Whether to also localize the virtual space.
-    pop_method : str
-        Population analysis scheme used for the virtual block (default ``"becke"``).
+    Args:
+        mol (pyscf.gto.Mole):
+            Molecular geometry and basis set.
+        mf (pyscf.scf.hf.SCF):
+            Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
+        n_occ (int, optional):
+            Number of occupied orbitals. Inferred from *mf* if not given.
+        on_virtual (bool):
+            Whether to also localize the virtual space.
+        pop_method (str):
+            Population analysis scheme used for the virtual block (default ``"becke"``).
 
     Returns:
-    -------
-    new_mos : np.ndarray, shape (nao, nmo)
-        Localized MO coefficients.
+        new_mos (np.ndarray, shape (nao, nmo)):
+            Localized MO coefficients.
     """
     if n_occ is None:
         n_occ = int(np.count_nonzero(mf.mo_occ > 0))
@@ -143,23 +137,21 @@ def localize_ibos(
     orbitals (IAOs). IBOs tend to give chemically intuitive bond and lone-pair
     orbitals, and handle systems with mixed ionic/covalent character well.
 
-    Parameters
-    ----------
-    mol : pyscf.gto.Mole
-        Molecular geometry and basis set.
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
-    n_occ : int, optional
-        Number of occupied orbitals. Inferred from *mf* if not given.
-    minao : str
-        Reference minimal basis used for IAO construction (default ``"minao"``).
-    exponent : int
-        Exponent in the IBO localization criterion (default ``4``).
+    Args:
+        mol (pyscf.gto.Mole):
+            Molecular geometry and basis set.
+        mf (pyscf.scf.hf.SCF):
+            Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
+        n_occ (int, optional):
+            Number of occupied orbitals. Inferred from *mf* if not given.
+        minao (str):
+            Reference minimal basis used for IAO construction (default ``"minao"``).
+        exponent (int):
+            Exponent in the IBO localization criterion (default ``4``).
 
     Returns:
-    -------
-    new_mos : np.ndarray, shape (nao, nmo)
-        IBO coefficients for the occupied block; virtual block is unchanged.
+        new_mos (np.ndarray, shape (nao, nmo)):
+            IBO coefficients for the occupied block; virtual block is unchanged.
     """
     from pyscf.lo import ibo as _ibo  # noqa: PLC0415
 
@@ -188,22 +180,20 @@ def localize_iaos(
     chemically meaningful occupied basis for population analysis and as a
     starting point for IBO construction.
 
-    Parameters
-    ----------
-    mol : pyscf.gto.Mole
-        Molecular geometry and basis set.
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
-    n_occ : int, optional
-        Number of occupied orbitals. Inferred from *mf* if not given.
-    minao : str
-        Reference minimal basis (default ``"minao"``).
+    Args:
+        mol (pyscf.gto.Mole):
+            Molecular geometry and basis set.
+        mf (pyscf.scf.hf.SCF):
+            Converged mean-field object supplying ``mo_coeff`` and ``mo_occ``.
+        n_occ (int, optional):
+            Number of occupied orbitals. Inferred from *mf* if not given.
+        minao (str):
+            Reference minimal basis (default ``"minao"``).
 
     Returns:
-    -------
-    new_mos : np.ndarray, shape (nao, nmo)
-        Löwdin-orthogonalized IAOs for the occupied block; virtual block is
-        unchanged.
+        new_mos (np.ndarray, shape (nao, nmo)):
+            Löwdin-orthogonalized IAOs for the occupied block; virtual block is
+            unchanged.
     """
     from pyscf.lo import iao as _iao  # noqa: PLC0415
     from pyscf.lo import orth as _orth  # noqa: PLC0415
@@ -233,25 +223,23 @@ def localize_fnos(
     Builds a correlated wavefunction, partitions orbitals into a frozen core and
     an active set, and returns the FNO coefficient matrix.
 
-    Parameters
-    ----------
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object.
-    correlated_method : {'mp2', 'cisd', 'ccsd'}
-        Correlated method used to build the 1-RDM for the NO transformation.
-    active : True or list of int
-        Controls which occupied orbitals enter the correlated calculation.
-        ``True`` uses all occupied orbitals (no freezing). A list of integers
-        specifies the indices of the active occupied orbitals; all others
-        are frozen. Ignored when *frozen* is provided.
-    frozen : list of int, optional
-        Indices of occupied orbitals to freeze (0-based). Takes precedence over
-        *active* when provided.
+    Args:
+        mf (pyscf.scf.hf.SCF):
+            Converged mean-field object.
+        correlated_method ({'mp2', 'cisd', 'ccsd'}):
+            Correlated method used to build the 1-RDM for the NO transformation.
+        active (True or list of int):
+            Controls which occupied orbitals enter the correlated calculation.
+            ``True`` uses all occupied orbitals (no freezing). A list of integers
+            specifies the indices of the active occupied orbitals; all others
+            are frozen. Ignored when *frozen* is provided.
+        frozen (list of int, optional):
+            Indices of occupied orbitals to freeze (0-based). Takes precedence over
+            *active* when provided.
 
     Returns:
-    -------
-    mo_coeff : np.ndarray, shape (nao, nmo)
-        FNO coefficients in the AO basis.
+        mo_coeff (np.ndarray, shape (nao, nmo)):
+            FNO coefficients in the AO basis.
     """
     from aegiss.localization.fnos import compute_fnos  # noqa: PLC0415
 
@@ -300,20 +288,18 @@ def localize_nos(
     Always uses the full molecular orbital space. To freeze core orbitals use
     :func:`localize_fnos` instead.
 
-    Parameters
-    ----------
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object.
-    correlated_method : {'mp2', 'cisd', 'ccsd'}
-        Correlated method used to build the 1-RDM for the NO transformation.
-    split : bool
-        If ``True``, diagonalise the occupied and virtual blocks of the 1-RDM
-        separately instead of the full matrix.
+    Args:
+        mf (pyscf.scf.hf.SCF):
+            Converged mean-field object.
+        correlated_method ({'mp2', 'cisd', 'ccsd'}):
+            Correlated method used to build the 1-RDM for the NO transformation.
+        split (bool):
+            If ``True``, diagonalise the occupied and virtual blocks of the 1-RDM
+            separately instead of the full matrix.
 
     Returns:
-    -------
-    nos : np.ndarray, shape (nao, nmo)
-        Natural orbital coefficients in the AO basis.
+        nos (np.ndarray, shape (nao, nmo)):
+            Natural orbital coefficients in the AO basis.
     """
     from aegiss.localization.nos import compute_nos  # noqa: PLC0415
 
@@ -342,19 +328,17 @@ _METHODS: dict[str, Any] = {
 def localize(method: str, *args: Any, **kwargs: Any) -> Any:
     """Dispatch to a localization method by name.
 
-    Parameters
-    ----------
-    method : str
-        One of ``'boys'``, ``'edmiston'`` / ``'er'``, ``'pm'`` / ``'pipek'``,
-        ``'ibos'`` / ``'ibo'``, ``'iaos'`` / ``'iao'``, ``'nos'``, ``'fnos'``.
-    *args
-        Positional arguments forwarded to the selected method.
-    **kwargs
-        Keyword arguments forwarded to the selected method.
+    Args:
+        method (str):
+            One of ``'boys'``, ``'edmiston'`` / ``'er'``, ``'pm'`` / ``'pipek'``,
+            ``'ibos'`` / ``'ibo'``, ``'iaos'`` / ``'iao'``, ``'nos'``, ``'fnos'``.
+        *args:
+            Positional arguments forwarded to the selected method.
+        **kwargs:
+            Keyword arguments forwarded to the selected method.
 
-    Examples:
-    --------
-    >>> localize('pm', mol, mf, on_virtual=True)
+    Example:
+        >>> localize('pm', mol, mf, on_virtual=True)
     >>> localize('ibos', mol, mf)
     >>> localize('iaos', mol, mf, minao='minao')
     >>> localize('nos', mf, correlated_method='mp2', frozen=[0])

@@ -26,29 +26,19 @@ def _compute_contribution(
 ) -> tuple[list[tuple[int, float]], list[tuple[int, float]]]:
     """Compute the AO contribution of each orbital to a given label.
 
-    Parameters
-    ----------
-    mf : pyscf.scf.hf.SCF
-        Mean-field object containing the molecule and MO coefficients.
-    label : str or list of str
-        AO label(s) to compute contributions for.
-    full_mo_coeff : np.ndarray
-        Coefficients of the active MOs.
-    reduced_space_indices : list of tuple[int, float]
-        Orbital index/entropy pairs in the reduced space.
-    contribution : float
-        Threshold for selecting orbitals.
-    contribution_type : {'r', 'a'}
-        Relative or absolute contribution type.
-    secondary_basis : str or None
-        Basis for projection; ``None`` uses the original molecule basis.
+    Args:
+        mf (pyscf.scf.hf.SCF): Mean-field object containing the molecule and MO coefficients.
+        label (str or list of str): AO label(s) to compute contributions for.
+        full_mo_coeff (np.ndarray): Coefficients of the active MOs.
+        reduced_space_indices (list of tuple[int, float]): Orbital index/entropy pairs in the reduced space.
+        contribution (float): Threshold for selecting orbitals.
+        contribution_type ({'r', 'a'}): Relative or absolute contribution type.
+        secondary_basis (str or None): Basis for projection; ``None`` uses the original molecule basis.
 
     Returns:
-    -------
-    selected : list of tuple[int, float]
-        Orbital index/weight pairs above the contribution threshold.
-    all_contributions : list of tuple[int, float]
-        Orbital index/weight pairs for all orbitals, ordered by index, for potential further analysis or plotting.
+        selected (list of tuple[int, float]): Orbital index/weight pairs above the contribution threshold.
+        all_contributions (list of tuple[int, float]): Orbital index/weight pairs for all orbitals, ordered by index,
+            for potential further analysis or plotting.
     """
     mol2 = mf.mol  # original basis
     projection_mol = mol2.copy()  # extended basis
@@ -117,32 +107,22 @@ def select_by_label(
 ) -> tuple[list[tuple[int, float]], list[tuple[int, float]]]:
     """Select orbitals based on their contribution to a specific AO label.
 
-    Parameters
-    ----------
-    label : str or list of str
-        AO label(s) to compute contributions for. Each label should be in the
-        format ``"Element.Index AtomicOrbital"``, e.g. ``"O.1 1s"`` for the
-        second oxygen atom. If a list is provided, contributions are computed
-        for each label separately and combined.
-    mf : pyscf.scf.hf.SCF
-        Mean-field object containing the molecule and MO coefficients.
-    full_mo_coeff : np.ndarray
-        Coefficients of the full MOs.
-    space : list of tuple[int, float]
-        Orbital index/entropy pairs to restrict the selection to.
-    contribution : float
-        Threshold for selecting orbitals based on their contribution.
-    projected_basis : str or None
-        Basis set used for projection; ``None`` uses the original basis.
-    contribution_type : {'r', 'a'}
-        Relative (``'r'``) or absolute (``'a'``) contribution type.
+    Args:
+        label (str or list of str): AO label(s) to compute contributions for. Each label should be in the
+            format ``"Element.Index AtomicOrbital"``, e.g. ``"O.1 1s"`` for the
+            second oxygen atom. If a list is provided, contributions are computed
+            for each label separately and combined.
+        mf (pyscf.scf.hf.SCF): Mean-field object containing the molecule and MO coefficients.
+        full_mo_coeff (np.ndarray): Coefficients of the full MOs.
+        space (list of tuple[int, float]): Orbital index/entropy pairs to restrict the selection to.
+        contribution (float): Threshold for selecting orbitals based on their contribution.
+        projected_basis (str or None): Basis set used for projection; ``None`` uses the original basis.
+        contribution_type ({'r', 'a'}): Relative (``'r'``) or absolute (``'a'``) contribution type.
 
     Returns:
-    -------
-    selected_indices : list of tuple[int, float]
-        Orbital index/weight pairs selected based on their contribution.
-    projected_weights : list of tuple[int, float]
-        Orbital index/weight pairs for all orbitals, ordered by index, for potential further analysis or plotting.
+        selected_indices (list of tuple[int, float]): Orbital index/weight pairs selected based on their contribution.
+        projected_weights (list of tuple[int, float]): Orbital index/weight pairs for all orbitals, ordered by index,
+            for potential further analysis or plotting.
     """
     return _compute_contribution(
         mf,
@@ -164,23 +144,19 @@ def _resolve_space(
 ) -> list[tuple[int, float]]:
     """Resolve the orbital search space from the ``restricted_space`` argument.
 
-    Parameters
-    ----------
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object; used to determine the total number of MOs
-        when *restricted_space* is ``None``.
-    restricted_space : list of int, list of tuple, tuple of lists, or None
-        If ``None``, all MOs are returned with a placeholder entropy of 0.0.
-        If a list of plain integers, converted to ``(index, 0.0)`` pairs.
-        If a flat list of ``(index, entropy)`` pairs, returned unchanged.
-        If a ``(occ_list, virt_list)`` tuple (as returned by
-        ``select_by_entropy``), the two lists are merged with
-        ``combine_candidate_entropies``.
+    Args:
+        mf (pyscf.scf.hf.SCF): Converged mean-field object; used to determine the total number of MOs
+            when *restricted_space* is ``None``.
+        restricted_space (list of int, list of tuple, tuple of lists, or None):
+            If ``None``, all MOs are returned with a placeholder entropy of 0.0.
+            If a list of plain integers, converted to ``(index, 0.0)`` pairs.
+            If a flat list of ``(index, entropy)`` pairs, returned unchanged.
+            If a ``(occ_list, virt_list)`` tuple (as returned by
+            ``select_by_entropy``), the two lists are merged with
+            ``combine_candidate_entropies``.
 
     Returns:
-    -------
-    space : list of tuple[int, float]
-        Orbital index / entropy pairs for the search space.
+        space (list of tuple[int, float]): Orbital index / entropy pairs for the search space.
     """
     if restricted_space is None:
         logger.info(
@@ -205,18 +181,14 @@ def _resolve_contribution(
 ) -> list[float]:
     """Helper function to resolve contribution thresholds for AO projection selection.
 
-    Parameters:
-    ----------
-    contribution : float or list of float
-        Contribution threshold(s) for selecting orbitals.
-        A single float applies to all labels; a list specifies per-label thresholds.
-    n_labels : int
-        Number of AO labels being considered for selection.
+    Args:
+        contribution (float or list of float): Contribution threshold(s) for selecting orbitals.
+            A single float applies to all labels; a list specifies per-label thresholds.
+        n_labels (int): Number of AO labels being considered for selection.
 
     Returns:
-    -------
-    resolved_contribution : list of float
-        List of contribution thresholds for each AO label, resolved based on the input parameters.
+        resolved_contribution (list of float): List of contribution thresholds for each AO label,
+            resolved based on the input parameters.
     """
     if isinstance(contribution, list):
         logger.info(
@@ -243,18 +215,13 @@ def _resolve_top_n(
 ) -> list[int]:
     """Helper function to resolve the number of top orbitals to select per AO label.
 
-    Parameters:
-    ----------
-    top_n : int, list of int
-        Number of top orbitals to select per AO label. A single int applies to all labels;
-        a list specifies per-label counts.
-    n_labels : int
-        Number of AO labels being considered for selection.
+    Args:
+        top_n (int, list of int): Number of top orbitals to select per AO label. A single int applies to all labels;
+            a list specifies per-label counts.
+        n_labels (int): Number of AO labels being considered for selection.
 
     Returns:
-    -------
-    resolved_top_n : list of int
-        List of top-N counts for each AO label, one entry per label.
+        resolved_top_n (list of int): List of top-N counts for each AO label, one entry per label.
     """
     if isinstance(top_n, list):
         logger.info(
@@ -290,41 +257,35 @@ def select_by_ao_projection(
 ) -> np.ndarray:
     """Select active orbitals by their projection onto a set of target AOs.
 
-    Parameters
-    ----------
-    mf : pyscf.scf.hf.SCF or pyscf.dft.rks.KohnShamDFT
-        Mean-field object containing the molecular orbitals and occupation numbers.
-    ao_labels : list[str | list[str]]
-        List of AO label entries. Each entry is either a single label string
-        (e.g. ``"Fe 3d"``) or a list of strings treated as one group
-        (e.g. ``["Fe 3d", "Fe 4d"]``). Entries can be freely mixed, e.g.
-        ``["C 2pz", "Fe 3d", ["Fe 3d", "Fe 4d"]]``.
-    projected_basis : str or None, default 'minao'
-        Basis set to use for the projection. ``None`` uses the original basis.
-        A minimal basis (e.g. ``'minao'``) helps focus the selection on
-        chemically relevant orbitals and reduces noise from diffuse functions.
-    contribution_type : {'r', 'a'}
-        Relative (``'r'``) or absolute (``'a'``) contribution. Required when
-        *contribution* is specified.
-    contribution : float or list of float, default 0.0
-        Threshold for selecting orbitals based on their contribution.
-        A single float applies to all AO groups; a list specifies per-group
-        thresholds and must match the length of *ao_labels*.
-    top_n : int or list of int, optional
-        Alternative to *contribution* thresholding. Selects the top N orbitals
-        per AO group. A list specifies per-group counts.
-    restricted_space : list of int, list of tuple, or tuple of lists, optional
-        Orbital indices to restrict selection to. Can be a plain list of
-        integers (e.g. ``list(range(34, 131))``), a list of ``(index, entropy)``
-        pairs, or a ``(occ_list, virt_list)`` tuple from ``select_by_entropy``.
-        ``None`` considers all orbitals.
-    save_path : str or None, optional
-        If provided, saves a heatmap of AO contributions to the specified path.
+    Args:
+        mf (pyscf.scf.hf.SCF or pyscf.dft.rks.KohnShamDFT):
+            Mean-field object containing the molecular orbitals and occupation numbers.
+        ao_labels (list[str | list[str]]): List of AO label entries. Each entry is either a single label string
+            (e.g. ``"Fe 3d"``) or a list of strings treated as one group
+            (e.g. ``["Fe 3d", "Fe 4d"]``). Entries can be freely mixed, e.g.
+            ``["C 2pz", "Fe 3d", ["Fe 3d", "Fe 4d"]]``.
+        projected_basis (str or None, default 'minao'):
+            Basis set to use for the projection. ``None`` uses the original basis.
+            A minimal basis (e.g. ``'minao'``) helps focus the selection on
+            chemically relevant orbitals and reduces noise from diffuse functions.
+        contribution_type ({'r', 'a'}): Relative (``'r'``) or absolute (``'a'``) contribution. Required when
+            *contribution* is specified.
+        contribution (float or list of float, default 0.0): Threshold for selecting
+            orbitals based on their contribution.
+            A single float applies to all AO groups; a list specifies per-group
+            thresholds and must match the length of *ao_labels*.
+        top_n (int or list of int, optional): Alternative to *contribution* thresholding. Selects the top N orbitals
+            per AO group. A list specifies per-group counts.
+        restricted_space (list of int, list of tuple, or tuple of lists, optional):
+            Orbital indices to restrict selection to. Can be a plain list of
+            integers (e.g. ``list(range(34, 131))``), a list of ``(index, entropy)``
+            pairs, or a ``(occ_list, virt_list)`` tuple from ``select_by_entropy``.
+            ``None`` considers all orbitals.
+        save_path (str or None, optional):
+            If provided, saves a heatmap of AO contributions to the specified path.
 
     Returns:
-    -------
-    active_indices : np.ndarray of int
-        Array of orbital indices selected for the active space.
+        active_indices (np.ndarray of int): Array of orbital indices selected for the active space.
     """
     logger.info("----------------AO Projection Screening for AEGISS----------------\n")
     logger.info("AO labels for projection: %s", ao_labels)

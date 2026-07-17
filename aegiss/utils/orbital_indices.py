@@ -51,22 +51,17 @@ def valence_occupied_orbitals(mf: Any, *, exclude_core: bool = True) -> list[int
     indices (see :func:`aegiss.active_space.ao_projection.select_by_ao_projection`)
     without needing entropy scores.
 
-    Parameters
-    ----------
-    mf : PySCF SCF object
-        Converged mean-field object exposing ``mo_occ`` and ``mol``.
-    exclude_core : bool, keyword-only
-        If ``True`` (default), drop the frozen chemical-core orbitals as
-        defined by :func:`pyscf.data.elements.chemcore` (1s for first-row
-        atoms, 1s2s2p for second-row, and so on). The core is assumed to
-        occupy the lowest ``ncore`` orbital indices, following PySCF's
-        frozen-core convention; this holds for canonical SCF orbitals but
-        not necessarily for localized orbitals.
+    Args:
+        mf (PySCF SCF object): Converged mean-field object exposing ``mo_occ`` and ``mol``.
+        exclude_core (bool, keyword-only): If ``True`` (default), drop the frozen chemical-core orbitals as
+            defined by :func:`pyscf.data.elements.chemcore` (1s for first-row
+            atoms, 1s2s2p for second-row, and so on). The core is assumed to
+            occupy the lowest ``ncore`` orbital indices, following PySCF's
+            frozen-core convention; this holds for canonical SCF orbitals but
+            not necessarily for localized orbitals.
 
     Returns:
-    -------
-    orbitals : list of int
-        Occupied orbital indices (0-based), sorted ascending.
+        orbitals (list of int): Occupied orbital indices (0-based), sorted ascending.
     """
     occ = np.where(mf.mo_occ > 0)[0]
     if not exclude_core:

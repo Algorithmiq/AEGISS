@@ -142,33 +142,28 @@ def run_dmrg_subprocess(
 ) -> tuple[float, np.ndarray | None]:
     """Run a DMRG calculation via the ``block2main`` subprocess.
 
-    Parameters
-    ----------
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object.
-    ncas : int
-        Number of active orbitals.
-    nelecas : int or tuple[int, int]
-        Number of active electrons (total count or ``(nalpha, nbeta)`` pair).
-    max_bond_dim : int
-        Target bond dimension for the DMRG schedule (must be a positive multiple of 4).
-    symm_type : {'SU2', 'SZ'}
-        Spin symmetry: ``'SZ'`` adds the ``nonspinadapted`` keyword so
-        block2main runs without spin adaptation; ``'SU2'`` omits it.
-    verbosity : int
-        If non-zero, block2main stdout/stderr are forwarded to the terminal.
-    get_qmi : bool
-        If ``True``, compute and return single-orbital entropies.
+    Args:
+        mf (pyscf.scf.hf.SCF): Converged mean-field object.
+        ncas (int): Number of active orbitals.
+        nelecas (int or tuple[int, int]): Number of active electrons (total
+            count or ``(nalpha, nbeta)`` pair).
+        max_bond_dim (int): Target bond dimension for the DMRG schedule (must
+            be a positive multiple of 4).
+        symm_type ({'SU2', 'SZ'}): Spin symmetry: ``'SZ'`` adds the
+            ``nonspinadapted`` keyword so block2main runs without spin
+            adaptation; ``'SU2'`` omits it.
+        verbosity (int): If non-zero, block2main stdout/stderr are forwarded to
+            the terminal.
+        get_qmi (bool): If ``True``, compute and return single-orbital
+            entropies.
 
     Returns:
-    -------
-    energy : float
-        DMRG ground-state energy.
-    soe1 : np.ndarray or None
-        Single-orbital entropies (``None`` if *get_qmi* is ``False``).
-        Two-orbital entropies and mutual information are not available from
-        the ``1pdm`` + ``1npc`` output; pass them from an external source to
-        any downstream plotting functions if needed.
+        energy (float): DMRG ground-state energy.
+        soe1 (np.ndarray or None): Single-orbital entropies (``None`` if
+            *get_qmi* is ``False``). Two-orbital entropies and mutual
+            information are not available from the ``1pdm`` + ``1npc`` output;
+            pass them from an external source to any downstream plotting
+            functions if needed.
     """
     if symm_type not in _VALID_SYMM_TYPES:
         raise ValueError(
