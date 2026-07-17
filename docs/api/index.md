@@ -9,7 +9,7 @@ AEGISS exposes a small, focused public API organized around five concerns:
 | [Initial Guess](initial_guess.md) | Molecule construction and mean-field calculation |
 | [Wavefunction](wavefunction.md) | DMRG and correlated wavefunction methods |
 | [Localization](localization.md) | Orbital localization methods |
-| [Utilities](utils.md) | Plotting, orbital export, and helper functions |
+| [Utilities](utils.md) | Plotting, orbital export, MO composition, and helper functions |
 
 ## Top-level imports
 

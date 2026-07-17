@@ -1,20 +1,21 @@
 # Utilities
 
-Helper functions for orbital export, plotting, and entropy data.
+Helper functions for orbital export, plotting, MO composition, and entropy data.
 
 ```python
 from aegiss.utils import (
-    compute_qmi,
     dump_qmi,
     get_orbital_spaces,
     get_subspaces_from_cas,
+    plot_ao_contribution,
+    plot_pie_contribution,
+    print_banner,
     save_orbitals,
     soe_heatmap,
     th_plots,
-    plot_ao_contribution,
-    print_banner,
 )
 from aegiss.utils.dump import save_orbitals_from_entropies
+from aegiss.utils.mo_composition import mo_ao_contributions
 ```
 
 ## Orbital spaces
@@ -43,11 +44,15 @@ from aegiss.utils.dump import save_orbitals_from_entropies
 
 ## Entropy and mutual information
 
-::: aegiss.utils.dmrg_utils.compute_qmi
+::: aegiss.utils.dump.dump_qmi
     options:
       heading_level: 3
 
-::: aegiss.utils.dump.dump_qmi
+---
+
+## MO composition
+
+::: aegiss.utils.mo_composition.mo_ao_contributions
     options:
       heading_level: 3
 
@@ -64,6 +69,10 @@ from aegiss.utils.dump import save_orbitals_from_entropies
       heading_level: 3
 
 ::: aegiss.utils.plotting.plot_ao_contribution
+    options:
+      heading_level: 3
+
+::: aegiss.utils.plotting.plot_pie_contribution
     options:
       heading_level: 3
 
