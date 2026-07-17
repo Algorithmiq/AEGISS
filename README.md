@@ -296,7 +296,8 @@ from aegiss.config_dataclasses import DMRGConfig, EntropyConfig, ProjectionConfi
 #### `DMRGConfig`
 
 ```python
-DMRGConfig(ncas, nelecas, max_bond_dim=500, symm_type="SZ", verbosity=0)
+DMRGConfig(ncas, nelecas, max_bond_dim=500, symm_type="SZ", verbosity=0,
+           unrestricted=None, reorder="noreorder")
 ```
 
 | Field | Type | Default | Description |
@@ -306,8 +307,12 @@ DMRGConfig(ncas, nelecas, max_bond_dim=500, symm_type="SZ", verbosity=0)
 | `max_bond_dim` | `int` | `500` | Target DMRG bond dimension. The schedule starts at `max_bond_dim // 2` and ramps to `max_bond_dim`. Must be a positive multiple of 4. |
 | `symm_type` | `"SZ"` or `"SU2"` | `"SZ"` | Spin symmetry: `"SZ"` is required for entropy calculations; `"SU2"` is faster |
 | `verbosity` | `int` | `0` | block2main output verbosity |
+| `unrestricted` | `bool` or `None` | `None` | Emit unrestricted (UHF) integrals. `None` autodetects from the mean field (`isinstance(mf, scf.uhf.UHF)`); `True`/`False` overrides. Requires `symm_type="SZ"`. |
+| `reorder` | `"noreorder"` or `"fiedler"` | `"noreorder"` | Orbital ordering for block2main. `"noreorder"` keeps the FCIDUMP order and enables `full_fci_space`; `"fiedler"` reorders by the Fiedler vector and disables it. |
 
 Open-shell example: `DMRGConfig(ncas=10, nelecas=(5, 4))` sets up a doublet CAS with 5α and 4β electrons.
+
+Unrestricted example: `DMRGConfig(ncas=6, nelecas=(5, 3), unrestricted=True)` (or leaving `unrestricted=None` with a UHF mean field) writes UHF integrals. See [Unrestricted (UHF) references](#unrestricted-uhf-references) below.
 
 #### `EntropyConfig`
 
@@ -402,6 +407,10 @@ energy, soe1 = run_dmrg_subprocess(
     max_bond_dim=500,
     symm_type="SZ",
     verbosity=0,
+    unrestricted=None,
+    get_qmi=True,
+    spin_resolved=False,
+    reorder="noreorder",
 )
 ```
 
@@ -413,11 +422,37 @@ energy, soe1 = run_dmrg_subprocess(
 | `max_bond_dim` | `int` | `500` | Target DMRG bond dimension. The schedule starts at `max_bond_dim // 2` and ramps to `max_bond_dim`. Must be a positive multiple of 4. |
 | `symm_type` | `str` | `"SZ"` | Spin symmetry: `"SZ"` or `"SU2"` |
 | `verbosity` | `int` | `0` | block2main output verbosity |
+| `unrestricted` | `bool` or `None` | `None` | Emit unrestricted (UHF) integrals. `None` autodetects from `mf`; `True`/`False` overrides. Requires `symm_type="SZ"`. |
 | `get_qmi` | `bool` | `True` | If `True`, compute and return single-orbital entropies |
+| `spin_resolved` | `bool` | `False` | If `True`, return separate α/β spin-orbital entropies as a `(2, ncas)` array instead of the spin-summed `(ncas,)` vector. Only meaningful with `get_qmi=True`. |
+| `reorder` | `str` | `"noreorder"` | Orbital ordering: `"noreorder"` or `"fiedler"` (see `DMRGConfig`). |
 
-Returns `(energy, soe1)`. `soe1` is `None` when `get_qmi=False`.
+Returns `(energy, soe1)`. `soe1` is `None` when `get_qmi=False`, shape `(ncas,)` when `spin_resolved=False`, or `(2, ncas)` (row 0 = α, row 1 = β) when `spin_resolved=True`.
 
 `OMP_NUM_THREADS`, `SCRATCH_DIR`, and `MEM` environment variables are read at call time (see [Environment variables](#environment-variables) for details).
+
+#### Unrestricted (UHF) references
+
+The DMRG/entropy path supports unrestricted references end to end. With a UHF
+mean field (or `unrestricted=True`), an `IUHF=1` FCIDUMP with separate αα/ββ/αβ
+and α/β blocks is written, and block2main runs non-spin-adapted (`SZ` is
+required — `SU2` + UHF raises).
+
+- **SOE is spin-summed by default.** The DMRG always produces α/β-resolved
+  1-particle density matrices; `spin_resolved=False` (the default, and what the
+  `DMRGConfig` pipeline uses) contracts them to one entropy per spatial orbital,
+  which is what entropy screening consumes. Pass `spin_resolved=True` to a
+  direct `run_dmrg_subprocess` call to inspect the separate α/β entropies.
+- **CAS partitioning assumes a closed frozen core** — the reference spin
+  polarisation must equal the active spin (`Nα − Nβ == nα − nβ`); otherwise the
+  α and β active windows would differ and `get_subspaces_from_cas` raises. A
+  *restricted* reference with an open-shell active target (e.g. a triplet CAS on
+  an RHF orbital set) is always allowed.
+- **Initialization.** The block2main input seeds the reference determinant
+  (`warmup occ` with an aufbau occupation) plus `full_fci_space`; this avoids a
+  local-minimum trap that bare random init hits on near-degenerate / strongly
+  multireference active spaces. Selecting `reorder="fiedler"` drops
+  `full_fci_space` (that pairing can converge to a higher state).
 
 ---
 
