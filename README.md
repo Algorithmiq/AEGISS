@@ -38,6 +38,7 @@ workflows.
   - [run_scf](#run_scf)
   - [run_dmrg_subprocess](#run_dmrg_subprocess)
   - [select_by_entropy](#select_by_entropy)
+  - [select_by_spin_entropy](#select_by_spin_entropy)
   - [select_by_ao_projection](#select_by_ao_projection)
   - [plot_ao_contribution](#plot_ao_contribution)
   - [mo_ao_contributions](#mo_ao_contributions)
@@ -297,7 +298,7 @@ from aegiss.config_dataclasses import DMRGConfig, EntropyConfig, ProjectionConfi
 
 ```python
 DMRGConfig(ncas, nelecas, max_bond_dim=500, symm_type="SZ", verbosity=0,
-           unrestricted=None, reorder="noreorder")
+           unrestricted=None, reorder="noreorder", spin_soe="auto")
 ```
 
 | Field | Type | Default | Description |
@@ -309,6 +310,7 @@ DMRGConfig(ncas, nelecas, max_bond_dim=500, symm_type="SZ", verbosity=0,
 | `verbosity` | `int` | `0` | block2main output verbosity |
 | `unrestricted` | `bool` or `None` | `None` | Emit unrestricted (UHF) integrals. `None` autodetects from the mean field (`isinstance(mf, scf.uhf.UHF)`); `True`/`False` overrides. Requires `symm_type="SZ"`. |
 | `reorder` | `"noreorder"` or `"fiedler"` | `"noreorder"` | Orbital ordering for block2main. `"noreorder"` keeps the FCIDUMP order and enables `full_fci_space`; `"fiedler"` reorders by the Fiedler vector and disables it. |
+| `spin_soe` | `"auto"`, `"summed"`, or `"resolved"` | `"auto"` | Whether single-orbital entropies (and the screening built on them) are spin-summed or spin-resolved. `"summed"` uses the 4-state spatial entropy → one spatial active space. `"resolved"` uses the per-spin-orbital entropies `H(n_α)`/`H(n_β)` and screens the α and β channels independently. `"auto"` picks `"resolved"` when the target is spin-polarised (`nα != nβ`) and `symm_type="SZ"`, else `"summed"`. `"resolved"` requires `symm_type="SZ"`. Resolve it with `DMRGConfig.spin_resolved()`. |
 
 Open-shell example: `DMRGConfig(ncas=10, nelecas=(5, 4))` sets up a doublet CAS with 5α and 4β electrons.
 
@@ -438,11 +440,20 @@ mean field (or `unrestricted=True`), an `IUHF=1` FCIDUMP with separate αα/ββ
 and α/β blocks is written, and block2main runs non-spin-adapted (`SZ` is
 required — `SU2` + UHF raises).
 
-- **SOE is spin-summed by default.** The DMRG always produces α/β-resolved
-  1-particle density matrices; `spin_resolved=False` (the default, and what the
-  `DMRGConfig` pipeline uses) contracts them to one entropy per spatial orbital,
-  which is what entropy screening consumes. Pass `spin_resolved=True` to a
-  direct `run_dmrg_subprocess` call to inspect the separate α/β entropies.
+- **SOE is spin-summed by default, spin-resolved on demand.** The DMRG always
+  produces α/β-resolved 1-particle density matrices. `spin_resolved=False` (the
+  default) contracts them to the 4-state entropy per *spatial* orbital;
+  `spin_resolved=True` returns the per-spin-orbital entropies `H(n_α)`/`H(n_β)`
+  as a `(2, ncas)` array. The choice is driven by `DMRGConfig.spin_soe`
+  (`"auto"`/`"summed"`/`"resolved"`, resolved via `DMRGConfig.spin_resolved()`):
+  `"auto"` uses spin-resolved only for a spin-polarised target (`nα != nβ`),
+  where the channels genuinely differ (e.g. an open-shell SOMO is entangled in
+  one spin channel and frozen in the other). Spin-summed selection is screened
+  with `select_by_entropy`; spin-resolved selection thresholds the α and β
+  channels independently with `select_by_spin_entropy`, yielding a split
+  `{"alpha", "beta"}` selection. (Note: `H(n_α) + H(n_β) ≥ S_spatial ≥
+  max(H_α, H_β)`, so the spin-summed threshold is always at least as inclusive
+  as either channel's.)
 - **CAS partitioning assumes a closed frozen core** — the reference spin
   polarisation must equal the active spin (`Nα − Nβ == nα − nβ`); otherwise the
   α and β active windows would differ and `get_subspaces_from_cas` raises. A
@@ -480,6 +491,32 @@ selected_occ, selected_virt = select_by_entropy(
 
 Returns `(selected_occ, selected_virt)` — each a `list[tuple[int, float]]` of
 (orbital index, entropy value).
+
+`soe1` must be 1-D (spin-summed); passing a `(2, ncas)` spin-resolved array
+raises a `ValueError` pointing to `select_by_spin_entropy`.
+
+---
+
+### `select_by_spin_entropy`
+
+```python
+from aegiss.active_space.entropy_screening import select_by_spin_entropy
+
+selection = select_by_spin_entropy(
+    occ_orbs, virt_orbs, soe1,   # soe1 shape (2, ncas): row 0 = α, row 1 = β
+    fraction=0.1,
+    fraction_type="r",
+    ranking="global",
+)
+# selection == {"alpha": (occ_α, virt_α), "beta": (occ_β, virt_β)}
+```
+
+Screens the α and β channels **independently** (the same `fraction` applied to
+each) from the spin-resolved SOE returned by
+`run_dmrg_subprocess(..., spin_resolved=True)`, so the α and β active windows may
+contain different orbitals. Same parameters as `select_by_entropy`; returns a
+`dict` with `"alpha"`/`"beta"` keys, each an `(selected_occ, selected_virt)`
+pair. Passing a 1-D array raises a `ValueError` pointing to `select_by_entropy`.
 
 ---
 
