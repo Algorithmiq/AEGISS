@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -12,6 +13,7 @@ from aegiss.utils.orbital_indices import (
     get_orbital_spaces,
     get_subspaces_from_cas,
     resolve_nelecas,
+    valence_occupied_orbitals,
 )
 
 
@@ -119,6 +121,25 @@ class TestGetOrbitalSpaces:
         result = get_orbital_spaces(mock_mf_7mo, [1, 2, 4])
         for arr in result:
             assert isinstance(arr, np.ndarray)
+
+
+class TestValenceOccupiedOrbitals:
+    def test_h2o_excludes_core(self, h2o_rhf: Any) -> None:
+        """H2O/sto-3g: 5 occupied, O contributes 1 core 1s → 4 valence."""
+        assert valence_occupied_orbitals(h2o_rhf) == [1, 2, 3, 4]
+
+    def test_h2o_keeps_all_when_core_kept(self, h2o_rhf: Any) -> None:
+        assert valence_occupied_orbitals(h2o_rhf, exclude_core=False) == [0, 1, 2, 3, 4]
+
+    def test_h2_has_no_core(self, h2_rhf: Any) -> None:
+        """Pure-hydrogen system has zero chemical core → nothing dropped."""
+        assert valence_occupied_orbitals(h2_rhf) == valence_occupied_orbitals(
+            h2_rhf, exclude_core=False
+        )
+
+    def test_returns_plain_python_ints(self, h2o_rhf: Any) -> None:
+        result = valence_occupied_orbitals(h2o_rhf)
+        assert all(type(i) is int for i in result)
 
 
 class TestGetSubspacesFromCas:
