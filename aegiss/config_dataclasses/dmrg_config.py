@@ -12,19 +12,26 @@ from aegiss.utils.orbital_indices import resolve_nelecas
 class DMRGConfig:
     """Configuration dataclass for DMRG calculations.
 
-    Args:
-        ncas (int): Number of active orbitals for the DMRG calculation.
-        nelecas (int or tuple[int, int]): Number of active electrons, either as a total count or an explicit
-            ``(nalpha, nbeta)`` pair (same convention as PySCF's CASCI).
-        init_bond_dim (int, default 10): Initial DMRG bond dimension; grows automatically during the sweep schedule.
-        symm_type ({'SZ', 'SU2'}, default 'SZ'): Spin symmetry used by block2.  ``'SZ'`` is required for entropy
-            calculations; ``'SU2'`` is faster but needs MPS conversion for entropies.
-        verbosity (int, default 0): Verbosity level for block2 output.  Higher values produce more detailed logs.
+    Parameters:
+    ----------
+    ncas : int
+        Number of active orbitals for the DMRG calculation.
+    nelecas : int or tuple[int, int]
+        Number of active electrons, either as a total count or an explicit
+        ``(nalpha, nbeta)`` pair (same convention as PySCF's CASCI).
+    max_bond_dim : int, default 500
+        Target DMRG bond dimension (must be a positive multiple of 4).
+        The sweep schedule starts at ``max_bond_dim // 2`` and ramps up to ``max_bond_dim``.
+    symm_type : {'SZ', 'SU2'}, default 'SZ'
+        Spin symmetry used by block2.  ``'SZ'`` is required for entropy
+        calculations; ``'SU2'`` is faster but needs MPS conversion for entropies.
+    verbosity : int, default 0
+        Verbosity level for block2 output.  Higher values produce more detailed logs.
     """
 
     ncas: int
     nelecas: int | tuple[int, int]
-    init_bond_dim: int = 10
+    max_bond_dim: int = 500
     symm_type: Literal["SZ", "SU2"] = "SZ"
     verbosity: int = 0
 
@@ -32,7 +39,9 @@ class DMRGConfig:
         """Validate the configuration parameters.
 
         Raises:
-            ValueError: If any of the parameters are out of their expected ranges or have invalid values.
+        ------
+        ValueError
+            If any of the parameters are out of their expected ranges or have invalid values.
         """
         if self.ncas <= 0:
             raise ValueError(
@@ -51,9 +60,13 @@ class DMRGConfig:
             raise ValueError(
                 f"DMRGConfig: `nelecas` must satisfy nalpha >= nbeta >= 0, got {self.nelecas}."
             )
-        if self.init_bond_dim <= 0:
+        if self.max_bond_dim <= 0:
             raise ValueError(
-                f"DMRGConfig: Initial bond dimension (`init_bond_dim`) must be positive, got {self.init_bond_dim}."
+                f"DMRGConfig: Target bond dimension (`max_bond_dim`) must be positive, got {self.max_bond_dim}."
+            )
+        if self.max_bond_dim % 4 != 0:
+            raise ValueError(
+                f"DMRGConfig: `max_bond_dim` must be a multiple of 4, got {self.max_bond_dim}."
             )
         if self.symm_type not in ("SZ", "SU2"):
             raise ValueError(

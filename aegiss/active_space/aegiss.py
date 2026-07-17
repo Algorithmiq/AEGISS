@@ -16,7 +16,7 @@ from aegiss.utils.plotting import (
     _make_soe_plots,
     plot_pie_contribution,
 )
-from aegiss.wavefunction.dmrg import run_dmrg
+from aegiss.wavefunction.dmrg_subprocess import run_dmrg_subprocess
 
 if TYPE_CHECKING:
     from aegiss.config_dataclasses import (
@@ -59,20 +59,19 @@ def select_aegiss(
     active_orbs, virt_orbs = get_subspaces_from_cas(
         mf, ncas=dmrg_config.ncas, nelecas=dmrg_config.nelecas
     )
-    _energy, soe1, _soe2, minfo = run_dmrg(
+    _energy, soe1 = run_dmrg_subprocess(
         mf,
         ncas=dmrg_config.ncas,
         nelecas=dmrg_config.nelecas,
         symm_type=dmrg_config.symm_type,
-        init_bond_dim=dmrg_config.init_bond_dim,
+        max_bond_dim=dmrg_config.max_bond_dim,
         verbosity=dmrg_config.verbosity,
     )
-    if output_config.save_plots and (soe1 is not None and minfo is not None):
+    if output_config.save_plots and soe1 is not None:
         _make_soe_plots(
             active_orbs,
             virt_orbs,
             soe1,
-            minfo,
             output_config.saving_folder,
             output_config.saving_prefix,
         )

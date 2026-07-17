@@ -11,6 +11,7 @@ import pytest
 mpl.use("Agg")
 
 from aegiss.utils.plotting import (
+    _build_ao_heatmap_matrix,
     _define_cas_size,
     _detect_plateaus,
     plot_ao_contribution,
@@ -292,18 +293,18 @@ class TestPlotAoContribution:
         tmp_path: pytest.FixturePath,
         simple_contributions: dict,
     ) -> None:
-        plot_ao_contribution(simple_contributions, save_path=str(tmp_path / "ao"))
+        plot_ao_contribution(simple_contributions, folder=str(tmp_path), filename="ao")
         assert (tmp_path / "ao_heatmap.pdf").exists()
 
     def test_empty_contributions_returns_silently(
         self, tmp_path: pytest.FixturePath
     ) -> None:
-        plot_ao_contribution({}, save_path=str(tmp_path / "ao"))
+        plot_ao_contribution({}, folder=str(tmp_path), filename="ao")
         assert not (tmp_path / "ao_heatmap.pdf").exists()
 
     def test_empty_group_is_skipped(self, tmp_path: pytest.FixturePath) -> None:
         contributions = {0: [(0, 0.5), (1, 0.3)], 1: []}
-        plot_ao_contribution(contributions, save_path=str(tmp_path / "ao"))
+        plot_ao_contribution(contributions, folder=str(tmp_path), filename="ao")
         assert (tmp_path / "ao_heatmap.pdf").exists()
 
     def test_default_letter_labels(
@@ -313,7 +314,7 @@ class TestPlotAoContribution:
     ) -> None:
         """No ao_labels → should complete without error using A/B/C labels."""
         plot_ao_contribution(
-            simple_contributions, save_path=str(tmp_path / "ao"), ao_labels=None
+            simple_contributions, folder=str(tmp_path), filename="ao", ao_labels=None
         )
         assert (tmp_path / "ao_heatmap.pdf").exists()
 
@@ -325,7 +326,8 @@ class TestPlotAoContribution:
         labels = {0: "Fe 3d", 1: "C 2pz", 2: "C 2px"}
         plot_ao_contribution(
             simple_contributions,
-            save_path=str(tmp_path / "ao"),
+            folder=str(tmp_path),
+            filename="ao",
             ao_labels=labels,
         )
         assert (tmp_path / "ao_heatmap.pdf").exists()
@@ -338,7 +340,8 @@ class TestPlotAoContribution:
         labels = {0: ["Fe 3d", "Fe 4d"], 1: "C 2pz", 2: "C 2px"}
         plot_ao_contribution(
             simple_contributions,
-            save_path=str(tmp_path / "ao"),
+            folder=str(tmp_path),
+            filename="ao",
             ao_labels=labels,
         )
         assert (tmp_path / "ao_heatmap.pdf").exists()
@@ -350,7 +353,8 @@ class TestPlotAoContribution:
     ) -> None:
         plot_ao_contribution(
             simple_contributions,
-            save_path=str(tmp_path / "ao"),
+            folder=str(tmp_path),
+            filename="ao",
             mo_labels=[10, 11, 12, 13, 14],
         )
         assert (tmp_path / "ao_heatmap.pdf").exists()
@@ -360,7 +364,110 @@ class TestPlotAoContribution:
         contributions = {0: [(j, float(j) / 5) for j in range(5)]}
         plot_ao_contribution(
             contributions,
-            save_path=str(tmp_path / "ao"),
+            folder=str(tmp_path),
+            filename="ao",
             mos_per_plot=3,
         )
         assert (tmp_path / "ao_heatmap.pdf").exists()
+
+    def test_combined_alpha_beta_creates_pdf(
+        self,
+        tmp_path: pytest.FixturePath,
+        simple_contributions: dict,
+    ) -> None:
+        """Passing ao_contributions_beta produces the combined heatmap."""
+        beta = {
+            i: [(j, v * 0.5) for j, v in simple_contributions[i]]
+            for i in simple_contributions
+        }
+        plot_ao_contribution(
+            simple_contributions,
+            beta,
+            folder=str(tmp_path),
+            filename="ao",
+        )
+        assert (tmp_path / "ao_heatmap.pdf").exists()
+
+    def test_relative_normalization_creates_pdf(
+        self,
+        tmp_path: pytest.FixturePath,
+        simple_contributions: dict,
+    ) -> None:
+        plot_ao_contribution(
+            simple_contributions,
+            folder=str(tmp_path),
+            filename="ao",
+            normalization="relative",
+        )
+        assert (tmp_path / "ao_heatmap.pdf").exists()
+
+
+class TestBuildAoHeatmapMatrix:
+    def test_restricted_one_row_per_group(self) -> None:
+        contributions = {0: [(0, 0.5), (1, 0.3)], 1: [(0, 0.2), (1, 0.8)]}
+        matrix, yticks, boundaries = _build_ao_heatmap_matrix(contributions, None, None)
+        assert matrix.shape == (2, 2)
+        assert boundaries == [1, 2]
+        assert len(yticks) == 2
+
+    def test_empty_returns_zero_size_matrix(self) -> None:
+        matrix, yticks, boundaries = _build_ao_heatmap_matrix({}, None, None)
+        assert matrix.size == 0
+        assert yticks == []
+        assert boundaries == []
+
+    def test_empty_group_skipped(self) -> None:
+        contributions = {0: [(0, 0.5), (1, 0.3)], 1: []}
+        matrix, _, boundaries = _build_ao_heatmap_matrix(contributions, None, None)
+        assert matrix.shape == (1, 2)
+        assert boundaries == [1]
+
+    def test_combined_interleaves_alpha_beta(self) -> None:
+        alpha = {0: [(0, 1.0), (1, 0.5)], 1: [(0, 0.4), (1, 0.2)]}
+        beta = {0: [(0, 0.6), (1, 0.3)], 1: [(0, 0.8), (1, 0.1)]}
+        matrix, yticks, boundaries = _build_ao_heatmap_matrix(alpha, beta, None)
+        # 2 groups x (alpha, beta) = 4 rows; group boundaries after rows 2 and 4
+        assert matrix.shape == (4, 2)
+        assert boundaries == [2, 4]
+        assert yticks[0].endswith(r"($\alpha$)")
+        assert yticks[1].endswith(r"($\beta$)")
+
+    def test_missing_beta_group_treated_as_zeros(self) -> None:
+        alpha = {0: [(0, 1.0), (1, 0.5)]}
+        beta: dict[int, list[tuple[int, float]]] = {}
+        matrix, _, _ = _build_ao_heatmap_matrix(alpha, beta, None)
+        assert matrix.shape == (2, 2)
+        np.testing.assert_array_equal(matrix[1], [0.0, 0.0])  # beta row all zeros
+
+    def test_global_normalization_preserves_cross_group_magnitude(self) -> None:
+        """Global mode: a weak group stays below 1; the dominant group hits 1."""
+        contributions = {0: [(0, 0.1), (1, 0.05)], 1: [(0, 1.0), (1, 0.5)]}
+        matrix, _, _ = _build_ao_heatmap_matrix(
+            contributions, None, None, normalization="global"
+        )
+        assert matrix[0].max() < 1.0
+        assert matrix[1].max() == pytest.approx(1.0)
+
+    def test_relative_normalization_each_group_maxes_to_one(self) -> None:
+        contributions = {0: [(0, 0.1), (1, 0.05)], 1: [(0, 1.0), (1, 0.5)]}
+        matrix, _, _ = _build_ao_heatmap_matrix(
+            contributions, None, None, normalization="relative"
+        )
+        assert matrix[0].max() == pytest.approx(1.0)
+        assert matrix[1].max() == pytest.approx(1.0)
+
+    def test_combined_relative_uses_joint_group_max(self) -> None:
+        """Relative mode normalises alpha and beta of a group by their shared max."""
+        alpha = {0: [(0, 1.0), (1, 0.5)]}
+        beta = {0: [(0, 0.5), (1, 0.25)]}
+        matrix, _, _ = _build_ao_heatmap_matrix(
+            alpha, beta, None, normalization="relative"
+        )
+        # joint max is 1.0 (alpha) → beta scaled by the same 1.0, not its own 0.5
+        assert matrix[0].max() == pytest.approx(1.0)
+        assert matrix[1].max() == pytest.approx(0.5)
+
+    def test_all_zero_weights_do_not_divide(self) -> None:
+        contributions = {0: [(0, 0.0), (1, 0.0)]}
+        matrix, _, _ = _build_ao_heatmap_matrix(contributions, None, None)
+        np.testing.assert_array_equal(matrix[0], [0.0, 0.0])

@@ -27,14 +27,20 @@ workflows.
 - [Environment variables](#environment-variables)
 - [Logging](#logging)
 - [Tutorial — benzene π system](#tutorial--benzene-π-system)
+  - [1. Build the molecule](#1-build-the-molecule)
+  - [2. Run a mean-field calculation](#2-run-a-mean-field-calculation)
+  - [3. Configure and run the full pipeline](#3-configure-and-run-the-full-pipeline)
+  - [4. Localize orbitals before the pipeline (optional)](#4-localize-orbitals-before-the-pipeline-optional)
 - [API reference](#api-reference)
   - [select_aegiss](#select_aegiss)
   - [Configuration dataclasses](#configuration-dataclasses)
   - [build_mol](#build_mol)
   - [run_scf](#run_scf)
-  - [run_dmrg](#run_dmrg)
+  - [run_dmrg_subprocess](#run_dmrg_subprocess)
   - [select_by_entropy](#select_by_entropy)
   - [select_by_ao_projection](#select_by_ao_projection)
+  - [plot_ao_contribution](#plot_ao_contribution)
+  - [mo_ao_contributions](#mo_ao_contributions)
   - [localize](#localize)
   - [save_orbitals](#save_orbitals)
 - [Development](#development)
@@ -165,7 +171,7 @@ mf = run_scf(mol, method="RHF")
 from aegiss.active_space.aegiss import select_aegiss
 from aegiss.config_dataclasses import DMRGConfig, EntropyConfig, ProjectionConfig, OutputConfig
 
-dmrg_config = DMRGConfig(ncas=20, nelecas=20, init_bond_dim=10, symm_type="SZ")
+dmrg_config = DMRGConfig(ncas=20, nelecas=20, max_bond_dim=500, symm_type="SZ")
 
 entropy_config = EntropyConfig(
     fraction=0.1,
@@ -203,8 +209,50 @@ entropy before the 10 % threshold is applied, so only the most entangled orbital
 across the full CAS survive. Narrowing `ao_labels` to `["C 2pz"]` targets the
 benzene π manifold exclusively.
 
-For custom workflows that call individual steps directly, see `run_dmrg`,
+For custom workflows that call individual steps directly, see `run_dmrg_subprocess`,
 `select_by_entropy`, and `select_by_ao_projection` in the API reference below.
+
+### 4. Localize orbitals before the pipeline (optional)
+
+Orbital localization can improve DMRG convergence by making the orbitals more
+spatially compact. Pass the localized coefficients back into `mf` before calling
+`select_aegiss`.
+
+```python
+from aegiss.localization.orbital_localization import localize
+
+# Boys localization of occupied orbitals only
+mf.mo_coeff = localize("boys", mol, mf)
+
+# Pipek-Mezey including virtuals
+mf.mo_coeff = localize("pm", mol, mf, on_virtual=True)
+
+# Intrinsic Bond Orbitals — good for transition metals and mixed bonding
+mf.mo_coeff = localize("ibos", mol, mf)
+
+# Intrinsic Atomic Orbitals — atom-centred, useful for population analysis
+mf.mo_coeff = localize("iaos", mol, mf)
+
+# Natural orbitals from an MP2 density matrix
+mf.mo_coeff = localize("nos", mf, "mp2")
+```
+
+#### Freezing core orbitals (FNOs only)
+
+For heavier atoms it is common to exclude chemically inert core orbitals from the
+correlated calculation. This is supported by `"fnos"` via the `frozen` keyword
+(NOs always use the full orbital space):
+
+```python
+import numpy as np
+
+# Freeze the two lowest-energy (core) occupied orbitals
+mf.mo_coeff = localize("fnos", mf, "mp2", frozen=[0, 1])
+```
+
+The frozen orbitals are excluded from the MP2/CISD/CCSD density matrix but are
+kept in the output coefficient matrix, so `mf.mo_coeff` retains its original
+shape and the rest of the pipeline is unaffected.
 
 Further step-by-step tutorials covering SCF & localization, DMRG, AO projection, and
 the full pipeline are available as Jupyter notebooks in
@@ -259,16 +307,16 @@ from aegiss.config_dataclasses import DMRGConfig, EntropyConfig, ProjectionConfi
 #### `DMRGConfig`
 
 ```python
-DMRGConfig(ncas, nelecas, init_bond_dim=10, symm_type="SZ", verbosity=0)
+DMRGConfig(ncas, nelecas, max_bond_dim=500, symm_type="SZ", verbosity=0)
 ```
 
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `ncas` | `int` | — | Number of active orbitals |
 | `nelecas` | `int` or `tuple[int, int]` | — | Number of active electrons. An integer total count or an explicit `(nalpha, nbeta)` pair — same convention as PySCF's CASCI. Odd integers are treated as high-spin doublets. |
-| `init_bond_dim` | `int` | `10` | Initial DMRG bond dimension; grows automatically during the sweep schedule |
+| `max_bond_dim` | `int` | `500` | Target DMRG bond dimension. The schedule starts at `max_bond_dim // 2` and ramps to `max_bond_dim`. Must be a positive multiple of 4. |
 | `symm_type` | `"SZ"` or `"SU2"` | `"SZ"` | Spin symmetry: `"SZ"` is required for entropy calculations; `"SU2"` is faster |
-| `verbosity` | `int` | `0` | block2 output verbosity |
+| `verbosity` | `int` | `0` | block2main output verbosity |
 
 Open-shell example: `DMRGConfig(ncas=10, nelecas=(5, 4))` sets up a doublet CAS with 5α and 4β electrons.
 
@@ -355,17 +403,16 @@ Returns the converged PySCF mean-field object.
 
 ---
 
-### `run_dmrg`
+### `run_dmrg_subprocess`
 
 ```python
-from aegiss.wavefunction.dmrg import run_dmrg
+from aegiss.wavefunction.dmrg_subprocess import run_dmrg_subprocess
 
-energy, soe1, soe2, minfo = run_dmrg(
+energy, soe1 = run_dmrg_subprocess(
     mf, ncas, nelecas,
-    init_bond_dim=10,
-    symm_type="SU2",
+    max_bond_dim=500,
+    symm_type="SZ",
     verbosity=0,
-    get_qmi=False,
 )
 ```
 
@@ -374,12 +421,12 @@ energy, soe1, soe2, minfo = run_dmrg(
 | `mf` | SCF object | — | Converged mean-field |
 | `ncas` | `int` | — | Number of active orbitals |
 | `nelecas` | `int` or `tuple[int, int]` | — | Number of active electrons. An integer total count or an explicit `(nalpha, nbeta)` pair. Odd integers are treated as high-spin doublets. |
-| `init_bond_dim` | `int` | `10` | Initial DMRG bond dimension; the schedule grows to a larger final dimension automatically |
-| `symm_type` | `str` | `"SU2"` | Spin symmetry: `"SU2"` (faster) or `"SZ"` (required for entropy calculation without MPS conversion) |
-| `verbosity` | `int` | `0` | block2 output verbosity |
-| `get_qmi` | `bool` | `False` | If `True`, compute and return single- and two-orbital entropies and the quantum mutual information matrix |
+| `max_bond_dim` | `int` | `500` | Target DMRG bond dimension. The schedule starts at `max_bond_dim // 2` and ramps to `max_bond_dim`. Must be a positive multiple of 4. |
+| `symm_type` | `str` | `"SZ"` | Spin symmetry: `"SZ"` or `"SU2"` |
+| `verbosity` | `int` | `0` | block2main output verbosity |
+| `get_qmi` | `bool` | `True` | If `True`, compute and return single-orbital entropies |
 
-Returns `(energy, soe1, soe2, minfo)`. The last three are `None` when `get_qmi=False`.
+Returns `(energy, soe1)`. `soe1` is `None` when `get_qmi=False`.
 
 `OMP_NUM_THREADS`, `SCRATCH_DIR`, and `MEM` environment variables are read at call time (see [Environment variables](#environment-variables) for details).
 
@@ -436,9 +483,29 @@ active_indices = select_by_ao_projection(
 | `contribution` | `float` or `list[float]` or `None` | `None` | Projection weight threshold. A single float applies to all labels; a list assigns per-label thresholds. Mutually exclusive with `top_n`. |
 | `contribution_type` | `"r"` or `"a"` or `None` | `None` | Required when `contribution` is set. `"r"`: threshold relative to the maximum weight; `"a"`: absolute threshold. |
 | `top_n` | `int` or `list[int]` or `None` | `None` | Alternative to `contribution`: keep the top-N orbitals per label. A list assigns per-label counts. |
-| `restricted_space` | `list[tuple[int, float]]` or `tuple[list, list]` or `None` | `None` | Restrict candidates to a pre-filtered set. Pass a flat list of `(index, score)` pairs, or a `(occ_list, virt_list)` tuple as returned by `select_by_entropy`. `None` considers all molecular orbitals. |
+| `restricted_space` | `list[int]` or `list[tuple[int, float]]` or `tuple[list, list]` or `None` | `None` | Restrict candidates to a pre-filtered set. Pass a plain list of orbital indices (e.g. `list(range(34, 131))`), a list of `(index, score)` pairs, or a `(occ_list, virt_list)` tuple as returned by `select_by_entropy`. `None` considers all molecular orbitals. |
 
 Returns `np.ndarray` of sorted orbital indices.
+
+**Restricting to occupied orbitals**
+
+To screen only the occupied space (optionally dropping the chemical core),
+build the index list with `valence_occupied_orbitals` and pass it as
+`restricted_space`:
+
+```python
+from aegiss.utils.orbital_indices import valence_occupied_orbitals
+
+# Valence occupied orbitals only (chemical core excluded — 1s for first-row
+# atoms, 1s2s2p for second-row, etc., via pyscf.data.elements.chemcore)
+restricted_space = valence_occupied_orbitals(mf)
+
+# All occupied orbitals, including the core
+restricted_space = valence_occupied_orbitals(mf, exclude_core=False)
+```
+
+The core is taken to be the lowest `ncore` orbital indices (PySCF's frozen-core
+convention), which holds for canonical SCF orbitals.
 
 **AO label format**
 
@@ -449,6 +516,139 @@ Labels follow PySCF's `search_ao_label` convention:
 "Element.N AtomicOrbital"        # N-th atom of this element (1-indexed)
 ["Fe 3dxz", "Fe 3dyz", "Fe 3dz^2"]  # multiple orbitals at once
 ```
+
+---
+
+### `plot_ao_contribution`
+
+```python
+from aegiss.utils.plotting import plot_ao_contribution
+```
+
+Renders the per-orbital AO projection weights as a heatmap — one row per AO
+group, columns are MOs, colour is the (normalised) projection weight. Wide
+orbital ranges are paginated into stacked panels (`mos_per_plot`).
+`select_by_ao_projection(..., save_path=...)` calls this internally for the
+restricted case; call it directly for finer control or to combine spin channels.
+
+```python
+# Restricted: one row per AO group
+plot_ao_contribution(alpha_contributions, folder="./", filename="ao")
+
+# Unrestricted: alpha and beta interleaved (alpha above beta) within each
+# group, with a thin white line separating consecutive groups
+plot_ao_contribution(
+    alpha_contributions,
+    beta_contributions,
+    folder="./",
+    filename="ao",
+    normalization="global",
+)
+```
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `ao_contributions` | `dict[int, list[tuple[int, float]]]` | — | Per-group `(orbital_index, weight)` lists covering the search space. For unrestricted calculations, the alpha-spin contributions. |
+| `ao_contributions_beta` | `dict[int, list[tuple[int, float]]]` or `None` | `None` | Optional beta-spin contributions sharing the same group keys. When given, each group is drawn as an interleaved alpha-above-beta row pair. |
+| `folder` | `str` | `"./"` | Output directory. |
+| `filename` | `str` | `"ao_contribution"` | Base name; `_heatmap` and the format suffix are appended automatically. |
+| `ao_labels` | `dict[int, str \| list[str]]` or `None` | `None` | Row labels per group (a list is joined with newlines). `None` falls back to letter identifiers A, B, C, … |
+| `mo_labels` | `list[int]` or `None` | `None` | x-tick labels (orbital indices). Defaults to sequential integers. |
+| `mos_per_plot` | `int` | `200` | Maximum MOs per panel; wider ranges paginate into stacked panels. |
+| `fmt` | `str` or `None` | `"pdf"` | Output format (`"pdf"`, `"png"`, …). `None` lets matplotlib infer from the filename. |
+| `normalization` | `"global"` or `"relative"` | `"global"` | `"global"`: divide the whole matrix by a single maximum, preserving magnitude differences between AO groups. `"relative"`: divide each group by its own maximum (jointly over alpha and beta), emphasising within-group patterns and spin asymmetry instead. |
+
+> **Note** Combining alpha and beta adds *rows*, not columns, so it never worsens
+> the horizontal crowding of wide orbital ranges — the figure just grows taller.
+
+---
+
+### `mo_ao_contributions`
+
+```python
+from aegiss.utils.mo_composition import mo_ao_contributions
+
+composition = mo_ao_contributions(mf, [4, 5, 6], top_n=10)
+```
+
+The drill-down companion to `plot_ao_contribution`: when an MO shows only a
+faint weight in the heatmap, this reports **which AOs that orbital is actually
+built from**. For each requested MO the AO basis functions are ranked by the
+magnitude of their expansion coefficient `mo_coeff[μ, i]`, and the `top_n`
+largest are printed — signed, so the orbital phase is preserved — as a table
+with one column per orbital, grouped four orbitals per row:
+
+```
+Top-4 AO contributions per MO (signed mo_coeff entries):
+MO 1                   |  MO 2                   |  MO 3                   |  MO 4
+-----------------------+-------------------------+-------------------------+-----------------------
+0 O 2s        +0.4429  |  0 O 2py       +0.4900  |  0 O 2pz       +0.5455  |  0 O 2px       +0.6312
+0 O 3s        +0.3757  |  1 H 1s        +0.3280  |  0 O 3pz       +0.3653  |  0 O 3px       +0.4957
+1 H 1s        +0.1936  |  2 H 1s        -0.3280  |  0 O 3s        -0.3498  |  2 H 2px       +0.0311
+2 H 1s        +0.1936  |  0 O 3py       +0.2219  |  2 H 1s        +0.2064  |  1 H 2px       +0.0311
+```
+
+For an unrestricted `mf` (`mo_coeff` shape `(2, n_ao, n_mo)`), the alpha and
+beta channels are printed as adjacent columns per orbital.
+
+Set `group_by_element=True` to collapse the atom index and merge every AO that
+shares an element symbol and basis label (e.g. all `C 2pz` across the molecule)
+into a single group, weighted by the **sum of `|coefficient|`** over its
+members and ranked by that weight:
+
+```
+Top-4 AO contributions per MO (summed |mo_coeff| per element+label):
+MO 4              |  MO 5              |  MO 6              |  MO 7
+------------------+--------------------+--------------------+------------------
+H 1s     +1.2781  |  H 1s     +1.3234  |  H 1s     +0.8674  |  O 2px    +1.3405
+O 2py    +0.6054  |  O 2py    +0.6483  |  O 2s     +0.7885  |  O 2s     +0.2387
+O 2pz    +0.6054  |  O 2pz    +0.6483  |  O 2pz    +0.6881  |  H 1s     +0.1161
+O 2s     +0.0000  |  O 2s     +0.0000  |  O 2py    +0.6881  |  O 2py    +0.1043
+```
+
+Pass `clusters={cluster_id: [atom_idx, ...]}` to instead collapse by **cluster
+and basis label**. Each atom is mapped to the cluster containing it (atoms in no
+cluster fall into a catch-all group keyed `U`), and `|coefficient|` is summed
+over the atoms of a cluster sharing a basis label. Each group label reads
+`(<cluster id>) <elements> <ao_label>`, listing the cluster's distinct element
+symbols (e.g. `(0) C 2pz`, or `(0) C,O 2pz` for a mixed cluster, `(U) H 1s` for
+unassigned atoms). The membership log (printed first) lists each cluster's atoms
+with indices as `<symbol>(<ids>)`, collapsing same-element atoms and preserving
+any PySCF atom tag. `clusters` and `group_by_element` are mutually exclusive.
+
+```
+# clusters={0: [0], 1: [1, 2]} on a water molecule
+Cluster membership:
+  cluster 0: O(0)
+  cluster 1: H(1,2)
+Top-4 AO contributions per MO (summed |mo_coeff| per cluster+label):
+MO 4               |  ...
+-------------------+-----
+(0) O 2px +0.9876  |  ...
+(1) H 1s  +0.4521  |  ...
+(0) O 2s  +0.1203  |  ...
+(0) O 2pz +0.0000  |  ...
+```
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `mf` | SCF object | — | Converged mean-field exposing `mo_coeff` and `mol`. Restricted or unrestricted. |
+| `mo_indices` | `int` or `Sequence[int]` | — | Orbital index, or indices, to decompose. |
+| `top_n` | `int` | `10` | Number of largest AO contributions (or groups) kept per orbital. |
+| `group_by_element` | `bool` | `False` | Sum `|coefficient|` over all atoms of the same element sharing a basis label, ranking the groups instead of individual AOs. |
+| `clusters` | `Mapping[int, Sequence[int]]` | `None` | Map of cluster id to its atom indices. Sum `|coefficient|` over each cluster's atoms sharing a basis label. Mutually exclusive with `group_by_element`. |
+
+Returns `dict[int, dict[str, list[tuple[int, str, float]]]]` — each MO maps to a
+`{spin: entries}` dict (`spin` is `"alpha"`, plus `"beta"` when unrestricted),
+where each entry is `(key, label, weight)` ordered by descending weight.
+Ungrouped, `key` is the AO index and `weight` is the signed coefficient;
+grouped, `key` is the number of AOs in the group and `weight` is the summed
+`|coefficient|`. The table is always logged.
+
+> Raw coefficients (not Mulliken populations) are used deliberately: they answer
+> "which AOs is this orbital built from" directly and need no overlap matrix.
+> They are *not* a normalised partition — in a non-orthogonal AO basis the
+> values do not sum to 1 — but they give the same ranking of dominant AOs.
 
 ---
 
@@ -467,6 +667,8 @@ Dispatches to a localization method by name.
 | `"boys"` | — | Foster-Boys localization (minimises orbital spread) |
 | `"edmiston"` | `"er"` | Edmiston-Ruedenberg localization (maximises self-repulsion) |
 | `"pm"` | `"pipek"` | Pipek-Mezey localization (maximises partial charges) |
+| `"ibos"` | `"ibo"` | Intrinsic Bond Orbital localization (maximises IAO population) |
+| `"iaos"` | `"iao"` | Intrinsic Atomic Orbital construction (Löwdin-orthogonalized) |
 | `"nos"` | — | Natural orbitals from a correlated wavefunction |
 | `"fnos"` | — | Frozen natural orbitals |
 
@@ -485,6 +687,15 @@ Additional keyword for `"pm"`:
 |---|---|---|---|
 | `pop_method` | `str` | `"becke"` | Population analysis scheme for the virtual block |
 
+Additional keywords for `"ibos"` / `"iaos"`:
+
+| Keyword | Type | Default | Description |
+|---|---|---|---|
+| `minao` | `str` | `"minao"` | Reference minimal basis for IAO construction |
+| `exponent` | `int` | `4` | Exponent in the IBO cost function (`"ibos"` only) |
+
+Both methods transform only the occupied block; the virtual block is unchanged.
+
 Arguments for `"nos"` and `"fnos"`:
 
 | Keyword | Type | Default | Description |
@@ -492,14 +703,18 @@ Arguments for `"nos"` and `"fnos"`:
 | `mf` | SCF object | — | First positional argument |
 | `correlated_method` | `"mp2"`, `"cisd"`, `"ccsd"` | — | Method used to build the correlated density matrix |
 | `split` *(nos only)* | `bool` | `False` | Diagonalise occupied and virtual blocks of the 1-RDM separately |
-| `active` *(fnos only)* | `bool` or `list[int]` | `True` | `True`: use all occupied orbitals; list of indices: freeze those orbitals |
+| `frozen` *(fnos only)* | `list[int]` or `None` | `None` | Indices of occupied orbitals to freeze (0-based). Excluded from the correlated calculation but kept in the output. |
+| `active` *(fnos only)* | `True` or `list[int]` | `True` | `True`: use all occupied orbitals; list of indices: the active occupied set (the complement is frozen). Ignored when `frozen` is provided. |
 
 ```python
 # Examples
 localize("boys", mol, mf, on_virtual=True)
 localize("pm", mol, mf, n_occ=10)
-localize("nos", mf, correlated_method="mp2", split=True)
-localize("fnos", mf, correlated_method="ccsd", active=[0, 1, 2])
+localize("ibos", mol, mf)                                         # IBO localization
+localize("iaos", mol, mf, minao="minao")                          # IAO construction
+localize("nos", mf, correlated_method="mp2", split=True)          # full space, split blocks
+localize("fnos", mf, correlated_method="ccsd", frozen=[0, 1, 2]) # freeze core orbitals
+localize("fnos", mf, correlated_method="ccsd", active=[3, 4, 5]) # equivalent: keep 3,4,5 active
 ```
 
 ---

@@ -62,8 +62,8 @@ def pipeline_patches():
             return_value=(np.array([2, 3]), np.array([5])),
         ),
         patch(
-            f"{_MODULE}.run_dmrg",
-            return_value=(-75.0, np.ones(3), None, None),
+            "aegiss.active_space.aegiss.run_dmrg_subprocess",
+            return_value=(-75.0, np.ones(3)),
         ),
         patch(
             f"{_MODULE}.select_by_entropy",
@@ -433,7 +433,10 @@ class TestEntropyScreeningEarlyReturn:
                 f"{_MODULE}.get_subspaces_from_cas",
                 return_value=(np.array([2, 3]), np.array([5])),
             ),
-            patch(f"{_MODULE}.run_dmrg", return_value=(-75.0, np.ones(3), None, None)),
+            patch(
+                "aegiss.active_space.aegiss.run_dmrg_subprocess",
+                return_value=(-75.0, np.ones(3)),
+            ),
             patch(f"{_MODULE}.select_by_entropy", return_value=([], [])),
             patch(f"{_MODULE}.select_by_ao_projection") as mock_proj,
             patch(f"{_MODULE}.save_orbitals"),
@@ -465,7 +468,10 @@ class TestEntropyScreeningEarlyReturn:
                 f"{_MODULE}.get_subspaces_from_cas",
                 return_value=(np.array([2, 3]), np.array([5])),
             ),
-            patch(f"{_MODULE}.run_dmrg", return_value=(-75.0, np.ones(3), None, None)),
+            patch(
+                "aegiss.active_space.aegiss.run_dmrg_subprocess",
+                return_value=(-75.0, np.ones(3)),
+            ),
             patch(f"{_MODULE}.select_by_entropy", return_value=([], [(5, 0.4)])),
             patch(
                 f"{_MODULE}.select_by_ao_projection",
@@ -500,7 +506,10 @@ class TestEntropyScreeningEarlyReturn:
                 f"{_MODULE}.get_subspaces_from_cas",
                 return_value=(np.array([2, 3]), np.array([5])),
             ),
-            patch(f"{_MODULE}.run_dmrg", return_value=(-75.0, np.ones(3), None, None)),
+            patch(
+                "aegiss.active_space.aegiss.run_dmrg_subprocess",
+                return_value=(-75.0, np.ones(3)),
+            ),
             patch(f"{_MODULE}.select_by_entropy", return_value=([(2, 0.8)], [])),
             patch(
                 f"{_MODULE}.select_by_ao_projection",

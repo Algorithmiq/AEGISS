@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import string
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
@@ -28,13 +28,19 @@ def _draw_pie_subplot(
 ) -> None:
     """Draw a single pie chart for one orbital's AO composition.
 
-    Args:
-        ax (matplotlib.axes.Axes): Axes on which to draw the pie chart.
-        data (np.ndarray): Fractional contributions for each AO group (must sum to ≤ 1).
-        labels_names (list of str): Slice labels corresponding to each entry in *data*.
-        orb_id (int): Orbital index displayed as the subplot title.
-        min_pct (float): Minimum fractional contribution below which the slice label and
-            percentage text are hidden.
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes on which to draw the pie chart.
+    data : np.ndarray
+        Fractional contributions for each AO group (must sum to ≤ 1).
+    labels_names : list of str
+        Slice labels corresponding to each entry in *data*.
+    orb_id : int
+        Orbital index displayed as the subplot title.
+    min_pct : float
+        Minimum fractional contribution below which the slice label and
+        percentage text are hidden.
     """
     n_labels = len(data)
     explode = np.zeros(n_labels)
@@ -69,23 +75,36 @@ def _save_contributions(
     folder: str = "./",
     filename: str = "major_composition",
     min_pct: float = 0.01,
+    fmt: str | None = "pdf",
 ) -> None:
     """Compute AO compositions and save a grid of pie charts as a PDF.
 
     Computes the fractional contribution of each AO group to every orbital in
     *orbs*, lays out the charts in a *shape* grid, and writes a single PDF file.
 
-    Args:
-        shape (tuple[int, int]): Grid dimensions ``(n_rows, n_cols)`` for the subplot layout.
-        mol (pyscf.gto.Mole): PySCF Mole object used to resolve AO labels.
-        orbs (np.ndarray or list of int): Indices of the molecular orbitals to plot.
-        ao_labels (list of str or list of str): AO label strings recognised by ``mol.search_ao_label``.
-        labels_names (list of str): Human-readable names for each AO group, used as pie slice labels.
-        mo (np.ndarray, shape (n_ao, n_mo)): MO coefficient matrix for one spin channel.
-        folder (str): Directory where the PDF is saved.
-        filename (str): Output filename without extension.
-        min_pct (float): Minimum fractional contribution below which the slice label and
-            percentage are hidden.
+    Parameters
+    ----------
+    shape : tuple[int, int]
+        Grid dimensions ``(n_rows, n_cols)`` for the subplot layout.
+    mol : pyscf.gto.Mole
+        PySCF Mole object used to resolve AO labels.
+    orbs : np.ndarray or list of int
+        Indices of the molecular orbitals to plot.
+    ao_labels : list of str or list of str
+        AO label strings recognised by ``mol.search_ao_label``.
+    labels_names : list of str
+        Human-readable names for each AO group, used as pie slice labels.
+    mo : np.ndarray, shape (n_ao, n_mo)
+        MO coefficient matrix for one spin channel.
+    folder : str
+        Directory where the PDF is saved.
+    filename : str
+        Output filename without extension.
+    min_pct : float
+        Minimum fractional contribution below which the slice label and
+        percentage are hidden.
+    fmt : str or None
+        Output format for the figure (e.g., "pdf", "png"). If None, the default (`pdf`) is used.
     """
     n_orbs, n_labels = len(orbs), len(ao_labels)
     total_ao_idx = np.unique(
@@ -118,9 +137,10 @@ def _save_contributions(
                 min_pct=min_pct,
             )
 
-    logger.info("Saving %s.pdf", filename)
+    full_filename = f"{filename}.{fmt}" if fmt else filename
+    logger.info("Saving %s", full_filename)
     fig.tight_layout()
-    fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf", bbox_inches="tight")
+    fig.savefig(Path(folder) / full_filename, format=fmt, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -134,6 +154,7 @@ def plot_pie_contribution(
     folder: str = "./",
     orb_for_row: int = 4,
     min_pct: float = 0.01,
+    fmt: str | None = "pdf",
 ) -> None:
     """Plot per-orbital AO composition as a grid of pie charts.
 
@@ -143,7 +164,8 @@ def plot_pie_contribution(
     Saves one PDF per spin channel (``_alpha`` / ``_beta`` for unrestricted,
     ``_alpha`` only for restricted).
 
-    Args:
+    Parameters
+    ----------
     mol:
         PySCF Mole object, used to resolve AO labels.
     mf:
@@ -166,6 +188,8 @@ def plot_pie_contribution(
     min_pct:
         Minimum fractional contribution (0-1) below which the slice label
         and percentage are hidden. Default is 0.01 (1 %).
+    fmt:
+        Output format for the figure (e.g., "pdf", "png"). If None, the default (`pdf`) is used.
     """
     if isinstance(ao_labels, str):
         ao_labels = [ao_labels]
@@ -189,6 +213,7 @@ def plot_pie_contribution(
         "labels_names": str_labels_names,
         "folder": folder,
         "min_pct": min_pct,
+        "fmt": fmt,
     }
 
     if np.ndim(mf.mo_coeff) == 3:
@@ -199,24 +224,127 @@ def plot_pie_contribution(
         _save_contributions(**common, mo=mf.mo_coeff, filename=filename + "_alpha")
 
 
+def _ao_group_label(
+    group_idx: int,
+    position: int,
+    ao_labels: dict[int, str | list[str]] | None,
+) -> str:
+    """Resolve the y-tick label for one AO group."""
+    if ao_labels is not None:
+        raw = ao_labels.get(group_idx, str(group_idx))
+        return "\n".join(raw) if isinstance(raw, list) else raw
+    if position < 26:
+        return string.ascii_uppercase[position]
+    return (
+        string.ascii_uppercase[position // 26 - 1]
+        + string.ascii_uppercase[position % 26]
+    )
+
+
+def _normalise_row(vals: np.ndarray, norm: float) -> np.ndarray:
+    """Scale *vals* to [0, 1] by *norm*, leaving them unchanged when norm is 0."""
+    return vals if norm == 0 else vals / norm
+
+
+def _build_ao_heatmap_matrix(
+    ao_contributions: dict[int, list[tuple[int, float]]],
+    ao_contributions_beta: dict[int, list[tuple[int, float]]] | None,
+    ao_labels: dict[int, str | list[str]] | None,
+    normalization: Literal["global", "relative"] = "global",
+) -> tuple[np.ndarray, list[str], list[int]]:
+    """Assemble the heatmap matrix, y-tick labels, and inter-group boundaries.
+
+    Rows are scaled to [0, 1]. For the unrestricted case each non-empty group
+    yields an alpha row followed by a beta row; *boundaries* holds the row index
+    just after each group (for drawing separators).
+
+    *normalization* controls the scaling reference:
+
+    - ``"global"``: every row is divided by the single maximum across the whole
+      matrix, so weaker AO groups stay dim relative to dominant ones.
+    - ``"relative"``: each group is divided by its own maximum (jointly over
+      alpha and beta), so within-group patterns and spin asymmetry are
+      emphasised at the cost of cross-group magnitude comparison.
+    """
+    raw_rows: list[np.ndarray] = []
+    yticks: list[str] = []
+    boundaries: list[int] = []
+    group_spans: list[tuple[int, int]] = []
+    for position, group_idx in enumerate(ao_contributions):
+        weights = ao_contributions[group_idx]
+        if not weights:
+            continue
+        label = _ao_group_label(group_idx, position, ao_labels)
+        a_vals = np.array([w for _, w in weights], dtype=float)
+        start = len(raw_rows)
+        if ao_contributions_beta is None:
+            raw_rows.append(a_vals)
+            yticks.append(label)
+        else:
+            beta = ao_contributions_beta.get(group_idx, [])
+            b_vals = (
+                np.array([w for _, w in beta], dtype=float)
+                if beta
+                else np.zeros_like(a_vals)
+            )
+            raw_rows.append(a_vals)
+            yticks.append(rf"{label} ($\alpha$)")
+            raw_rows.append(b_vals)
+            yticks.append(rf"{label} ($\beta$)")
+        boundaries.append(len(raw_rows))
+        group_spans.append((start, len(raw_rows)))
+
+    if not raw_rows:
+        return np.empty((0, 0)), yticks, boundaries
+
+    if normalization == "global":
+        gmax = max(r.max(initial=0.0) for r in raw_rows)
+        norm_rows = [_normalise_row(r, gmax) for r in raw_rows]
+    else:
+        norm_rows = []
+        for span_start, span_end in group_spans:
+            block = raw_rows[span_start:span_end]
+            block_max = max(r.max(initial=0.0) for r in block)
+            norm_rows.extend(_normalise_row(r, block_max) for r in block)
+
+    return np.array(norm_rows), yticks, boundaries
+
+
 def plot_ao_contribution(
     ao_contributions: dict[int, list[tuple[int, float]]],
-    save_path: str,
+    ao_contributions_beta: dict[int, list[tuple[int, float]]] | None = None,
+    folder: str = "./",
+    filename: str = "ao_contribution",
     ao_labels: dict[int, str | list[str]] | None = None,
     mo_labels: list[int] | np.ndarray | None = None,
     mos_per_plot: int = 200,
+    fmt: str | None = "pdf",
+    normalization: Literal["global", "relative"] = "global",
 ) -> None:
     """Plot AO contributions as a heatmap, one row per AO group.
 
-    Each row is the contribution array for one AO group, normalised by its own
-    maximum so all rows share the same [0, 1] colour scale.
+    Rows share a common [0, 1] colour scale; *normalization* sets the reference
+    (see below).
 
-    Args:
+    When *ao_contributions_beta* is supplied (unrestricted case), each AO group
+    is shown as a pair of interleaved rows — alpha above beta — and a thin white
+    line separates consecutive groups.
+
+    Parameters
+    ----------
     ao_contributions:
         Dict mapping integer group index to a list of (orbital_index, weight)
-        pairs covering all orbitals in the search space.
-    save_path:
-        Output path/stem; ``_heatmap.pdf`` is appended automatically.
+        pairs covering all orbitals in the search space. For unrestricted
+        calculations these are the alpha-spin contributions.
+    ao_contributions_beta:
+        Optional beta-spin contributions with the same structure and group keys
+        as *ao_contributions*. When ``None`` (default), a single row per group
+        is drawn (restricted case).
+    folder:
+        Directory where the file is saved.
+    filename:
+        Base name of the output file (without extension); ``_heatmap`` is
+        appended automatically.
     ao_labels:
         Dict mapping each group index to its label string (or list of strings,
         which are joined with a space). When *None* (default), letter
@@ -226,35 +354,21 @@ def plot_ao_contribution(
         integers when *None*.
     mos_per_plot:
         Maximum number of MOs shown in each subplot panel.
+    fmt:
+        Output format for the figure (e.g., ``"pdf"``, ``"png"``). If ``None``,
+        matplotlib infers the format from the filename.
+    normalization:
+        ``"global"`` (default) divides every row by the single maximum across
+        the whole matrix, preserving magnitude differences between AO groups.
+        ``"relative"`` normalises each group by its own maximum (jointly over
+        alpha and beta), emphasising within-group patterns instead.
     """
-    keys = list(ao_contributions.keys())
-
-    def _ytick(group_idx: int, position: int) -> str:
-        if ao_labels is not None:
-            raw = ao_labels.get(group_idx, str(group_idx))
-            return "\n".join(raw) if isinstance(raw, list) else raw
-        return (
-            string.ascii_uppercase[position]
-            if position < 26
-            else string.ascii_uppercase[position // 26 - 1]
-            + string.ascii_uppercase[position % 26]
-        )
-
-    heat_map_matrix: list[np.ndarray] = []
-    valid_yticks: list[str] = []
-    for i, group_idx in enumerate(keys):
-        weights = ao_contributions[group_idx]
-        if not weights:
-            continue
-        vals = np.array([w for _, w in weights])
-        max_val = np.max(vals)
-        heat_map_matrix.append(vals if max_val == 0 else vals / max_val)
-        valid_yticks.append(_ytick(group_idx, i))
-
-    if not heat_map_matrix:
+    matrix, valid_yticks, boundaries = _build_ao_heatmap_matrix(
+        ao_contributions, ao_contributions_beta, ao_labels, normalization
+    )
+    if matrix.size == 0:
         return
 
-    matrix = np.array(heat_map_matrix)  # (n_groups, n_mos)
     n_mos = matrix.shape[1]
     n_plots = int(np.ceil(n_mos / mos_per_plot))
     vmin, vmax = 0.0, 1.0
@@ -281,6 +395,9 @@ def plot_ao_contribution(
         ax.set_xticks(np.arange(end - start) + 0.5)
         if mo_labels is not None:
             ax.set_xticklabels([str(m) for m in mo_labels[start:end]], rotation=90)
+        if ao_contributions_beta is not None:
+            for boundary in boundaries[:-1]:
+                ax.axhline(boundary, color="white", linewidth=2)
 
     cbar_ax = fig.add_axes((0.92, 0.15, 0.02, 0.7))
     sm = plt.cm.ScalarMappable(
@@ -289,8 +406,10 @@ def plot_ao_contribution(
     sm.set_array([])
     fig.colorbar(sm, cax=cbar_ax)
 
+    stem = f"{filename}_heatmap"
+    full_filename = f"{stem}.{fmt}" if fmt else stem
     plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
-    fig.savefig(Path(save_path + "_heatmap.pdf"), format="pdf", bbox_inches="tight")
+    fig.savefig(Path(folder) / full_filename, format=fmt, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -299,6 +418,7 @@ def soe_heatmap(
     n_occ: int = 0,
     folder: str = "./",
     filename: str = "SOE_plot",
+    fmt: str | None = "pdf",
 ) -> None:
     """Plot a single-orbital entropy (SOE) heatmap.
 
@@ -306,7 +426,8 @@ def soe_heatmap(
     values as a continuous colormap, and the bottom two rows show binary
     threshold indicators. Saves the figure as a PDF.
 
-    Args:
+    Parameters
+    ----------
     so1_entropies:
         List of (orbital_index, relative_entropy) tuples, where the entropy
         is already normalised by ``max_so1``.
@@ -317,6 +438,9 @@ def soe_heatmap(
         Directory where the PDF is saved.
     filename:
         Base name of the output file (without extension).
+    fmt:
+        Output format for the figure (e.g., ``"pdf"``, ``"png"``). If ``None``,
+        matplotlib infers the format from the filename.
     """
     so1_abs = np.array([x[1] for x in so1_entropies])
     max_so1 = max(so1_abs)
@@ -358,8 +482,9 @@ def soe_heatmap(
     ax.axhline(y=3.5, color="red", linewidth=2)
 
     ax.set_title(f"Max SOE: {max_so1:.5f}", fontsize=16)
+    full_filename = f"{filename}.{fmt}" if fmt else filename
     fig.tight_layout()
-    fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf", bbox_inches="tight")
+    fig.savefig(Path(folder) / full_filename, format=fmt, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -374,19 +499,28 @@ def _detect_plateaus(
     of length ≥ *plateau_size* as plateaus. Returns the data needed to annotate
     the threshold curve plot.
 
-    Args:
-        y_values (np.ndarray, shape (n_thresholds,)): Number of orbitals above each threshold step.
-        indices_above (dict[int, np.ndarray]): Mapping from threshold step index to the array of orbital indices above
-            that threshold.
-        plateau_size (int): Minimum run length (in threshold steps) for a flat region to be
-            considered a plateau.
+    Parameters
+    ----------
+    y_values : np.ndarray, shape (n_thresholds,)
+        Number of orbitals above each threshold step.
+    indices_above : dict[int, np.ndarray]
+        Mapping from threshold step index to the array of orbital indices above
+        that threshold.
+    plateau_size : int
+        Minimum run length (in threshold steps) for a flat region to be
+        considered a plateau.
 
     Returns:
-        plateau_vector (list of float): y-values belonging to plateau points.
-        plateau_index (list of float): x-coordinates (threshold fractions) of plateau points.
-        starting_plateaus_indices (list of int): Index into *y_values* at which each plateau begins.
-        rect_size (list of list of float): For each plateau: ``[x_start, x_end, n_orbs]``, used to draw bounding
-            rectangles on the plot.
+    -------
+    plateau_vector : list of float
+        y-values belonging to plateau points.
+    plateau_index : list of float
+        x-coordinates (threshold fractions) of plateau points.
+    starting_plateaus_indices : list of int
+        Index into *y_values* at which each plateau begins.
+    rect_size : list of list of float
+        For each plateau: ``[x_start, x_end, n_orbs]``, used to draw bounding
+        rectangles on the plot.
     """
     tmp_val = y_values[0]
     plateau_vector: list[float] = []
@@ -424,14 +558,19 @@ def _detect_plateaus(
 def _define_cas_size(selected_ones: np.ndarray, occ_index: int) -> tuple[int, int]:
     """Return ``(n_orbs, n_elec)`` for a CAS defined by a set of orbital indices.
 
-    Args:
-        selected_ones (np.ndarray): Orbital indices in the candidate active space.
-        occ_index (int): Index of HOMO + 1 (first virtual orbital). Orbitals with index strictly
-            below this value are treated as occupied.
+    Parameters
+    ----------
+    selected_ones : np.ndarray
+        Orbital indices in the candidate active space.
+    occ_index : int
+        Index of HOMO + 1 (first virtual orbital). Orbitals with index strictly
+        below this value are treated as occupied.
 
     Returns:
-        cas_size (tuple[int, int]): ``(n_orbs, n_elec)`` where *n_orbs* is the total number of selected
-            orbitals and *n_elec* is twice the number of selected occupied orbitals.
+    -------
+    cas_size : tuple[int, int]
+        ``(n_orbs, n_elec)`` where *n_orbs* is the total number of selected
+        orbitals and *n_elec* is twice the number of selected occupied orbitals.
     """
     return (len(selected_ones), 2 * int(np.sum(selected_ones < occ_index)))
 
@@ -442,6 +581,7 @@ def th_plots(
     occ_index: int = 0,
     plateau_size: int = 10,
     filename: str = "TH_plot",
+    fmt: str | None = "pdf",
 ) -> None:
     """Plot the threshold curve for single-orbital entropy (TH) analysis.
 
@@ -451,20 +591,21 @@ def th_plots(
     stable across a range of thresholds — are highlighted and annotated with
     the implied CAS(n_elec, n_orbs) sizes. Saves the figure as a PDF.
 
-    Args:
-        so1_entropies (list of (int, float)):
-            List of (orbital_index, relative_entropy) tuples, where the entropy
-            is already normalised by ``max_so1``.
-        folder (str):
-            Directory where the PDF is saved.
-        occ_index (int):
-            Index of the first virtual orbital (HOMO + 1).
-            Used to determine the number of electrons in candidate CAS regions.
-        plateau_size (int):
-            Minimum number of consecutive threshold steps (out of 101) for a
-            flat region to be considered a plateau and annotated on the plot.
-        filename (str):
-            Base name of the output file (without extension).
+    Parameters
+    ----------
+    so1_entropies:
+        List of (orbital_index, relative_entropy) tuples, where the entropy
+        is already normalised by ``max_so1``.
+    folder:
+        Directory where the PDF is saved.
+    plateau_size:
+        Minimum number of consecutive threshold steps (out of 101) for a
+        flat region to be considered a plateau and annotated on the plot.
+    filename:
+        Base name of the output file (without extension).
+    fmt:
+        Output format for the figure (e.g., ``"pdf"``, ``"png"``). If ``None``,
+        matplotlib infers the format from the filename.
     """
     so1_abs = np.array([x[1] for x in so1_entropies])
     max_so1 = max(so1_abs)
@@ -552,15 +693,17 @@ def th_plots(
             indices_above[idx],
         )
 
+    full_filename = f"{filename}.{fmt}" if fmt else filename
     fig.tight_layout()
-    fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf")
+    fig.savefig(Path(folder) / full_filename, format=fmt)
     plt.close(fig)
 
 
 def _ticks_helper(soe1: list[tuple[int, float]], ax: plt.Axes) -> None:
     """Helper function to set x and y ticks for the MI plot.
 
-    Args:
+    Parameters
+    ----------
     soe1:
         List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
     ax:
@@ -581,10 +724,12 @@ def mi_plot(
     soe1: list[tuple[int, float]],
     folder: str = "./",
     filename: str = "MI_plot",
+    fmt: str | None = "pdf",
 ) -> None:
     """Plot an entanglement diagram based on mutual information (MI) and single-orbital entropy (SOE).
 
-    Args:
+    Parameters
+    ----------
     minfo:
         Mutual Information matrix between orbitals.
     soe1:
@@ -593,6 +738,9 @@ def mi_plot(
         Directory where the PDF is saved.
     filename:
         Base name of the output file (without extension).
+    fmt:
+        Output format for the figure (e.g., ``"pdf"``, ``"png"``). If ``None``,
+        matplotlib infers the format from the filename.
     """
     fig, ax = plt.subplots(figsize=(8, 8))
     ax.matshow(minfo, cmap="magma", vmin=0, vmax=np.max(minfo))
@@ -608,9 +756,10 @@ def mi_plot(
     ax.set_xlabel("Orbital Index", fontsize=12)
     ax.set_ylabel("Orbital Index", fontsize=12)
 
+    full_filename = f"{filename}.{fmt}" if fmt else filename
     fig.tight_layout()
-    fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf", bbox_inches="tight")
-    logger.info("Entanglement diagram saved as %s.pdf", filename)
+    fig.savefig(Path(folder) / full_filename, format=fmt, bbox_inches="tight")
+    logger.info("Saved %s", full_filename)
     plt.close(fig)
 
 
@@ -619,14 +768,21 @@ def _helper_mi(
 ) -> list[plt.Line2D]:
     """Helper function to plot lines between orbitals based on mutual information (MI) values.
 
-    Args:
-        minfo (np.ndarray): Mutual Information matrix between orbitals.
-        x (np.ndarray): x-coordinates of the orbital positions on the plot.
-        y (np.ndarray): y-coordinates of the orbital positions on the plot.
-        ax (plt.Axes): Matplotlib Axes object on which to plot the lines.
+    Parameters:
+    -----------
+    minfo: np.ndarray
+        Mutual Information matrix between orbitals.
+    x: np.ndarray
+        x-coordinates of the orbital positions on the plot.
+    y: np.ndarray
+        y-coordinates of the orbital positions on the plot.
+    ax: plt.Axes
+        Matplotlib Axes object on which to plot the lines.
 
     Returns:
-        list of plt.Line2D: Legend handles for the different MI thresholds.
+    --------
+    list of plt.Line2D
+        Legend handles for the different MI thresholds.
     """
     # Set up line styles and alpha values for different MI thresholds
     N = minfo.shape[0]
@@ -664,14 +820,21 @@ def _helper_soe(
 ) -> list[plt.Line2D]:
     """Helper function to plot orbital markers based on single-orbital entropy (SOE) values.
 
-    Args:
-        soe1 (list of tuples): List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
-        x (np.ndarray): x-coordinates of the orbital positions on the plot.
-        y (np.ndarray): y-coordinates of the orbital positions on the plot.
-        ax (plt.Axes): Matplotlib Axes object on which to plot the orbital markers.
+    Parameters:
+    -----------
+    soe1: list of tuples
+        List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
+    x: np.ndarray
+        x-coordinates of the orbital positions on the plot.
+    y: np.ndarray
+        y-coordinates of the orbital positions on the plot.
+    ax: plt.Axes
+        Matplotlib Axes object on which to plot the orbital markers.
 
     Returns:
-        list of plt.Line2D: Legend handles for the different SOE thresholds.
+    --------
+    list of plt.Line2D
+        Legend handles for the different SOE thresholds.
     """
     # Set up marker sizes and colors for different SOE thresholds
     N = len(soe1)
@@ -727,6 +890,7 @@ def entanglement_diagrams(
     minfo: np.ndarray,
     folder: str = "./",
     filename: str = "entanglement_diagrams",
+    fmt: str | None = "pdf",
 ) -> None:
     """Plot entanglement diagrams for active and virtual orbitals.
 
@@ -735,11 +899,19 @@ def entanglement_diagrams(
     Solid to dotted is the gradient for the Mutual Information (MI) between orbitals.
     The plot is saved as a PDF file.
 
-    Args:
-        soe1 (list of tuples): List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
-        minfo (np.ndarray): Mutual Information matrix between orbitals.
-        folder (str, default "./"): Directory where the PDF file will be saved.
-        filename (str, default "entanglement_diagrams"): Base name of the output PDF file (without extension).
+    Parameters:
+    -----------
+    soe1: list of tuples
+        List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
+    minfo: np.ndarray
+        Mutual Information matrix between orbitals.
+    folder: str, default "./"
+        Directory where the PDF file will be saved.
+    filename: str, default "entanglement_diagrams"
+        Base name of the output PDF file (without extension).
+    format: str or None, default "pdf"
+        Output format for the figure (e.g., ``"pdf"``, ``"png"``). If ``None``,
+        matplotlib infers the format from the filename.
     """
     N = len(soe1)
 
@@ -764,9 +936,10 @@ def entanglement_diagrams(
 
     leg = plt.legend(handles=handles, loc="center")
     leg.get_frame().set_alpha(None)
+    full_filename = f"{filename}.{fmt}" if fmt else filename
     fig.tight_layout()
-    fig.savefig(Path(folder) / (filename + ".pdf"), format="pdf", bbox_inches="tight")
-    logger.info("Entanglement diagram saved as %s.pdf", filename)
+    fig.savefig(Path(folder) / full_filename, format=fmt, bbox_inches="tight")
+    logger.info("Saved %s", full_filename)
     plt.close(fig)
 
 
@@ -774,14 +947,16 @@ def _make_soe_plots(
     active_orbs: np.ndarray,
     virt_orbs: np.ndarray,
     soe1: np.ndarray,
-    minfo: np.ndarray,
     saving_folder: str,
     saving_prefix: str,
+    minfo: np.ndarray | None = None,
+    fmt: str | None = "pdf",
 ) -> None:
     """Generate and save single-orbital entropy diagnostic plots.
 
-    Saves an SOE heatmap, a threshold curve (TH plot), an entanglement diagram,
-    and a mutual information heatmap to *saving_folder*.
+    Always saves an SOE heatmap and a threshold curve (TH plot).
+    When *minfo* is provided, also saves an entanglement diagram and a mutual
+    information heatmap.
 
     Parameters
     ----------
@@ -792,13 +967,18 @@ def _make_soe_plots(
     soe1 : np.ndarray
         Single-orbital entropies for all CAS orbitals, ordered as
         ``[active_orbs..., virt_orbs...]``.
-    minfo : np.ndarray
-        Mutual information matrix for all CAS orbitals.
     saving_folder : str
         Directory where the PDF files are written.
     saving_prefix : str
-        Filename prefix; ``_SOE_heatmap.pdf``, ``_TH_plot.pdf``,
-        ``_entanglement_diagram.pdf``, and ``_MI_heatmap.pdf`` are appended.
+        Filename prefix; ``_SOE_heatmap``, ``_TH_plot``,
+        and optionally ``_entanglement_diagram`` and ``_MI_heatmap``
+        are appended (plus the format extension).
+    minfo : np.ndarray or None
+        Mutual information matrix for all CAS orbitals.  When ``None``, the
+        entanglement diagram and MI heatmap are skipped.
+    fmt : str or None
+        Output format for all figures (e.g., ``"pdf"``, ``"png"``). If ``None``,
+        matplotlib infers the format from the filename.
     """
     tagged = [(orb_id, soe1[idx]) for idx, orb_id in enumerate(active_orbs)]
     tagged += [
@@ -809,22 +989,27 @@ def _make_soe_plots(
         n_occ=len(active_orbs),
         folder=saving_folder,
         filename=saving_prefix + "_SOE_heatmap",
+        fmt=fmt,
     )
     th_plots(
         so1_entropies=tagged,
         occ_index=max(active_orbs) + 1,
         folder=saving_folder,
         filename=saving_prefix + "_TH_plot",
+        fmt=fmt,
     )
-    entanglement_diagrams(
-        soe1=tagged,
-        minfo=minfo,
-        folder=saving_folder,
-        filename=saving_prefix + "_entanglement_diagram",
-    )
-    mi_plot(
-        minfo=minfo,
-        soe1=tagged,
-        folder=saving_folder,
-        filename=saving_prefix + "_MI_heatmap",
-    )
+    if minfo is not None:
+        entanglement_diagrams(
+            soe1=tagged,
+            minfo=minfo,
+            folder=saving_folder,
+            filename=saving_prefix + "_entanglement_diagram",
+            fmt=fmt,
+        )
+        mi_plot(
+            minfo=minfo,
+            soe1=tagged,
+            folder=saving_folder,
+            filename=saving_prefix + "_MI_heatmap",
+            fmt=fmt,
+        )
