@@ -1,6 +1,7 @@
 # Utilities
 
-Helper functions for orbital export, plotting, MO composition, and entropy data.
+Helper functions for orbital export, plotting, MO composition, entropy data, and
+runtime configuration.
 
 ```python
 from aegiss.utils import (
@@ -28,6 +29,18 @@ from aegiss.utils.mo_composition import mo_ao_contributions
     options:
       heading_level: 3
 
+::: aegiss.utils.orbital_indices.valence_occupied_orbitals
+    options:
+      heading_level: 3
+
+::: aegiss.utils.orbital_indices.resolve_nelecas
+    options:
+      heading_level: 3
+
+::: aegiss.utils.orbital_indices.combine_candidate_entropies
+    options:
+      heading_level: 3
+
 ---
 
 ## Orbital export
@@ -51,6 +64,10 @@ from aegiss.utils.mo_composition import mo_ao_contributions
 ---
 
 ## MO composition
+
+A text/table companion to the AO-composition plots ([`plot_ao_contribution`](#plotting)
+and [`plot_pie_contribution`](#plotting) below): it prints and returns the top-N atomic
+orbital contributions to each MO.
 
 ::: aegiss.utils.mo_composition.mo_ao_contributions
     options:
@@ -104,6 +121,45 @@ the σ framework spreads over `C 2s`/`H 1s`.
 each mixes `C 2s`, `C 2px`, `C 2py` and `H 1s` character.
 
 ![Pie composition example](../assets/images/example_pie_composition_alpha.png)
+
+::: aegiss.utils.plotting.mi_plot
+    options:
+      heading_level: 3
+
+::: aegiss.utils.plotting.entanglement_diagrams
+    options:
+      heading_level: 3
+
+---
+
+## Runtime configuration
+
+Helpers that read runtime settings from environment variables, configure logging,
+and print the startup banner.
+
+::: aegiss.utils.env.mem
+    options:
+      heading_level: 3
+
+::: aegiss.utils.env.omp_num_threads
+    options:
+      heading_level: 3
+
+::: aegiss.utils.env.scratch_dir
+    options:
+      heading_level: 3
+
+::: aegiss.utils.env.pyscf_max_memory
+    options:
+      heading_level: 3
+
+::: aegiss.utils.logging.configure_logging
+    options:
+      heading_level: 3
+
+::: aegiss.utils.banner.print_banner
+    options:
+      heading_level: 3
 
 ---
 
