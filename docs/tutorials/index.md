@@ -169,6 +169,17 @@ $$
 The threshold is applied **independently** to occupied and virtual subspaces
 (`ranking='subset'`, default) or to all CAS orbitals jointly (`ranking='global'`).
 
+!!! tip "Diagnostics"
+    The entropy spectrum is best read visually with
+    [`soe_heatmap`](../api/utils.md#plotting) and [`th_plots`](../api/utils.md#plotting)
+    (utilities reference). For a benzene CAS(30,30), the entanglement concentrates on the
+    π-type frontier orbitals, and the threshold curve exposes two plateaus — CAS(6,6) and,
+    at higher thresholds, the π-only CAS(4,4):
+
+    ![SOE heatmap](../assets/images/example_soe_heatmap.png)
+
+    ![TH plot](../assets/images/example_th_plot.png){ width="85%" }
+
 ---
 
 ## Step 4 — AO projection for each group $D \in \mathcal{D}$
@@ -226,6 +237,17 @@ Two modes are available, controlled by `ProjectionConfig`:
 
 - **Threshold** — keep all $\psi_p$ where $w_p^D \geq \epsilon_D$
 - **Top-N** — keep the $n_D$ orbitals with the largest $w_p^D$, regardless of magnitude
+
+!!! tip "Diagnostics"
+    The projection weights $w_p^D$ can be inspected with
+    [`plot_ao_contribution`](../api/utils.md#plotting) (a per-MO / per-AO-group heatmap)
+    and the per-orbital composition with
+    [`plot_pie_contribution`](../api/utils.md#plotting) (utilities reference). For benzene,
+    the π orbitals concentrate on `C 2pz` while the σ framework mixes `C 2s`/`C 2px`/`H 1s`:
+
+    ![AO contribution heatmap](../assets/images/example_ao_contribution_heatmap.png)
+
+    ![Pie composition](../assets/images/example_pie_composition_alpha.png){ width="90%" }
 
 ---
 

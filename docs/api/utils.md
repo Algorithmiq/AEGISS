@@ -60,21 +60,50 @@ from aegiss.utils.mo_composition import mo_ao_contributions
 
 ## Plotting
 
+The examples below are produced by
+[`scripts/generate_doc_plots.py`](https://github.com/Algorithmiq/AEGISS/blob/main/scripts/generate_doc_plots.py)
+from a real benzene calculation (RHF/cc-pVDZ, a DMRG in the frontier CAS(30,30),
+and an AO projection onto the `minao` reference). Re-run that script to refresh them.
+
 ::: aegiss.utils.plotting.soe_heatmap
     options:
       heading_level: 3
+
+**Example** — single-orbital entropies $S(1)_i$ across the benzene frontier CAS(30,30).
+The top row shows each orbital's entropy; the lower rows mark which survive the threshold
+$\tau_E$ and which are left empty. The entanglement concentrates on the π-type frontier
+orbitals (around 19–22), with most of the 30 CAS orbitals nearly inactive.
+
+![SOE heatmap example](../assets/images/example_soe_heatmap.png)
 
 ::: aegiss.utils.plotting.th_plots
     options:
       heading_level: 3
 
+**Example** — the number of retained orbitals as the entropy threshold is swept from
+0 to $S(1)_{\max}$. Two plateaus emerge — a broad CAS(6,6) at intermediate thresholds
+and a stable CAS(4,4) at higher ones — the latter being the benzene π active space.
+
+![TH plot example](../assets/images/example_th_plot.png)
+
 ::: aegiss.utils.plotting.plot_ao_contribution
     options:
       heading_level: 3
 
+**Example** — projection weight of each frontier MO onto three AO manifolds
+(`C 2pz`, `C 2s`, `H 1s`). The π orbitals (19–22) light up in the `C 2pz` row, while
+the σ framework spreads over `C 2s`/`H 1s`.
+
+![AO contribution heatmap example](../assets/images/example_ao_contribution_heatmap.png)
+
 ::: aegiss.utils.plotting.plot_pie_contribution
     options:
       heading_level: 3
+
+**Example** — per-orbital composition of the benzene valence σ orbitals, showing how
+each mixes `C 2s`, `C 2px`, `C 2py` and `H 1s` character.
+
+![Pie composition example](../assets/images/example_pie_composition_alpha.png)
 
 ---
 
