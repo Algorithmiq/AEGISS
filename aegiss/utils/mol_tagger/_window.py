@@ -173,7 +173,7 @@ class MolViewWindow(QMainWindow):
             QPushButton:pressed {
                 background: rgba(70, 70, 150, 230);
             }
-        """)
+""")
         grid = QGridLayout(overlay)
         grid.setContentsMargins(2, 2, 2, 2)
         grid.setSpacing(2)

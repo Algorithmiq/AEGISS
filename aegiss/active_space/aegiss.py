@@ -45,25 +45,16 @@ def select_aegiss(
     Therefore, only highly entangled orbitals are kept. These orbitals
     must also have significant contribution on the specified AOs.
 
-    Parameters
-    ----------
-    mol : pyscf.gto.Mole
-        Molecular geometry and basis set.
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object.
-    dmrg_config : DMRGConfig
-        Configuration for the DMRG calculation (CAS size, bond dimension, symmetry).
-    entropy_config : EntropyConfig
-        Configuration for the entropy-based screening step.
-    projection_config : ProjectionConfig
-        Configuration for the AO projection-based screening step.
-    output_config : OutputConfig
-        Configuration for output options (file saving, plots).
+    Args:
+        mol (pyscf.gto.Mole): Molecular geometry and basis set.
+        mf (pyscf.scf.hf.SCF): Converged mean-field object.
+        dmrg_config (DMRGConfig): Configuration for the DMRG calculation (CAS size, bond dimension, symmetry).
+        entropy_config (EntropyConfig): Configuration for the entropy-based screening step.
+        projection_config (ProjectionConfig): Configuration for the AO projection-based screening step.
+        output_config (OutputConfig): Configuration for output options (file saving, plots).
 
     Returns:
-    -------
-    active_indices : np.ndarray of int
-        Sorted array of orbital indices forming the selected active space.
+        active_indices (np.ndarray of int): Sorted array of orbital indices forming the selected active space.
     """
     active_orbs, virt_orbs = get_subspaces_from_cas(
         mf, ncas=dmrg_config.ncas, nelecas=dmrg_config.nelecas

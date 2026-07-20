@@ -12,21 +12,20 @@ from aegiss.utils.orbital_indices import resolve_nelecas
 class DMRGConfig:
     """Configuration dataclass for DMRG calculations.
 
-    Parameters:
-    ----------
-    ncas : int
-        Number of active orbitals for the DMRG calculation.
-    nelecas : int or tuple[int, int]
-        Number of active electrons, either as a total count or an explicit
-        ``(nalpha, nbeta)`` pair (same convention as PySCF's CASCI).
-    max_bond_dim : int, default 500
-        Target DMRG bond dimension (must be a positive multiple of 4).
-        The sweep schedule starts at ``max_bond_dim // 2`` and ramps up to ``max_bond_dim``.
-    symm_type : {'SZ', 'SU2'}, default 'SZ'
-        Spin symmetry used by block2.  ``'SZ'`` is required for entropy
-        calculations; ``'SU2'`` is faster but needs MPS conversion for entropies.
-    verbosity : int, default 0
-        Verbosity level for block2 output.  Higher values produce more detailed logs.
+    Args:
+        ncas (int):
+            Number of active orbitals for the DMRG calculation.
+        nelecas (int or tuple[int, int]):
+            Number of active electrons, either as a total count or an explicit
+            ``(nalpha, nbeta)`` pair (same convention as PySCF's CASCI).
+        max_bond_dim (int, default 500):
+            Target DMRG bond dimension (must be a positive multiple of 4).
+            The sweep schedule starts at ``max_bond_dim // 2`` and ramps up to ``max_bond_dim``.
+        symm_type ({'SZ', 'SU2'}, default 'SZ'):
+            Spin symmetry used by block2.  ``'SZ'`` is required for entropy
+            calculations; ``'SU2'`` is faster but needs MPS conversion for entropies.
+        verbosity (int, default 0):
+            Verbosity level for block2 output.  Higher values produce more detailed logs.
     """
 
     ncas: int
@@ -39,9 +38,7 @@ class DMRGConfig:
         """Validate the configuration parameters.
 
         Raises:
-        ------
-        ValueError
-            If any of the parameters are out of their expected ranges or have invalid values.
+            ValueError: If any of the parameters are out of their expected ranges or have invalid values.
         """
         if self.ncas <= 0:
             raise ValueError(

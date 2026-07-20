@@ -1,0 +1,90 @@
+site_name: AEGISS
+site_description: Atomic Orbital and Entropy based Guided Inference for Space Selection
+site_url: https://algorithmiq.github.io/AEGISS/
+repo_url: https://github.com/Algorithmiq/AEGISS
+repo_name: Algorithmiq/AEGISS
+edit_uri: ""
+
+# Contributor-facing readme for the docs/ dir; not a site page (would clash with index.md).
+exclude_docs: |
+  README.md
+
+theme:
+  icon:
+      repo: fontawesome/brands/github
+  name: material
+  palette:
+    - scheme: default
+      primary: blue grey
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: To the Dark-side
+    - scheme: slate
+      primary: teal
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.highlight
+    - content.code.copy
+    - content.tooltips
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            members_order: source
+            show_signature_annotations: true
+            filters: ["!^__"]
+  - mkdocs-jupyter:
+      execute: false
+      include_source: true
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Tutorials:
+    - Overview: tutorials/index.md
+    - "01 — SCF & Localization": tutorials/01_scf_and_localization.ipynb
+    - "02 — DMRG & Entropy": tutorials/02_dmrg.ipynb
+    - "03 — AO Projection": tutorials/03_ao_projection.ipynb
+    - "04 — Full Pipeline": tutorials/04_aegiss.ipynb
+  - MolTagger: moltagger.md
+  - API Reference:
+    - Overview: api/index.md
+    - Active Space: api/active_space.md
+    - Configuration: api/config.md
+    - Initial Guess: api/initial_guess.md
+    - Wavefunction: api/wavefunction.md
+    - Localization: api/localization.md
+    - Utilities: api/utils.md

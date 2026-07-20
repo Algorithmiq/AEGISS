@@ -21,20 +21,14 @@ def _default_dmrg_schedule(
     The first segment uses ``max_bond_dim // 2``; all subsequent segments use
     ``max_bond_dim``.  Noise and thresholds are tightened at each waypoint.
 
-    Parameters
-    ----------
-    max_bond_dim : int
-        Target bond dimension.  Must be a positive multiple of 4
-        so that both ``max_bond_dim`` and ``max_bond_dim // 2`` are even.
+    Args:
+        max_bond_dim (int): Target bond dimension.  Must be a positive multiple of 4
+            so that both ``max_bond_dim`` and ``max_bond_dim // 2`` are even.
 
     Returns:
-    -------
-    bond_dims : list of int
-        Bond dimension for each sweep.
-    noises : list of float
-        Perturbative noise injected at each sweep.
-    thrds : list of float
-        Davidson convergence threshold for each sweep.
+        bond_dims (list of int): Bond dimension for each sweep.
+        noises (list of float): Perturbative noise injected at each sweep.
+        thrds (list of float): Davidson convergence threshold for each sweep.
 
     Note:
         Suggested in: https://github.com/block-hczhai/block2-preview/issues/63
