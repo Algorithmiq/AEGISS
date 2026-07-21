@@ -102,15 +102,24 @@ H(n_i^\sigma) = -\,n_i^\sigma \ln n_i^\sigma - (1 - n_i^\sigma)\ln(1 - n_i^\sigm
 $$
 
 The alpha and beta channels are then thresholded **independently**, so the two
-active windows can contain different orbitals — precisely the open-shell
-situation where a singly-occupied orbital (SOMO) is entangled in one spin
-channel and frozen in the other.
+active windows can contain different orbitals — precisely the spin-polarised
+situation where an orbital carries a *fractional* occupation (and hence
+correlation) that differs between the two channels, e.g. $n_i^\alpha \approx 0.9$
+while $n_i^\beta \approx 0.1$. (A cleanly singly-occupied orbital,
+$n_i^\alpha = 1,\ n_i^\beta = 0$, is a product state with $H = 0$ in *both*
+channels — and $S_i = 0$ spatially too — so it is not, and should not be,
+flagged by either measure.)
 
-!!! note "Relationship between the two"
-    By subadditivity the spin-summed spatial entropy is bounded by the sum of
-    the per-spin entropies, $S_i \le S_i^\alpha + S_i^\beta$, with equality only
-    when the two spin modes of the orbital are uncorrelated. Spin-summed hides
-    the per-channel asymmetry that spin-resolved exposes.
+!!! note "What spin-resolved SOE keeps and drops"
+    $H(n_i^\alpha)$ and $H(n_i^\beta)$ are the two **marginals** of the joint
+    two-mode (spatial-orbital) state whose entropy is the spin-summed $S_i$. By
+    subadditivity $S_i \le S_i^\alpha + S_i^\beta$, with equality only when the
+    two spin modes of the orbital are uncorrelated. So spin-resolved SOE
+    **exposes** the per-channel asymmetry that spin-summed averages over, but at
+    the cost of **discarding the intra-orbital $\alpha$–$\beta$ correlation**
+    (the double-occupancy fluctuation $d_i \neq n_i^\alpha n_i^\beta$). For
+    static correlation localised *within a single spatial orbital*, the
+    spin-summed $S_i$ is the more faithful single number.
 
 ### Which to use
 
@@ -120,6 +129,31 @@ channel and frozen in the other.
 - **Spin-resolved** — strongly spin-polarised / open-shell targets where the
   alpha and beta correlation patterns genuinely differ. This is the `"auto"`
   choice when $n_\alpha \neq n_\beta$ (and `symm_type="SZ"`).
+
+### Degenerate targets
+
+The entropies are computed in the **fixed reference $S_z$ sector** — the `SZ`
+DMRG targets `spin = nalpha - nbeta`. This is well-defined and reproducible, but
+for a **spin-degenerate** open-shell target (a term with $S > 0$ has an
+$M_s = -S, \dots, +S$ manifold) the entropies are those of the specific $M_s$
+component that `nalpha - nbeta` selects:
+
+- This affects the **spin-summed** path too — it is the same `SZ` run — so it is
+  not introduced by spin resolution.
+- At the extremal $M_s$, the majority-spin closed / singly-occupied orbitals have
+  integer occupation, so $H(n^\sigma) = 0$ there; the per-channel **split**
+  reflects that sector's attribution (one channel can be frozen).
+- What is $M_s$-robust is the *set of spatial orbitals* carrying genuine
+  fractional-occupation correlation — i.e. the $\alpha \cup \beta$ **union**.
+  Since a UHF active space is ultimately a set of spatial indices, that union is
+  the physically meaningful object even though the split is kept for
+  transparency.
+
+A **spatially** degenerate target (a bare atom — e.g. the $^3P$ ground state of
+oxygen is also orbitally three-fold degenerate) lets DMRG pick an arbitrary
+component of the spatial manifold; this is a general active-space-selection
+caveat, unrelated to spin resolution. Molecular targets with a non-degenerate
+reference avoid it.
 
 ## AO projection on a UHF reference
 
@@ -181,3 +215,110 @@ active = select_aegiss(
     deliberately. When output is enabled, cube files and any per-channel plots
     are written with `_alpha` / `_beta` tags; the AO pie-contribution plot (which
     expects a single flat orbital list) is skipped for the split selection.
+
+## Experimental: validating the entropies against block2
+
+Both AEGISS entropy reconstructions are exact *only* because the reduced density
+matrices are diagonal under particle-number symmetry:
+
+- `_compute_soe` builds the 4-state **spatial** $S_i$ from the 1-PDM + 1-NPC
+  diagonals;
+- `_compute_spin_soe` builds the 2-state **per-spin** $H(n_i^\sigma)$ from the
+  1-PDM diagonal.
+
+block2 can measure both *directly* from an MPS with
+`get_orbital_entropies(ket, orb_type=1)` (see the block2 tutorial *"Orbital
+Entropy and Mutual Information"*): in **`SZ`** mode each site is a spatial orbital
+(so it returns $S_i$), and in **`SGF`** mode each site is a spin-orbital (so it
+returns $H(n_i^\sigma)$). Reproducing both from AEGISS's functions validates the
+spin-summed and spin-resolved paths at once.
+
+The reference must be **non-degenerate**, otherwise the `SZ` and `SGF` runs are
+free to converge to different members of a spin manifold (see
+[Degenerate targets](#degenerate-targets)). A stretched-H₂ **broken-symmetry
+singlet** fits: $S = 0$ is non-degenerate, yet the UHF orbitals are genuinely
+spin-polarised ($\alpha$ and $\beta$ localise on opposite atoms). It is reached
+by following the RHF→UHF instability — no arbitrary density seeding.
+
+!!! warning "Experimental — not part of AEGISS"
+
+```python
+import numpy as np
+from pyscf import gto, scf
+from pyblock2._pyscf.ao2mo import integrals as itg
+from pyblock2.driver.core import DMRGDriver, SymmetryTypes
+
+from aegiss.wavefunction.dmrg_subprocess import _compute_soe, _compute_spin_soe
+
+# Stretched H2/STO-3G: a closed-shell singlet (non-degenerate) with a broken-
+# symmetry UHF solution, reached by following the RHF->UHF instability. Because
+# the state is non-degenerate, the SZ and SGF runs converge to the SAME state.
+mol = gto.M(atom="H 0 0 0; H 0 0 2.5", basis="sto-3g", spin=0, verbose=0)
+mf = scf.UHF(mol).run()
+for _ in range(2):
+    mo = mf.stability()[0]
+    if np.allclose(mo, mf.mo_coeff):
+        break
+    mf = mf.run(mf.make_rdm1(mo, mf.mo_occ))
+
+n = mf.mo_coeff[0].shape[1]
+nsite, nelec, spin, ecore, h1e, g2e, sym = itg.get_uhf_integrals(mf, ncas=n, g2e_symm=1)
+sweep = dict(n_sweeps=30, bond_dims=[100] * 30, noises=[1e-4] * 4 + [0.0],
+             thrds=[1e-12] * 30, iprint=0)
+
+# --- SZ: sites are spatial orbitals -> block2 gives the 4-state spatial S(1) ---
+sz = DMRGDriver(scratch="./sz", symm_type=SymmetryTypes.SZ, n_threads=1)
+sz.initialize_system(n_sites=nsite, n_elec=nelec, spin=spin, orb_sym=sym)
+kz = sz.get_random_mps(tag="SZ", bond_dim=100)
+sz.dmrg(sz.get_qc_mpo(h1e=h1e, g2e=g2e, ecore=ecore, iprint=0), kz, **sweep)
+
+s_spatial = np.asarray(sz.get_orbital_entropies(kz, orb_type=1))   # block2 spatial S(1)
+pdm1 = np.asarray(sz.get_1pdm(kz))                                # (2, n, n)
+pdm2 = np.asarray(sz.get_2pdm(kz))                                # (3, n, n, n, n): aa, ab, bb
+na, nb = np.diagonal(pdm1[0]), np.diagonal(pdm1[1])
+dbl = np.array([pdm2[1][i, i, i, i] for i in range(n)])           # <n_ia n_ib> (double occ.)
+npc1 = np.zeros_like(pdm1)
+npc1[0] = np.diag(na + nb + 2 * dbl)                              # 1-NPC diagonal <N_i^2>
+assert np.allclose(_compute_soe(pdm1, npc1), s_spatial, atol=1e-10)   # spin-summed path
+
+# --- SGF: sites are spin-orbitals -> block2 gives the per-spin S(1) ---
+# Passing the UHF (ha, hb) / (aa, ab, bb) tuples straight to get_qc_mpo lets
+# block2 interleave them into its abab order (site 2p = alpha, 2p+1 = beta).
+gf = DMRGDriver(scratch="./sgf", symm_type=SymmetryTypes.SGF, n_threads=1)
+gf.initialize_system(n_sites=2 * n, n_elec=nelec, orb_sym=[0] * 2 * n)
+kg = gf.get_random_mps(tag="SGF", bond_dim=100)
+gf.dmrg(gf.get_qc_mpo(h1e=h1e, g2e=g2e, ecore=ecore, iprint=0), kg, **sweep)
+soe_so = np.asarray(gf.get_orbital_entropies(kg, orb_type=1))     # per spin-orbital (abab)
+
+Ha, Hb = _compute_spin_soe(pdm1)                                  # spin-resolved path
+assert np.allclose(soe_so[0::2], Ha, atol=1e-10)                 # alpha channel
+assert np.allclose(soe_so[1::2], Hb, atol=1e-10)                 # beta channel
+
+np.set_printoptions(precision=4, suppress=True, floatmode="fixed")
+print("SZ  spatial S(1) [block2]     :", s_spatial)
+print("    _compute_soe (spin-summed):", _compute_soe(pdm1, npc1))
+print("SGF per-spin S(1) [block2] a/b:", soe_so[0::2], soe_so[1::2])
+print("    _compute_spin_soe   a/b   :", Ha, Hb)
+print("subadditivity |Ha-Hb| <= S_spatial <= Ha+Hb:",
+      np.abs(Ha - Hb), "<=", s_spatial, "<=", Ha + Hb)
+```
+
+Output:
+
+```text
+SZ  spatial S(1) [block2]     : [0.7439 0.7439]
+    _compute_soe (spin-summed): [0.7439 0.7439]
+SGF per-spin S(1) [block2] a/b: [0.6930 0.6930] [0.6930 0.6930]
+    _compute_spin_soe   a/b   : [0.6930 0.6930] [0.6930 0.6930]
+subadditivity |Ha-Hb| <= S_spatial <= Ha+Hb: [0.0000 0.0000] <= [0.7439 0.7439] <= [1.3860 1.3860]
+```
+
+Both AEGISS functions reproduce block2's direct measurements to $\sim\!10^{-15}$,
+and the two runs share one energy (they are the same state). The numbers also
+make the subadditivity note concrete: the spatial entropy ($0.7439$) strictly
+**exceeds** each per-spin entropy ($0.6930$) — that gap is the intra-orbital
+$\alpha$–$\beta$ correlation the spin-resolved measure marginalises out — while
+staying below their sum ($1.3860$). Here $H(n^\alpha) = H(n^\beta)$ because a
+singlet has $n_i^\alpha = n_i^\beta$; the genuinely *asymmetric* per-channel case
+needs a spin-polarised ($n_\alpha \neq n_\beta$) target, which is the
+[degenerate](#degenerate-targets) regime.
