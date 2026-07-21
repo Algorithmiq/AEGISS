@@ -7,6 +7,8 @@ from typing import Literal
 
 import numpy as np
 
+from aegiss.utils.orb_display import to_display
+
 logger = logging.getLogger(__name__)
 _ORB_S1_FMT = "\tOrbital %d: S(1) = %.4f"
 
@@ -32,9 +34,11 @@ def _rank_and_threshold(
     max_s1 = float(np.max(soe1))
     logger.info("S(1) values for candidate orbitals:")
     for orb, s1 in zip(orbitals_index, soe1, strict=False):
-        logger.info(_ORB_S1_FMT, orb, s1)
+        logger.info(_ORB_S1_FMT, to_display(orb), s1)
     logger.info(
-        "MAX S(1): %.4f (orbital %d)\n", max_s1, orbitals_index[np.argmax(soe1)]
+        "MAX S(1): %.4f (orbital %d)\n",
+        max_s1,
+        to_display(orbitals_index[np.argmax(soe1)]),
     )
 
     if fraction_type == "r":
@@ -55,7 +59,7 @@ def _rank_and_threshold(
     sorted_indices = orbitals_index[sortkey]
     logger.info("Candidate orbitals sorted by entropy values:")
     for orb, s1 in zip(sorted_indices, entropies, strict=False):
-        logger.info(_ORB_S1_FMT, orb, s1)
+        logger.info(_ORB_S1_FMT, to_display(orb), s1)
 
     stop_idx = next((k for k, s in enumerate(entropies) if s < fraction), None)
     if stop_idx is None:
@@ -172,8 +176,12 @@ def select_by_entropy(
         )
 
     for i in selected_occ:
-        logger.info("\tSelected occupied orbital %d: S(1) = %.4f", i[0], i[1])
+        logger.info(
+            "\tSelected occupied orbital %d: S(1) = %.4f", to_display(i[0]), i[1]
+        )
     for i in selected_virt:
-        logger.info("\tSelected virtual orbital %d:  S(1) = %.4f", i[0], i[1])
+        logger.info(
+            "\tSelected virtual orbital %d:  S(1) = %.4f", to_display(i[0]), i[1]
+        )
 
     return selected_occ, selected_virt

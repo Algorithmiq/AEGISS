@@ -8,6 +8,7 @@ from typing import Any, Literal
 import numpy as np
 from pyscf import gto, lo
 
+from aegiss.utils.orb_display import from_display_all, to_display_all
 from aegiss.utils.orbital_indices import get_orbital_spaces
 from aegiss.wavefunction.methods import build_correlated_wfn
 
@@ -247,13 +248,16 @@ def localize_fnos(
 
     orbital_list: list[int]
     if frozen is not None:
-        # frozen names the orbitals to exclude; active for get_orbital_spaces is the complement
-        frozen_set = set(frozen)
+        # `frozen` is user input in the display base; convert to 0-based first.
+        # `frozen` names the orbitals to exclude; active for get_orbital_spaces
+        # is the complement.
+        frozen_set = set(from_display_all(frozen))
         orbital_list = [
             int(i) for i in np.nonzero(mf.mo_occ > 0)[0] if i not in frozen_set
         ]
     elif isinstance(active, list):
-        orbital_list = active
+        # `active` is user input in the display base; convert to 0-based.
+        orbital_list = from_display_all(active)
     elif active is True:
         orbital_list = []
     else:
@@ -266,9 +270,9 @@ def localize_fnos(
         unique_virt_space=True,
     )
     wfn_obj = build_correlated_wfn(mf, correlated_method, frozen=frozen_orbs)
-    logger.info("Frozen orbitals: %s", frozen_orbs)
-    logger.info("Active orbitals: %s", active_orbs)
-    logger.info("Frozen virtual orbitals: %s", frozen_virt)
+    logger.info("Frozen orbitals: %s", to_display_all(frozen_orbs))
+    logger.info("Active orbitals: %s", to_display_all(active_orbs))
+    logger.info("Frozen virtual orbitals: %s", to_display_all(frozen_virt))
 
     return compute_fnos(
         wfn_obj,
