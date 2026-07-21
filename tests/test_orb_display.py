@@ -96,6 +96,28 @@ class TestConversionHelpers:
             stored = orb_display.from_display(user_value)
             assert orb_display.to_display(stored) == user_value
 
+    def test_from_display_rejects_index_below_base(self, monkeypatch) -> None:
+        # base 1 + user input 0 must fail fast, not yield a negative index.
+        monkeypatch.setenv("AEGISS_ORB_BASE", "1")
+        orb_display.reset_cache()
+        with pytest.raises(ValueError, match="invalid for base 1"):
+            orb_display.from_display(0)
+
+    def test_from_display_all_rejects_and_reports_bad_indices(
+        self, monkeypatch
+    ) -> None:
+        monkeypatch.setenv("AEGISS_ORB_BASE", "1")
+        orb_display.reset_cache()
+        with pytest.raises(ValueError, match=r"\[0\].*base 1"):
+            orb_display.from_display_all([2, 0, 3])
+
+    def test_from_display_base_zero_allows_zero(self, monkeypatch) -> None:
+        # At the 0-based default, 0 is a perfectly valid index (no false positive).
+        monkeypatch.setenv("AEGISS_ORB_BASE", "0")
+        orb_display.reset_cache()
+        assert orb_display.from_display(0) == 0
+        assert orb_display.from_display_all([0, 1, 2]) == [0, 1, 2]
+
 
 class TestInputBoundary:
     """The plain-list input boundary in ao_projection._resolve_space."""
@@ -114,6 +136,14 @@ class TestInputBoundary:
         pairs = [(0, 0.5), (1, 0.4)]
         space = _resolve_space(mf=None, restricted_space=pairs)
         assert [idx for idx, _ in space] == [0, 1]
+
+    def test_below_base_input_fails_fast(self, monkeypatch) -> None:
+        # base 1 + a plain-list index 0 must raise here rather than produce a
+        # negative internal index that silently misfilters downstream.
+        monkeypatch.setenv("AEGISS_ORB_BASE", "1")
+        orb_display.reset_cache()
+        with pytest.raises(ValueError, match="base 1"):
+            _resolve_space(mf=None, restricted_space=[0, 1, 2])
 
 
 class TestBoundaryIntegration:
