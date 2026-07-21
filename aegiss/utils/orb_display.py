@@ -184,4 +184,10 @@ def from_display_all(indices: Iterable[int]) -> list[int]:
         list[int]: The equivalent 0-based indices for internal use.
     """
     base = orbital_base()
-    return [int(i) - base for i in indices]
+    raw = [int(i) for i in indices]
+    bad = [i for i in raw if i < base]
+    if bad:
+        raise ValueError(
+            f"Orbital indices {bad} are invalid for base {base} (expected >= {base})."
+        )
+    return [i - base for i in raw]
