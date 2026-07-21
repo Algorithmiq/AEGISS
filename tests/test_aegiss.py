@@ -20,6 +20,12 @@ _MODULE = "aegiss.active_space.aegiss"
 _SCREENED_OCC = [(2, 0.8), (3, 0.6)]
 _SCREENED_VIRT = [(5, 0.4)]
 
+# Spin-resolved entropy screening: one (occ, virt) window per spin channel.
+_SPIN_SCREENED = {
+    "alpha": ([(2, 0.8)], [(5, 0.4)]),
+    "beta": ([(3, 0.7)], []),
+}
+
 
 @pytest.fixture
 def mf_mock() -> MagicMock:
@@ -530,6 +536,83 @@ class TestEntropyScreeningEarlyReturn:
         mock_proj.assert_called_once()
         assert mock_proj.call_args.kwargs["restricted_space"] == [(2, 0.8)]
         assert list(result) == [2]
+
+
+class TestSpinResolvedPipeline:
+    """UHF + ``spin_soe='resolved'``: split alpha/beta pipeline, no reconciliation."""
+
+    def _run(
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        proj_side_effect: list,
+        ranking: str = "global",
+    ):
+        dmrg_config = DMRGConfig(ncas=4, nelecas=4, symm_type="SZ", spin_soe="resolved")
+        with (
+            patch(
+                f"{_MODULE}.get_subspaces_from_cas",
+                return_value=(np.array([2, 3]), np.array([5])),
+            ),
+            patch(
+                f"{_MODULE}.run_dmrg_subprocess",
+                return_value=(-75.0, np.ones((2, 3))),
+            ) as mock_dmrg,
+            patch(
+                f"{_MODULE}.select_by_spin_entropy",
+                return_value=_SPIN_SCREENED,
+            ) as mock_spin,
+            patch(
+                f"{_MODULE}.select_by_ao_projection",
+                side_effect=proj_side_effect,
+            ) as mock_proj,
+        ):
+            result = select_aegiss(
+                mol_mock,
+                mf_mock,
+                dmrg_config=dmrg_config,
+                entropy_config=EntropyConfig(),
+                projection_config=ProjectionConfig(
+                    ao_labels=["C 2pz"], ranking=ranking
+                ),
+                output_config=OutputConfig(save_orb=False, save_plots=False),
+            )
+        return result, mock_dmrg, mock_spin, mock_proj
+
+    def test_requests_spin_resolved_soe(
+        self, mol_mock: MagicMock, mf_mock: MagicMock
+    ) -> None:
+        _, mock_dmrg, mock_spin, _ = self._run(
+            mol_mock,
+            mf_mock,
+            [{"alpha": np.array([2]), "beta": np.array([3])}],
+        )
+        assert mock_dmrg.call_args.kwargs["spin_resolved"] is True
+        mock_spin.assert_called_once()
+
+    def test_returns_split_not_reconciled(
+        self, mol_mock: MagicMock, mf_mock: MagicMock
+    ) -> None:
+        result, _, _, _ = self._run(
+            mol_mock,
+            mf_mock,
+            [{"alpha": np.array([2, 5]), "beta": np.array([3])}],
+        )
+        assert isinstance(result, dict)
+        assert result["alpha"].tolist() == [2, 5]
+        assert result["beta"].tolist() == [3]
+
+    def test_uses_per_channel_restricted_space(
+        self, mol_mock: MagicMock, mf_mock: MagicMock
+    ) -> None:
+        _, _, _, mock_proj = self._run(
+            mol_mock,
+            mf_mock,
+            [{"alpha": np.array([2]), "beta": np.array([3])}],
+        )
+        restricted_space = mock_proj.call_args.kwargs["restricted_space"]
+        assert set(restricted_space) == {"alpha", "beta"}
+        assert restricted_space["alpha"] == _SPIN_SCREENED["alpha"]
 
 
 class TestParameterValidation:

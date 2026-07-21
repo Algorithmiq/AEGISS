@@ -464,3 +464,129 @@ class TestSelectByAoProjection:
             save_path=save_stem,
         )
         assert (tmp_path / "ao_test_heatmap.pdf").exists()
+
+
+class TestSelectByAoProjectionUnrestricted:
+    """UHF (3D ``mo_coeff``) → independent split alpha/beta selection (issue #52).
+
+    The AO overlaps are spin-independent, so each channel is screened with its
+    own ``mo_coeff[spin]`` block and the result is a ``{"alpha", "beta"}`` dict.
+    """
+
+    def test_returns_split_dict(self, c_sto3g_uhf) -> None:
+        result = select_by_ao_projection(
+            mf=c_sto3g_uhf,
+            ao_labels=["C 2p"],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+        )
+        assert isinstance(result, dict)
+        assert set(result) == {"alpha", "beta"}
+        for arr in result.values():
+            assert isinstance(arr, np.ndarray)
+
+    def test_each_channel_valid_sorted_unique(self, c_sto3g_uhf) -> None:
+        result = select_by_ao_projection(
+            mf=c_sto3g_uhf,
+            ao_labels=["C 2p"],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+        )
+        n_mo = c_sto3g_uhf.mo_coeff.shape[-1]
+        for arr in result.values():
+            assert all(0 <= idx < n_mo for idx in arr)
+            assert list(arr) == sorted(arr)
+            assert len(arr) == len(set(arr.tolist()))
+
+    def test_restricted_space_none_uses_nmo_not_spin_axis(self, c_sto3g_uhf) -> None:
+        """``_resolve_space`` must count MOs (shape[-1]), not the spin axis."""
+        result = select_by_ao_projection(
+            mf=c_sto3g_uhf,
+            ao_labels=["C 1s"],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+            restricted_space=None,
+        )
+        n_mo = c_sto3g_uhf.mo_coeff.shape[-1]
+        assert n_mo > 2  # guards against slicing the size-2 spin axis
+        for arr in result.values():
+            assert all(0 <= idx < n_mo for idx in arr)
+
+    def test_top_n_applies_per_channel(self, o_sto3g_uhf) -> None:
+        result = select_by_ao_projection(
+            mf=o_sto3g_uhf,
+            ao_labels=["O 2p"],
+            projected_basis="minao",
+            top_n=2,
+        )
+        assert len(result["alpha"]) <= 2
+        assert len(result["beta"]) <= 2
+
+    def test_per_channel_plot_paths(self, c_sto3g_uhf, tmp_path) -> None:
+        """Alpha/beta heatmaps are written to separate spin-tagged files."""
+        save_stem = str(tmp_path / "ao_uhf")
+        select_by_ao_projection(
+            mf=c_sto3g_uhf,
+            ao_labels=["C 2p"],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+            save_path=save_stem,
+        )
+        assert (tmp_path / "ao_uhf_alpha_heatmap.pdf").exists()
+        assert (tmp_path / "ao_uhf_beta_heatmap.pdf").exists()
+
+
+class TestSelectByAoProjectionSpinResolvedSpace:
+    """Spin-resolved (per-channel) ``restricted_space`` dict for a UHF reference."""
+
+    def test_each_channel_restricted_to_own_space(self, c_sto3g_uhf) -> None:
+        """A ``{"alpha", "beta"}`` restricted_space confines each spin channel."""
+        restricted_space = {
+            "alpha": ([(0, 0.0), (1, 0.0)], []),
+            "beta": ([(2, 0.0), (3, 0.0)], []),
+        }
+        result = select_by_ao_projection(
+            mf=c_sto3g_uhf,
+            ao_labels=["C 2p"],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+            restricted_space=restricted_space,
+        )
+        assert isinstance(result, dict)
+        assert set(result["alpha"].tolist()) <= {0, 1}
+        assert set(result["beta"].tolist()) <= {2, 3}
+
+    def test_empty_channel_gives_empty_array(self, c_sto3g_uhf) -> None:
+        """A channel with an empty window selects nothing (no ``max()`` crash)."""
+        restricted_space = {
+            "alpha": ([], []),
+            "beta": ([(2, 0.0)], []),
+        }
+        result = select_by_ao_projection(
+            mf=c_sto3g_uhf,
+            ao_labels=["C 2p"],
+            projected_basis="minao",
+            contribution=0.9,
+            contribution_type="r",
+            restricted_space=restricted_space,
+        )
+        assert isinstance(result, dict)
+        assert result["alpha"].tolist() == []
+        assert set(result["beta"].tolist()) <= {2}
+
+    def test_dict_space_requires_unrestricted(self, h2_rhf) -> None:
+        """A spin-resolved restricted_space on a restricted mf is rejected."""
+        with pytest.raises(ValueError, match="unrestricted"):
+            select_by_ao_projection(
+                mf=h2_rhf,
+                ao_labels=["H 1s"],
+                projected_basis="minao",
+                contribution=0.0,
+                contribution_type="a",
+                restricted_space={"alpha": ([(0, 0.0)], []), "beta": ([(1, 0.0)], [])},
+            )
