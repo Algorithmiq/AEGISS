@@ -73,6 +73,7 @@ extra_javascript:
 nav:
   - Home: index.md
   - Installation: installation.md
+  - Orbital Index Base: orbital_indexing.md
   - Tutorials:
     - Overview: tutorials/index.md
     - "01 — SCF & Localization": tutorials/01_scf_and_localization.ipynb
