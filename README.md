@@ -104,6 +104,26 @@ variable, which takes precedence over the file. The base only affects display
 and input interpretation — stored data and the indices returned by the API are
 always 0-based, so results round-trip safely regardless of the setting.
 
+> [!IMPORTANT]
+> **Inputs use the configured base, but return values are always 0-based.**
+> This asymmetry is deliberate — it keeps returned indices safe to slice
+> `mo_coeff[:, idx]`, save, and feed back into the pipeline regardless of the
+> base. With `AEGISS_ORB_BASE=1`:
+>
+> ```python
+> # you pass 1-based indices …
+> selected = select_by_ao_projection(mf, ao_labels=["C 2pz"], restricted_space=[35, 36, 37])
+> # … but `selected` comes back 0-based: array([34, 35, 36])
+> ```
+>
+> - **Passing indices** (`restricted_space`, `mo_indices`, `active`/`frozen`):
+>   give them in your configured base. An index below the base (e.g. `0` when
+>   base is 1) raises `ValueError` rather than silently misbehaving.
+> - **Reading results**: the returned array is 0-based. Do **not** feed it back
+>   in as a plain index list while in base 1 — it would be shifted down a second
+>   time. To display results in your base, wrap them:
+>   `aegiss.utils.orb_display.to_display_all(selected)`.
+
 ---
 
 ## Environment variables
@@ -506,7 +526,7 @@ active_indices = select_by_ao_projection(
 | `contribution` | `float` or `list[float]` or `None` | `None` | Projection weight threshold. A single float applies to all labels; a list assigns per-label thresholds. Mutually exclusive with `top_n`. |
 | `contribution_type` | `"r"` or `"a"` or `None` | `None` | Required when `contribution` is set. `"r"`: threshold relative to the maximum weight; `"a"`: absolute threshold. |
 | `top_n` | `int` or `list[int]` or `None` | `None` | Alternative to `contribution`: keep the top-N orbitals per label. A list assigns per-label counts. |
-| `restricted_space` | `list[int]` or `list[tuple[int, float]]` or `tuple[list, list]` or `None` | `None` | Restrict candidates to a pre-filtered set. Pass a plain list of orbital indices (e.g. `list(range(34, 131))`), a list of `(index, score)` pairs, or a `(occ_list, virt_list)` tuple as returned by `select_by_entropy`. `None` considers all molecular orbitals. |
+| `restricted_space` | `list[int]` or `list[tuple[int, float]]` or `tuple[list, list]` or `None` | `None` | Restrict candidates to a pre-filtered set. Pass a plain list of orbital indices (e.g. `list(range(34, 131))`), a list of `(index, score)` pairs, or a `(occ_list, virt_list)` tuple as returned by `select_by_entropy`. `None` considers all molecular orbitals. A plain index list is read in the configured base (see [Orbital index base](#orbital-index-base-0--or-1-based)); the pair/tuple forms are internal and always 0-based. |
 
 Returns `np.ndarray` of sorted orbital indices.
 
@@ -656,7 +676,7 @@ MO 4               |  ...
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `mf` | SCF object | — | Converged mean-field exposing `mo_coeff` and `mol`. Restricted or unrestricted. |
-| `mo_indices` | `int` or `Sequence[int]` | — | Orbital index, or indices, to decompose. |
+| `mo_indices` | `int` or `Sequence[int]` | — | Orbital index, or indices, to decompose, in the configured base (see [Orbital index base](#orbital-index-base-0--or-1-based)). Returned dict keys are always 0-based. |
 | `top_n` | `int` | `10` | Number of largest AO contributions (or groups) kept per orbital. |
 | `group_by_element` | `bool` | `False` | Sum `|coefficient|` over all atoms of the same element sharing a basis label, ranking the groups instead of individual AOs. |
 | `clusters` | `Mapping[int, Sequence[int]]` | `None` | Map of cluster id to its atom indices. Sum `|coefficient|` over each cluster's atoms sharing a basis label. Mutually exclusive with `group_by_element`. |
@@ -726,8 +746,8 @@ Arguments for `"nos"` and `"fnos"`:
 | `mf` | SCF object | — | First positional argument |
 | `correlated_method` | `"mp2"`, `"cisd"`, `"ccsd"` | — | Method used to build the correlated density matrix |
 | `split` *(nos only)* | `bool` | `False` | Diagonalise occupied and virtual blocks of the 1-RDM separately |
-| `frozen` *(fnos only)* | `list[int]` or `None` | `None` | Indices of occupied orbitals to freeze (0-based). Excluded from the correlated calculation but kept in the output. |
-| `active` *(fnos only)* | `True` or `list[int]` | `True` | `True`: use all occupied orbitals; list of indices: the active occupied set (the complement is frozen). Ignored when `frozen` is provided. |
+| `frozen` *(fnos only)* | `list[int]` or `None` | `None` | Indices of occupied orbitals to freeze, in the configured base (see [Orbital index base](#orbital-index-base-0--or-1-based)). Excluded from the correlated calculation but kept in the output. |
+| `active` *(fnos only)* | `True` or `list[int]` | `True` | `True`: use all occupied orbitals; list of indices (in the configured base, see [Orbital index base](#orbital-index-base-0--or-1-based)): the active occupied set (the complement is frozen). Ignored when `frozen` is provided. |
 
 ```python
 # Examples
