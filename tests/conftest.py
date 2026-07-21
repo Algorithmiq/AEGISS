@@ -2,13 +2,37 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 
 from aegiss.initial_guess import build_mol, run_scf
+from aegiss.utils import orb_display
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+
+@pytest.fixture(autouse=True)
+def _default_orbital_base(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[None]:
+    """Isolate every test from the machine's real orbital-base configuration.
+
+    ``orb_display.orbital_base()`` resolves from ``AEGISS_ORB_BASE`` and the
+    persisted ``~/.config/aegiss/config.toml``. Without this, a developer who
+    ran ``aegiss config set-base 1`` would see unrelated tests fail on 0-based
+    assertions. Point ``XDG_CONFIG_HOME`` at an empty dir, clear the env var,
+    and reset the cache so the base defaults to 0 unless a test opts in.
+    """
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path_factory.mktemp("xdg")))
+    monkeypatch.delenv("AEGISS_ORB_BASE", raising=False)
+    orb_display.reset_cache()
+    yield
+    orb_display.reset_cache()
 
 
 @pytest.fixture
