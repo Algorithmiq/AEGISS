@@ -38,8 +38,12 @@ def _load_config() -> dict[str, object]:
     path = config_path()
     if not path.is_file():
         return {}
-    with path.open("rb") as handle:
-        return dict(tomllib.load(handle))
+    try:
+        with path.open("rb") as handle:
+            return dict(tomllib.load(handle))
+    except (OSError, tomllib.TOMLDecodeError) as exc:
+        print(f"Warning: could not read config file {path}: {exc}", file=sys.stderr)
+        return {}
 
 
 def _dump_scalar(value: object) -> str:
