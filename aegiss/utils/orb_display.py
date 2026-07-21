@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 # Public: shared with the CLI (aegiss.cli) so the accepted bases and the
 # override variable name have a single source of truth.
-ENV_VAR = "AEGISS_ORB_BASE"
+ORB_BASE_ENV_VAR = "AEGISS_ORB_BASE"
 VALID_BASES = (0, 1)
 
 _CONFIG_KEY = "orbital_base"
@@ -74,14 +74,14 @@ def _validate(value: int, *, source: str) -> int | None:
 
 def _base_from_env() -> int | None:
     """Resolve the base from the environment variable, or ``None`` if unset."""
-    raw = os.environ.get(ENV_VAR)
+    raw = os.environ.get(ORB_BASE_ENV_VAR)
     if raw is None:
         return None
     stripped = raw.strip()
     try:
-        return _validate(int(stripped), source=ENV_VAR)
+        return _validate(int(stripped), source=ORB_BASE_ENV_VAR)
     except ValueError:
-        logger.warning("%s=%r is not an integer; ignoring.", ENV_VAR, stripped)
+        logger.warning("%s=%r is not an integer; ignoring.", ORB_BASE_ENV_VAR, stripped)
         return None
 
 

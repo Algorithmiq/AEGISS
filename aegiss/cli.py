@@ -22,7 +22,7 @@ import tomllib
 from typing import TYPE_CHECKING
 
 from aegiss.utils.orb_display import (
-    ENV_VAR,
+    ORB_BASE_ENV_VAR,
     VALID_BASES,
     config_path,
     orbital_base,
@@ -106,7 +106,7 @@ def build_parser() -> argparse.ArgumentParser:
         "set-base",
         help=(
             "Persist the base used when orbital indices are printed and "
-            f"interpreted. Overridable per run via ${ENV_VAR}."
+            f"interpreted. Overridable per run via ${ORB_BASE_ENV_VAR}."
         ),
     )
     set_base.add_argument("base", type=int, choices=VALID_BASES)
