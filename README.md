@@ -82,6 +82,28 @@ uv sync --all-extras --all-groups
 You'll have:
 - `--all-extras` picks up `viz`
 - `--all-groups` picks up `test`, `docs`,`dev`, and `interactive`.
+
+### Orbital index base (0- or 1-based)
+
+Internally AEGISS always stores orbital indices **0-based** (the PySCF
+convention). You can choose the base used when indices are **printed** (logs,
+plot labels, cube-file names) *and* how indices you **pass in** (e.g.
+`restricted_space`, `mo_indices`, `active`/`frozen`) are interpreted. Set it
+once after installation:
+
+```bash
+aegiss config set-base 1      # print/read orbital indices 1-based (ORCA/Molpro style)
+aegiss config set-base 0      # back to the 0-based default
+aegiss config get-base        # show the currently resolved base
+aegiss config path            # show the config-file location
+```
+
+The choice is persisted to `${XDG_CONFIG_HOME:-~/.config}/aegiss/config.toml`.
+It can be overridden for a single run with the `AEGISS_ORB_BASE` environment
+variable, which takes precedence over the file. The base only affects display
+and input interpretation — stored data and the indices returned by the API are
+always 0-based, so results round-trip safely regardless of the setting.
+
 ---
 
 ## Environment variables
@@ -92,6 +114,7 @@ You'll have:
 | `SCRATCH_DIR` | `./tmp` | Directory for DMRG scratch files (MPS/MPO) |
 | `MEM` | `4` | Memory budget in **GiB** for block2's internal stack (`stack_mem = MEM × 2³⁰` bytes). Set to roughly the free RAM available to the process. |
 | `PYSCF_MAX_MEMORY` | `4000` | PySCF memory budget in **MB** (`mol.max_memory`). Controls how much RAM PySCF may use for integral storage and intermediates. |
+| `AEGISS_ORB_BASE` | `0` | Base (`0` or `1`) for **displaying and interpreting** orbital indices. Overrides the persisted `aegiss config set-base` value for a single run. See [Orbital index base](#orbital-index-base-0--or-1-based). |
 
 Set them before running any calculation:
 
