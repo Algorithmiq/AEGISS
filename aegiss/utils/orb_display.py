@@ -35,9 +35,12 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_ENV_VAR = "AEGISS_ORB_BASE"
+# Public: shared with the CLI (aegiss.cli) so the accepted bases and the
+# override variable name have a single source of truth.
+ENV_VAR = "AEGISS_ORB_BASE"
+VALID_BASES = (0, 1)
+
 _CONFIG_KEY = "orbital_base"
-_VALID_BASES = (0, 1)
 _DEFAULT_BASE = 0
 
 
@@ -58,27 +61,27 @@ def config_path() -> Path:
 
 def _validate(value: int, *, source: str) -> int | None:
     """Return *value* if it is a valid base, else warn and return ``None``."""
-    if value in _VALID_BASES:
+    if value in VALID_BASES:
         return value
     logger.warning(
         "%s=%r is not a valid orbital base (expected one of %s); ignoring.",
         source,
         value,
-        _VALID_BASES,
+        VALID_BASES,
     )
     return None
 
 
 def _base_from_env() -> int | None:
     """Resolve the base from the environment variable, or ``None`` if unset."""
-    raw = os.environ.get(_ENV_VAR)
+    raw = os.environ.get(ENV_VAR)
     if raw is None:
         return None
     stripped = raw.strip()
     try:
-        return _validate(int(stripped), source=_ENV_VAR)
+        return _validate(int(stripped), source=ENV_VAR)
     except ValueError:
-        logger.warning("%s=%r is not an integer; ignoring.", _ENV_VAR, stripped)
+        logger.warning("%s=%r is not an integer; ignoring.", ENV_VAR, stripped)
         return None
 
 

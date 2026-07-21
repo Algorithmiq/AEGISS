@@ -21,10 +21,13 @@ import sys
 import tomllib
 from typing import TYPE_CHECKING
 
-from aegiss.utils.orb_display import config_path, orbital_base, reset_cache
-
-_ENV_VAR = "AEGISS_ORB_BASE"
-_VALID_BASES = (0, 1)
+from aegiss.utils.orb_display import (
+    ENV_VAR,
+    VALID_BASES,
+    config_path,
+    orbital_base,
+    reset_cache,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -103,10 +106,10 @@ def build_parser() -> argparse.ArgumentParser:
         "set-base",
         help=(
             "Persist the base used when orbital indices are printed and "
-            f"interpreted. Overridable per run via ${_ENV_VAR}."
+            f"interpreted. Overridable per run via ${ENV_VAR}."
         ),
     )
-    set_base.add_argument("base", type=int, choices=_VALID_BASES)
+    set_base.add_argument("base", type=int, choices=VALID_BASES)
 
     config_sub.add_parser("get-base", help="Show the currently resolved base.")
     config_sub.add_parser("path", help="Show the config-file location.")
