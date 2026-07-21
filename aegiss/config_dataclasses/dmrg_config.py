@@ -12,39 +12,38 @@ from aegiss.utils.orbital_indices import resolve_nelecas
 class DMRGConfig:
     """Configuration dataclass for DMRG calculations.
 
-    Parameters:
-    ----------
-    ncas : int
-        Number of active orbitals for the DMRG calculation.
-    nelecas : int or tuple[int, int]
-        Number of active electrons, either as a total count or an explicit
-        ``(nalpha, nbeta)`` pair (same convention as PySCF's CASCI).
-    max_bond_dim : int, default 500
-        Target DMRG bond dimension (must be a positive multiple of 4).
-        The sweep schedule starts at ``max_bond_dim // 2`` and ramps up to ``max_bond_dim``.
-    symm_type : {'SZ', 'SU2'}, default 'SZ'
-        Spin symmetry used by block2.  ``'SZ'`` is required for entropy
-        calculations; ``'SU2'`` is faster but needs MPS conversion for entropies.
-    verbosity : int, default 0
-        Verbosity level for block2 output.  Higher values produce more detailed logs.
-    unrestricted : bool or None, default None
-        Whether to emit an unrestricted (UHF) FCIDUMP. ``None`` autodetects from
-        the mean-field type (``isinstance(mf, scf.uhf.UHF)``); pass ``True``/
-        ``False`` to override. UHF requires ``symm_type='SZ'``.
-    reorder : {'noreorder', 'fiedler'}, default 'noreorder'
-        Orbital ordering for block2main. ``'noreorder'`` keeps the FCIDUMP order
-        and enables ``full_fci_space``; ``'fiedler'`` reorders by the Fiedler
-        vector and disables ``full_fci_space``.
-    spin_soe : {'auto', 'summed', 'resolved'}, default 'auto'
-        Whether single-orbital entropies (and the selection built on them) are
-        spin-summed or spin-resolved. ``'summed'`` uses the 4-state spatial
-        entropy and yields a single spatial active space. ``'resolved'`` uses the
-        per-spin-orbital entropies ``H(n_alpha)`` / ``H(n_beta)`` and screens the
-        alpha and beta channels independently, yielding a split
-        ``{'alpha', 'beta'}`` active space. ``'auto'`` picks ``'resolved'`` when
-        the target is spin-polarised (``nalpha != nbeta``) and ``symm_type='SZ'``,
-        else ``'summed'``. ``'resolved'`` requires ``symm_type='SZ'`` (the
-        spin-resolved 1-PDM is only available without spin adaptation).
+    Args:
+        ncas (int):
+            Number of active orbitals for the DMRG calculation.
+        nelecas (int or tuple[int, int]):
+            Number of active electrons, either as a total count or an explicit
+            ``(nalpha, nbeta)`` pair (same convention as PySCF's CASCI).
+        max_bond_dim (int, default 500):
+            Target DMRG bond dimension (must be a positive multiple of 4).
+            The sweep schedule starts at ``max_bond_dim // 2`` and ramps up to ``max_bond_dim``.
+        symm_type ({'SZ', 'SU2'}, default 'SZ'):
+            Spin symmetry used by block2.  ``'SZ'`` is required for entropy
+            calculations; ``'SU2'`` is faster but needs MPS conversion for entropies.
+        verbosity (int, default 0):
+            Verbosity level for block2 output.  Higher values produce more detailed logs.
+        unrestricted (bool or None, default None):
+            Whether to emit an unrestricted (UHF) FCIDUMP. ``None`` autodetects from
+            the mean-field type (``isinstance(mf, scf.uhf.UHF)``); pass ``True``/
+            ``False`` to override. UHF requires ``symm_type='SZ'``.
+        reorder ({'noreorder', 'fiedler'}, default 'noreorder'):
+            Orbital ordering for block2main. ``'noreorder'`` keeps the FCIDUMP order
+            and enables ``full_fci_space``; ``'fiedler'`` reorders by the Fiedler
+            vector and disables ``full_fci_space``.
+        spin_soe ({'auto', 'summed', 'resolved'}, default 'auto'):
+            Whether single-orbital entropies (and the selection built on them) are
+            spin-summed or spin-resolved. ``'summed'`` uses the 4-state spatial
+            entropy and yields a single spatial active space. ``'resolved'`` uses the
+            per-spin-orbital entropies ``H(n_alpha)`` / ``H(n_beta)`` and screens the
+            alpha and beta channels independently, yielding a split
+            ``{'alpha', 'beta'}`` active space. ``'auto'`` picks ``'resolved'`` when
+            the target is spin-polarised (``nalpha != nbeta``) and ``symm_type='SZ'``,
+            else ``'summed'``. ``'resolved'`` requires ``symm_type='SZ'`` (the
+            spin-resolved 1-PDM is only available without spin adaptation).
     """
 
     ncas: int
@@ -60,9 +59,7 @@ class DMRGConfig:
         """Validate the configuration parameters.
 
         Raises:
-        ------
-        ValueError
-            If any of the parameters are out of their expected ranges or have invalid values.
+            ValueError: If any of the parameters are out of their expected ranges or have invalid values.
         """
         self._validate_cas()
         self._validate_solver()

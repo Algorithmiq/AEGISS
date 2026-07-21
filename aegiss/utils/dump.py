@@ -20,19 +20,13 @@ def save_orbitals(
 ) -> None:
     """Save molecular orbitals as cube files for visualization.
 
-    Parameters
-    ----------
-    mol : pyscf.gto.Mole
-        Molecule object containing the geometry and basis set information.
-    mo_coeff : np.ndarray
-        Molecular orbital coefficients in the AO basis. Shape (n_ao, n_mo).
-    candidate_indices : np.ndarray
-        Indices of the orbitals to save.
-    filename_prefix : str
-        Prefix for the output cube files. Each orbital is saved as
-        ``"{filename_prefix}_{i}.cube"``.
-    folder : str
-        Output directory path. Created if it does not exist.
+    Args:
+        mol (pyscf.gto.Mole): Molecule object containing the geometry and basis set information.
+        mo_coeff (np.ndarray): Molecular orbital coefficients in the AO basis. Shape (n_ao, n_mo).
+        candidate_indices (np.ndarray): Indices of the orbitals to save.
+        filename_prefix (str): Prefix for the output cube files. Each orbital is saved as
+            ``"{filename_prefix}_{i}.cube"``.
+        folder (str): Output directory path. Created if it does not exist.
     """
     from pyscf.tools import cubegen  # noqa: PLC0415
 
@@ -53,19 +47,17 @@ def save_orbitals_from_entropies(
 ) -> None:
     """Save molecular orbitals (selected by entropy) as cube files.
 
-    Parameters
-    ----------
-    mol : pyscf.gto.Mole
-        Molecule object containing the geometry and basis set information.
-    mo_coeff : np.ndarray
-        Molecular orbital coefficients in the AO basis. Shape (n_ao, n_mo).
-    candidate_indices : list of tuple[int, float]
-        Orbital index/entropy pairs; only the indices are used for saving.
-    filename_prefix : str
-        Prefix for the output cube files. Each orbital is saved as
-        ``"{filename_prefix}_{i}.cube"``.
-    folder : str
-        Output directory path. Created if it does not exist.
+    Args:
+        mol (pyscf.gto.Mole):
+            Molecule object containing the geometry and basis set information.
+        mo_coeff (np.ndarray):
+            Molecular orbital coefficients in the AO basis. Shape (n_ao, n_mo).
+        candidate_indices (list of tuple[int, float]):
+            Orbital index/entropy pairs; only the indices are used for saving.
+        filename_prefix (str):
+            Prefix for the output cube files. Each orbital is saved as ``"{filename_prefix}_{i}.cube"``.
+        folder (str):
+            Output directory path. Created if it does not exist.
     """
     from pyscf.tools import cubegen  # noqa: PLC0415
 
@@ -85,16 +77,11 @@ def dump_qmi(
 ) -> None:
     """Dump QMI, SOE1, and optional SOE2 data to disk.
 
-    Parameters
-    ----------
-    minfo : np.ndarray
-        Mutual information matrix.
-    soe1 : np.ndarray
-        Single orbital entropy values.
-    soe2 : np.ndarray or None
-        Double orbital entropy values, or ``None`` if not computed.
-    path : Path or str
-        Output file path (without extension; ``.npz`` is appended by numpy).
+    Args:
+        minfo (np.ndarray): Mutual information matrix.
+        soe1 (np.ndarray): Single orbital entropy values.
+        soe2 (np.ndarray or None): Double orbital entropy values, or ``None`` if not computed.
+        path (Path or str): Output file path (without extension; ``.npz`` is appended by numpy).
     """
     filename = Path(path)
     data: dict[str, np.ndarray] = {"minfo": minfo, "soe1": soe1}

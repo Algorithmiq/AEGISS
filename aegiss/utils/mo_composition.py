@@ -242,37 +242,33 @@ def mo_ao_contributions(
     The result is always logged as a table with one column per orbital
     (restricted) or a pair of alpha/beta columns per orbital (unrestricted).
 
-    Parameters
-    ----------
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object exposing ``mo_coeff`` and ``mol``.
-        ``mo_coeff`` may be restricted ``(n_ao, n_mo)`` or unrestricted
-        ``(2, n_ao, n_mo)``; in the latter case both spins are reported.
-    mo_indices : int or sequence of int
-        Index (or indices) of the molecular orbital(s) to decompose.
-    top_n : int
-        Number of largest AO contributions (or element groups) to keep per
-        orbital.
-    group_by_element : bool
-        If ``True``, sum ``|coefficient|`` over all atoms of the same element
-        sharing a basis label, ranking the resulting groups instead of
-        individual AOs.
-    clusters : mapping of int to sequence of int, optional
-        Maps a cluster id to the atom indices it contains. When given, sum
-        ``|coefficient|`` over the atoms of each cluster sharing a basis label.
-        Atoms must each belong to at most one cluster; any not listed fall into
-        the catch-all ``U`` group. Mutually exclusive with *group_by_element*.
+    Args:
+        mf (pyscf.scf.hf.SCF): Converged mean-field object exposing ``mo_coeff``
+            and ``mol``. ``mo_coeff`` may be restricted ``(n_ao, n_mo)`` or
+            unrestricted ``(2, n_ao, n_mo)``; in the latter case both spins are
+            reported.
+        mo_indices (int or sequence of int): Index (or indices) of the molecular
+            orbital(s) to decompose.
+        top_n (int): Number of largest AO contributions (or element groups) to
+            keep per orbital.
+        group_by_element (bool): If ``True``, sum ``|coefficient|`` over all
+            atoms of the same element sharing a basis label, ranking the
+            resulting groups instead of individual AOs.
+        clusters (mapping of int to sequence of int, optional): Maps a cluster id
+            to the atom indices it contains. When given, sum ``|coefficient|``
+            over the atoms of each cluster sharing a basis label. Atoms must each
+            belong to at most one cluster; any not listed fall into the catch-all
+            ``U`` group. Mutually exclusive with *group_by_element*.
 
     Returns:
-    -------
-    composition : dict[int, dict[str, list[tuple[int, str, float]]]]
-        Maps each requested MO index to a ``{spin: entries}`` dict, where
-        *spin* is ``"alpha"`` (and ``"beta"`` for unrestricted inputs) and
-        *entries* is a list of ``(key, label, weight)`` triples ordered from
-        largest to smallest weight. Ungrouped: ``key`` is the AO index, *label*
-        the PySCF AO label and ``weight`` the signed coefficient. Grouped (by
-        element or cluster): ``key`` is the number of AOs in the group and
-        ``weight`` the summed ``|coefficient|``.
+        composition (dict[int, dict[str, list[tuple[int, str, float]]]]): Maps
+            each requested MO index to a ``{spin: entries}`` dict, where *spin*
+            is ``"alpha"`` (and ``"beta"`` for unrestricted inputs) and *entries*
+            is a list of ``(key, label, weight)`` triples ordered from largest to
+            smallest weight. Ungrouped: ``key`` is the AO index, *label* the
+            PySCF AO label and ``weight`` the signed coefficient. Grouped (by
+            element or cluster): ``key`` is the number of AOs in the group and
+            ``weight`` the summed ``|coefficient|``.
     """
     if clusters is not None and group_by_element:
         raise ValueError("Pass at most one of `group_by_element` and `clusters`.")

@@ -111,52 +111,46 @@ def run_dmrg_subprocess(
 ) -> tuple[float, np.ndarray | None]:
     """Run a DMRG calculation via the ``block2main`` subprocess.
 
-    Parameters
-    ----------
-    mf : pyscf.scf.hf.SCF
-        Converged mean-field object.
-    ncas : int
-        Number of active orbitals.
-    nelecas : int or tuple[int, int]
-        Number of active electrons (total count or ``(nalpha, nbeta)`` pair).
-    max_bond_dim : int
-        Target bond dimension for the DMRG schedule (must be a positive multiple of 4).
-    symm_type : {'SU2', 'SZ'}
-        Spin symmetry: ``'SZ'`` adds the ``nonspinadapted`` keyword so
-        block2main runs without spin adaptation; ``'SU2'`` omits it.
-    verbosity : int
-        If non-zero, block2main stdout/stderr are forwarded to the terminal.
-    unrestricted : bool or None
-        Whether to emit an unrestricted (UHF, ``IUHF=1``) FCIDUMP with separate
-        aa/bb/ab and alpha/beta blocks. If ``None`` (default), autodetected from
-        ``isinstance(mf, scf.uhf.UHF)``; pass ``True``/``False`` to override.
-        UHF requires ``symm_type='SZ'``.
-    get_qmi : bool
-        If ``True``, compute and return single-orbital entropies.
-    spin_resolved : bool
-        If ``True``, return separate alpha/beta spin-orbital entropies as a
-        ``(2, ncas)`` array (row 0 = alpha, row 1 = beta) instead of the
-        spin-summed ``(ncas,)`` vector. Only meaningful with *get_qmi*; the
-        spin-summed default feeds the entropy-screening pipeline, so callers
-        that screen orbitals should leave this ``False``.
-    reorder : {'noreorder', 'fiedler'}
-        Orbital ordering for block2main. ``'noreorder'`` (default) keeps the
-        FCIDUMP order and enables ``full_fci_space``; ``'fiedler'`` reorders by
-        the Fiedler vector and disables ``full_fci_space`` (that combination can
-        converge to a higher local minimum). Output ``1pdm``/``1npc`` are mapped
-        back to the input order either way, so per-orbital entropy indexing is
-        unaffected.
+    Args:
+        mf (pyscf.scf.hf.SCF): Converged mean-field object.
+        ncas (int): Number of active orbitals.
+        nelecas (int or tuple[int, int]): Number of active electrons (total
+            count or ``(nalpha, nbeta)`` pair).
+        max_bond_dim (int): Target bond dimension for the DMRG schedule (must
+            be a positive multiple of 4).
+        symm_type ({'SU2', 'SZ'}): Spin symmetry: ``'SZ'`` adds the
+            ``nonspinadapted`` keyword so block2main runs without spin
+            adaptation; ``'SU2'`` omits it.
+        verbosity (int): If non-zero, block2main stdout/stderr are forwarded to
+            the terminal.
+        unrestricted (bool or None): Whether to emit an unrestricted (UHF,
+            ``IUHF=1``) FCIDUMP with separate aa/bb/ab and alpha/beta blocks. If
+            ``None`` (default), autodetected from ``isinstance(mf, scf.uhf.UHF)``;
+            pass ``True``/``False`` to override. UHF requires ``symm_type='SZ'``.
+        get_qmi (bool): If ``True``, compute and return single-orbital
+            entropies.
+        spin_resolved (bool): If ``True``, return separate alpha/beta
+            spin-orbital entropies as a ``(2, ncas)`` array (row 0 = alpha,
+            row 1 = beta) instead of the spin-summed ``(ncas,)`` vector. Only
+            meaningful with *get_qmi*; the spin-summed default feeds the
+            entropy-screening pipeline, so callers that screen orbitals should
+            leave this ``False``.
+        reorder ({'noreorder', 'fiedler'}): Orbital ordering for block2main.
+            ``'noreorder'`` (default) keeps the FCIDUMP order and enables
+            ``full_fci_space``; ``'fiedler'`` reorders by the Fiedler vector and
+            disables ``full_fci_space`` (that combination can converge to a
+            higher local minimum). Output ``1pdm``/``1npc`` are mapped back to
+            the input order either way, so per-orbital entropy indexing is
+            unaffected.
 
     Returns:
-    -------
-    energy : float
-        DMRG ground-state energy.
-    soe1 : np.ndarray or None
-        Single-orbital entropies (``None`` if *get_qmi* is ``False``). Shape
-        ``(ncas,)`` by default, or ``(2, ncas)`` if *spin_resolved* is ``True``.
-        Two-orbital entropies and mutual information are not available from
-        the ``1pdm`` + ``1npc`` output; pass them from an external source to
-        any downstream plotting functions if needed.
+        energy (float): DMRG ground-state energy.
+        soe1 (np.ndarray or None): Single-orbital entropies (``None`` if
+            *get_qmi* is ``False``). Shape ``(ncas,)`` by default, or
+            ``(2, ncas)`` if *spin_resolved* is ``True``. Two-orbital entropies
+            and mutual information are not available from the ``1pdm`` +
+            ``1npc`` output; pass them from an external source to any downstream
+            plotting functions if needed.
     """
     if symm_type not in _VALID_SYMM_TYPES:
         raise ValueError(

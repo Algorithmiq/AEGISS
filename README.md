@@ -76,6 +76,13 @@ uv sync --extra viz
 
 See the [MolTagger README](aegiss/utils/mol_tagger/README.md) for full installation and usage.
 
+### `Extras` and `Groups`
+```bash
+uv sync --all-extras --all-groups
+```
+You'll have:
+- `--all-extras` picks up `viz`
+- `--all-groups` picks up `test`, `docs`,`dev`, and `interactive`.
 ---
 
 ## Environment variables
@@ -247,6 +254,10 @@ mf.mo_coeff = localize("fnos", mf, "mp2", frozen=[0, 1])
 The frozen orbitals are excluded from the MP2/CISD/CCSD density matrix but are
 kept in the output coefficient matrix, so `mf.mo_coeff` retains its original
 shape and the rest of the pipeline is unaffected.
+
+Further step-by-step tutorials covering SCF & localization, DMRG, AO projection, and
+the full pipeline are available as Jupyter notebooks in
+[aegiss/examples/tutorials/](aegiss/examples/tutorials/README.md).
 
 ---
 
@@ -809,3 +820,16 @@ pytest --cov=aegiss           # run with coverage
 
 Code style is enforced by **ruff** (linting + formatting) and **mypy** (strict type
 checking). Both run automatically as pre-commit hooks and in CI on every pull request.
+
+### Building the documentation
+
+Install the `docs` dependency group, then use the MkDocs CLI:
+
+```bash
+uv sync --group docs          # install MkDocs and plugins
+uv run mkdocs serve                  # live-reload preview at http://127.0.0.1:8000
+mkdocs build                  # write static site to site/
+```
+
+See [docs/README.md](docs/README.md) for a full description of the docs layout and
+how to add new pages.
