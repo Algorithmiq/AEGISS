@@ -150,14 +150,20 @@ def _resolve_space(
             when *restricted_space* is ``None``.
         restricted_space (list of int, list of tuple, tuple of lists, or None):
             If ``None``, all MOs are returned with a placeholder entropy of 0.0.
-            If a list of plain integers, converted to ``(index, 0.0)`` pairs.
-            If a flat list of ``(index, entropy)`` pairs, returned unchanged.
+            If a list of plain integers, these are treated as user input in the
+            configured display base (0-based by default; 1-based when
+            ``AEGISS_ORB_BASE=1``), converted to 0-based via
+            :func:`aegiss.utils.orb_display.from_display_all`, and paired as
+            ``(index, 0.0)``.
+            If a flat list of ``(index, entropy)`` pairs, returned unchanged
+            (these come from AEGISS internals and are already 0-based).
             If a ``(occ_list, virt_list)`` tuple (as returned by
             ``select_by_entropy``), the two lists are merged with
-            ``combine_candidate_entropies``.
+            ``combine_candidate_entropies`` (also already 0-based).
 
     Returns:
-        space (list of tuple[int, float]): Orbital index / entropy pairs for the search space.
+        space (list of tuple[int, float]): Orbital index / entropy pairs for the
+            search space; indices are always 0-based.
     """
     if restricted_space is None:
         logger.info(
