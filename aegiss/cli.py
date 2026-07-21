@@ -21,13 +21,10 @@ import sys
 import tomllib
 from typing import TYPE_CHECKING
 
-from aegiss.utils.orb_display import (
-    _ENV_VAR,
-    _VALID_BASES,
-    config_path,
-    orbital_base,
-    reset_cache,
-)
+from aegiss.utils.orb_display import config_path, orbital_base, reset_cache
+
+_ENV_VAR = "AEGISS_ORB_BASE"
+_VALID_BASES = (0, 1)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
