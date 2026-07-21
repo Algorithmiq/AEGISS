@@ -233,10 +233,13 @@ def localize_fnos(
             Controls which occupied orbitals enter the correlated calculation.
             ``True`` uses all occupied orbitals (no freezing). A list of integers
             specifies the indices of the active occupied orbitals; all others
-            are frozen. Ignored when *frozen* is provided.
+            are frozen. Ignored when *frozen* is provided. Indices are given in
+            the configured display base (see :func:`aegiss.utils.orb_display.orbital_base`):
+            0-based by default, or 1-based when ``AEGISS_ORB_BASE=1``.
         frozen (list of int, optional):
-            Indices of occupied orbitals to freeze (0-based). Takes precedence over
-            *active* when provided.
+            Indices of occupied orbitals to freeze, in the configured display
+            base (0-based by default; 1-based when ``AEGISS_ORB_BASE=1``). Takes
+            precedence over *active* when provided.
 
     Returns:
         mo_coeff (np.ndarray, shape (nao, nmo)):

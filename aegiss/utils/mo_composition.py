@@ -255,7 +255,9 @@ def mo_ao_contributions(
             unrestricted ``(2, n_ao, n_mo)``; in the latter case both spins are
             reported.
         mo_indices (int or sequence of int): Index (or indices) of the molecular
-            orbital(s) to decompose.
+            orbital(s) to decompose, in the configured display base (0-based by
+            default; 1-based when ``AEGISS_ORB_BASE=1``). Returned dict keys are
+            always 0-based.
         top_n (int): Number of largest AO contributions (or element groups) to
             keep per orbital.
         group_by_element (bool): If ``True``, sum ``|coefficient|`` over all

@@ -284,7 +284,11 @@ def select_by_ao_projection(
             Orbital indices to restrict selection to. Can be a plain list of
             integers (e.g. ``list(range(34, 131))``), a list of ``(index, entropy)``
             pairs, or a ``(occ_list, virt_list)`` tuple from ``select_by_entropy``.
-            ``None`` considers all orbitals.
+            ``None`` considers all orbitals. A plain list of integers is treated
+            as user input in the configured display base (0-based by default;
+            1-based when ``AEGISS_ORB_BASE=1``); the ``(index, entropy)`` pair
+            and tuple forms come from AEGISS internals and are always 0-based.
+            The returned indices are always 0-based regardless of the base.
         save_path (str or None, optional):
             If provided, saves a heatmap of AO contributions to the specified path.
 
