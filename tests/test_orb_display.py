@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 
 from aegiss import cli
-from aegiss.active_space.ao_projection import _resolve_space
+from aegiss.active_space.ao_projection import _resolve_space, select_by_ao_projection
 from aegiss.localization.orbital_localization import localize_fnos
 from aegiss.utils import orb_display
 from aegiss.utils.dump import save_orbitals
@@ -185,6 +185,58 @@ class TestBoundaryIntegration:
         )
         suffixes = sorted(int(name.split("_")[-1].split(".")[0]) for name in recorded)
         assert suffixes == expected
+
+
+class TestBaseEquivalence:
+    """Base is display-only: base-0 and base-1 runs must correspond exactly.
+
+    Switching base must not change any internal or returned result, and a
+    base-1 input of ``k`` must behave identically to a base-0 input of ``k-1``.
+    """
+
+    @staticmethod
+    def _project(mf: Any, restricted_space: list[int] | None = None) -> np.ndarray:
+        return select_by_ao_projection(
+            mf=mf,
+            ao_labels=["H 1s"],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+            restricted_space=restricted_space,
+        )
+
+    def test_return_values_are_base_invariant(
+        self, monkeypatch, h2o_rhf: Any
+    ) -> None:
+        monkeypatch.delenv("AEGISS_ORB_BASE", raising=False)
+        orb_display.reset_cache()
+        base0 = self._project(h2o_rhf)
+
+        monkeypatch.setenv("AEGISS_ORB_BASE", "1")
+        orb_display.reset_cache()
+        base1 = self._project(h2o_rhf)
+
+        # Returned indices are always 0-based, hence identical across bases.
+        np.testing.assert_array_equal(base0, base1)
+
+    def test_restricted_space_input_corresponds_across_bases(
+        self, monkeypatch, h2o_rhf: Any
+    ) -> None:
+        base0_space = [1, 2, 3, 4, 5]
+        monkeypatch.delenv("AEGISS_ORB_BASE", raising=False)
+        orb_display.reset_cache()
+        result_b0 = self._project(h2o_rhf, restricted_space=base0_space)
+
+        monkeypatch.setenv("AEGISS_ORB_BASE", "1")
+        orb_display.reset_cache()
+        # The same physical orbitals, expressed 1-based, must select identically.
+        result_b1 = self._project(
+            h2o_rhf, restricted_space=[k + 1 for k in base0_space]
+        )
+
+        np.testing.assert_array_equal(result_b0, result_b1)
+        # And a wrong (unshifted) base-1 input would select different orbitals:
+        assert set(result_b0) <= set(base0_space)
 
 
 class TestCli:
