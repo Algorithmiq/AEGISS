@@ -205,9 +205,7 @@ class TestBaseEquivalence:
             restricted_space=restricted_space,
         )
 
-    def test_return_values_are_base_invariant(
-        self, monkeypatch, h2o_rhf: Any
-    ) -> None:
+    def test_return_values_are_base_invariant(self, monkeypatch, h2o_rhf: Any) -> None:
         monkeypatch.delenv("AEGISS_ORB_BASE", raising=False)
         orb_display.reset_cache()
         base0 = self._project(h2o_rhf)
