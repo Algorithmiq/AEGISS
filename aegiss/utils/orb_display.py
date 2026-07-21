@@ -164,7 +164,13 @@ def from_display(index: int) -> int:
     Returns:
         int: The equivalent 0-based index for internal use.
     """
-    return int(index) - orbital_base()
+    base = orbital_base()
+    idx = int(index)
+    if idx < base:
+        raise ValueError(
+            f"Orbital index {idx} is invalid for base {base} (expected >= {base})."
+        )
+    return idx - base
 
 
 def from_display_all(indices: Iterable[int]) -> list[int]:
