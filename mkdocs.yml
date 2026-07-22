@@ -79,6 +79,7 @@ nav:
     - "02 — DMRG & Entropy": tutorials/02_dmrg.ipynb
     - "03 — AO Projection": tutorials/03_ao_projection.ipynb
     - "04 — Full Pipeline": tutorials/04_aegiss.ipynb
+    - "05 — Unrestricted (UHF)": tutorials/05_unrestricted.ipynb
   - UHF References: uhf.md
   - MolTagger: moltagger.md
   - API Reference:
