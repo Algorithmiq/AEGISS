@@ -245,6 +245,39 @@ def _resolve_top_n(
     return [top_n] * n_labels
 
 
+def _resolve_thresholds(
+    contribution: float | list[float],
+    top_n: int | list[int] | None,
+    n_labels: int,
+) -> tuple[list[float], list[int] | None]:
+    """Resolve the per-label contribution thresholds and top-N counts.
+
+    Wraps :func:`_resolve_contribution` and :func:`_resolve_top_n` and applies the
+    rule that *top_n*, when given, overrides *contribution* (the thresholds are
+    zeroed so selection is purely top-N). Called once per spin channel so an
+    unrestricted run can resolve different thresholds for alpha and beta.
+
+    Args:
+        contribution (float or list of float): Contribution threshold(s) for one
+            channel, already extracted from any per-channel dict.
+        top_n (int, list of int, or None): Top-N count(s), or ``None`` to
+            threshold by *contribution* instead.
+        n_labels (int): Number of AO labels being considered.
+
+    Returns:
+        resolved (tuple[list of float, list of int or None]): The per-label
+            contribution thresholds and per-label top-N counts (``None`` when
+            *top_n* is ``None``).
+    """
+    resolved_contribution = _resolve_contribution(contribution, n_labels)
+    resolved_top_n: list[int] | None = None
+    if top_n is not None:
+        resolved_top_n = _resolve_top_n(top_n, n_labels)
+        # Override contribution thresholds if top-N is specified.
+        resolved_contribution = [0.0] * n_labels
+    return resolved_contribution, resolved_top_n
+
+
 def _channel_save_path(save_path: str | None, channel: str) -> str | None:
     """Insert a spin-channel tag before the extension of *save_path*.
 
@@ -350,7 +383,7 @@ def select_by_ao_projection(
     ao_labels: list[str | list[str]],
     projected_basis: str | None = "minao",
     contribution_type: Literal["r", "a"] = "a",
-    contribution: float | list[float] = 0.0,
+    contribution: float | list[float] | dict[str, float | list[float]] = 0.0,
     top_n: int | list[int] | None = None,
     restricted_space: list[int]
     | list[tuple[int, float]]
@@ -374,10 +407,15 @@ def select_by_ao_projection(
             chemically relevant orbitals and reduces noise from diffuse functions.
         contribution_type ({'r', 'a'}): Relative (``'r'``) or absolute (``'a'``) contribution. Required when
             *contribution* is specified.
-        contribution (float or list of float, default 0.0): Threshold for selecting
-            orbitals based on their contribution.
+        contribution (float, list of float, or dict, default 0.0): Threshold for
+            selecting orbitals based on their contribution.
             A single float applies to all AO groups; a list specifies per-group
             thresholds and must match the length of *ao_labels*.
+            For an unrestricted mean-field it may also be a spin-resolved
+            ``{"alpha": ..., "beta": ...}`` mapping (each value itself a float or
+            per-group list), applying a different threshold to each spin channel.
+            A non-dict value is shared by both channels. A dict is rejected for a
+            restricted mean-field.
         top_n (int or list of int, optional): Alternative to *contribution* thresholding. Selects the top N orbitals
             per AO group. A list specifies per-group counts.
         restricted_space (list of int, list of tuple, tuple of lists, dict, optional):
@@ -417,14 +455,6 @@ def select_by_ao_projection(
     if top_n is not None:
         logger.info("Top N orbitals to select: %s", top_n)
 
-    resolved_contribution = _resolve_contribution(contribution, len(ao_labels))
-    resolved_top_n: list[int] | None = None
-    if top_n is not None:
-        resolved_top_n = _resolve_top_n(top_n, len(ao_labels))
-        resolved_contribution = [0.0] * len(
-            ao_labels
-        )  # Override contribution thresholds if top-N is specified
-
     if projected_basis is not None:
         logger.info("Using projected basis for AO projection: %s", projected_basis)
     else:
@@ -440,6 +470,15 @@ def select_by_ao_projection(
                 "an unrestricted mean-field with a 3D mo_coeff; got a restricted one."
             )
             raise ValueError(msg)
+        if isinstance(contribution, dict):
+            msg = (
+                "A spin-resolved contribution ({'alpha', 'beta'} dict) requires an "
+                "unrestricted mean-field with a 3D mo_coeff; got a restricted one."
+            )
+            raise ValueError(msg)
+        resolved_contribution, resolved_top_n = _resolve_thresholds(
+            contribution, top_n, len(ao_labels)
+        )
         return _run_ao_selection(
             mf=mf,
             ao_labels=ao_labels,
@@ -468,6 +507,14 @@ def select_by_ao_projection(
             restricted_space[channel]
             if isinstance(restricted_space, dict)
             else restricted_space
+        )
+        # A dict contribution carries its own threshold(s) per spin channel;
+        # anything else is shared by both.
+        channel_contribution = (
+            contribution[channel] if isinstance(contribution, dict) else contribution
+        )
+        resolved_contribution, resolved_top_n = _resolve_thresholds(
+            channel_contribution, top_n, len(ao_labels)
         )
         selection[channel] = _run_ao_selection(
             mf=mf,
