@@ -183,6 +183,24 @@ The `restricted_space` argument decides whether the channels share a window:
 Passing a spin-resolved dict together with a *restricted* `mf` raises a
 `ValueError`.
 
+The `contribution` threshold follows the same pattern: a float or per-label list
+is **shared** by both channels, while a `{"alpha": ..., "beta": ...}` dict applies
+a **different** threshold to each spin channel (each value may itself be a float or
+per-label list). This is orthogonal to `restricted_space` — you can share the
+window but cut the channels at different weights:
+
+```python
+result = select_by_ao_projection(
+    mf,                       # UHF: mo_coeff.ndim == 3
+    ao_labels=["C 2pz"],
+    contribution={"alpha": 0.2, "beta": 0.5},   # stricter cut on beta
+    contribution_type="r",
+)
+```
+
+As with a spin-resolved `restricted_space`, passing a `contribution` dict together
+with a *restricted* `mf` raises a `ValueError`.
+
 ## Full pipeline
 
 `select_aegiss` wires everything together. Its return type reflects the

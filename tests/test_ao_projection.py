@@ -590,3 +590,69 @@ class TestSelectByAoProjectionSpinResolvedSpace:
                 contribution_type="a",
                 restricted_space={"alpha": ([(0, 0.0)], []), "beta": ([(1, 0.0)], [])},
             )
+
+
+class TestSelectByAoProjectionSpinResolvedContribution:
+    """Spin-resolved (per-channel) ``contribution`` dict for a UHF reference."""
+
+    def test_per_channel_thresholds_applied(self, c_sto3g_uhf) -> None:
+        """Each channel screens against its own contribution threshold."""
+        loose = select_by_ao_projection(
+            mf=c_sto3g_uhf,
+            ao_labels=["C 2p"],
+            projected_basis="minao",
+            contribution={"alpha": 0.0, "beta": 0.0},
+            contribution_type="r",
+        )
+        split = select_by_ao_projection(
+            mf=c_sto3g_uhf,
+            ao_labels=["C 2p"],
+            projected_basis="minao",
+            # A strict beta cut should not select more than the loose one.
+            contribution={"alpha": 0.0, "beta": 0.99},
+            contribution_type="r",
+        )
+        assert set(split["alpha"].tolist()) == set(loose["alpha"].tolist())
+        assert set(split["beta"].tolist()) <= set(loose["beta"].tolist())
+
+    def test_dict_matches_scalar_when_channels_equal(self, c_sto3g_uhf) -> None:
+        """A dict with equal entries reproduces the shared-threshold result."""
+        shared = select_by_ao_projection(
+            mf=c_sto3g_uhf,
+            ao_labels=["C 2p"],
+            projected_basis="minao",
+            contribution=0.5,
+            contribution_type="r",
+        )
+        as_dict = select_by_ao_projection(
+            mf=c_sto3g_uhf,
+            ao_labels=["C 2p"],
+            projected_basis="minao",
+            contribution={"alpha": 0.5, "beta": 0.5},
+            contribution_type="r",
+        )
+        for channel in ("alpha", "beta"):
+            assert as_dict[channel].tolist() == shared[channel].tolist()
+
+    def test_per_channel_list_thresholds(self, c_sto3g_uhf) -> None:
+        """Each channel's value may itself be a per-AO-label list."""
+        result = select_by_ao_projection(
+            mf=c_sto3g_uhf,
+            ao_labels=["C 2s", "C 2p"],
+            projected_basis="minao",
+            contribution={"alpha": [0.0, 0.0], "beta": [0.5, 0.9]},
+            contribution_type="r",
+        )
+        assert isinstance(result, dict)
+        assert set(result) == {"alpha", "beta"}
+
+    def test_dict_contribution_requires_unrestricted(self, h2_rhf) -> None:
+        """A spin-resolved contribution on a restricted mf is rejected."""
+        with pytest.raises(ValueError, match="unrestricted"):
+            select_by_ao_projection(
+                mf=h2_rhf,
+                ao_labels=["H 1s"],
+                projected_basis="minao",
+                contribution={"alpha": 0.0, "beta": 0.5},
+                contribution_type="r",
+            )
