@@ -9,6 +9,7 @@ from typing import Any, Literal, cast
 import numpy as np
 from pyscf import gto
 
+from aegiss.utils.orb_display import from_display_all, to_display, to_display_all
 from aegiss.utils.orbital_indices import combine_candidate_entropies
 from aegiss.utils.plotting import plot_ao_contribution
 
@@ -89,7 +90,7 @@ def _compute_contribution(
         if tmp < contribution and not first_below:
             logger.info("\t%s", "-" * 10 + "below" + "-" * 10)
             first_below = True
-        logger.info("\tOrbital %d: contribution = %.8f", idx, tmp)
+        logger.info("\tOrbital %d: contribution = %.8f", to_display(idx), tmp)
 
     return [
         (idx, tmp) for idx, tmp in sorted_weights if tmp >= contribution
@@ -149,14 +150,20 @@ def _resolve_space(
             when *restricted_space* is ``None``.
         restricted_space (list of int, list of tuple, tuple of lists, or None):
             If ``None``, all MOs are returned with a placeholder entropy of 0.0.
-            If a list of plain integers, converted to ``(index, 0.0)`` pairs.
-            If a flat list of ``(index, entropy)`` pairs, returned unchanged.
+            If a list of plain integers, these are treated as user input in the
+            configured display base (0-based by default; 1-based when
+            ``AEGISS_ORB_BASE=1``), converted to 0-based via
+            :func:`aegiss.utils.orb_display.from_display_all`, and paired as
+            ``(index, 0.0)``.
+            If a flat list of ``(index, entropy)`` pairs, returned unchanged
+            (these come from AEGISS internals and are already 0-based).
             If a ``(occ_list, virt_list)`` tuple (as returned by
             ``select_by_entropy``), the two lists are merged with
-            ``combine_candidate_entropies``.
+            ``combine_candidate_entropies`` (also already 0-based).
 
     Returns:
-        space (list of tuple[int, float]): Orbital index / entropy pairs for the search space.
+        space (list of tuple[int, float]): Orbital index / entropy pairs for the
+            search space; indices are always 0-based.
     """
     if restricted_space is None:
         logger.info(
@@ -170,11 +177,14 @@ def _resolve_space(
         space = combine_candidate_entropies(*restricted_space)
         logger.info(
             "Combining candidate orbitals from different groups: %s",
-            [int(idx[0]) for idx in space],
+            to_display_all(int(idx[0]) for idx in space),
         )
         return space
     if restricted_space and not isinstance(restricted_space[0], tuple):
-        return [(i, 0.0) for i in cast("list[int]", restricted_space)]
+        # Plain integer indices are user input, expressed in the display base;
+        # convert them back to the internal 0-based representation. Pair-lists
+        # and (occ, virt) tuples come from AEGISS internals and stay 0-based.
+        return [(i, 0.0) for i in from_display_all(cast("list[int]", restricted_space))]
     return cast("list[tuple[int, float]]", restricted_space)
 
 
@@ -374,7 +384,8 @@ def _run_ao_selection(
 
     logger.info("Final selected orbital indices:")
     for idx in sorted(selected_indices):
-        logger.info("\tOrbital %d", idx)
+        logger.info("\tOrbital %d", to_display(idx))
+    # Return values stay 0-based so results round-trip safely into further logic.
     return np.asarray(sorted(selected_indices))
 
 

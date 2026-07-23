@@ -8,6 +8,8 @@ from typing import Any
 import numpy as np
 from pyscf.data.elements import chemcore
 
+from aegiss.utils.orb_display import to_display_all
+
 logger = logging.getLogger(__name__)
 
 
@@ -204,7 +206,8 @@ def get_subspaces_from_cas(
         "Total MOs: %d, Occupied MOs: %d, Virtual MOs: %d", nmos, nocc, nmos - nocc
     )
     logger.info("Frozen (doubly-occupied) core orbitals: %d", ncore)
-    logger.info("Active occupied orbital indices: %s", active_occ)
-    logger.info("Active virtual orbital indices: %s\n\n", active_virt)
+    logger.info("Active occupied orbital indices: %s", to_display_all(active_occ))
+    logger.info("Active virtual orbital indices: %s\n\n", to_display_all(active_virt))
 
+    # Return values stay 0-based so downstream slicing/logic is unaffected.
     return active_occ, active_virt

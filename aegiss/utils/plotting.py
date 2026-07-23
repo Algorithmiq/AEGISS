@@ -13,8 +13,11 @@ import numpy as np
 import seaborn as sns
 from matplotlib import patches
 
+from aegiss.utils.orb_display import to_display, to_display_all
+
 if TYPE_CHECKING:
     import pyscf
+    from matplotlib.typing import LineStyleType
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +59,7 @@ def _draw_pie_subplot(
             text.set_text("")
             autotext.set_text("")
 
-    ax.set_title(f"Orbital: {orb_id}", fontsize=16)
+    ax.set_title(f"Orbital: {to_display(orb_id)}", fontsize=16)
 
 
 def _save_contributions(
@@ -356,7 +359,9 @@ def plot_ao_contribution(
         ax.set_ylabel("Atomic Orbitals")
         ax.set_xticks(np.arange(end - start) + 0.5)
         if mo_labels is not None:
-            ax.set_xticklabels([str(m) for m in mo_labels[start:end]], rotation=90)
+            ax.set_xticklabels(
+                [str(to_display(m)) for m in mo_labels[start:end]], rotation=90
+            )
         if ao_contributions_beta is not None:
             for boundary in boundaries[:-1]:
                 ax.axhline(boundary, color="white", linewidth=2)
@@ -428,7 +433,9 @@ def soe_heatmap(
     ax.set_yticks([1, 3, 4])
     ax.set_yticklabels([r"$S(1)_i$", r"$\tau_{E}$", r"$Emp$"], fontsize=16)
     ax.set_xticks(np.arange(large_cas))
-    ax.set_xticklabels([str(i[0]) for i in so1_entropies], fontsize=10, rotation=90)
+    ax.set_xticklabels(
+        [str(to_display(i[0])) for i in so1_entropies], fontsize=10, rotation=90
+    )
     ax.set_xlim(-0.5, large_cas - 0.5)
     ax.xaxis.set_ticks_position("bottom")
 
@@ -650,8 +657,9 @@ def _ticks_helper(soe1: list[tuple[int, float]], ax: plt.Axes) -> None:
     y = np.arange(N)
     ax.set_xticks(x)
     ax.set_yticks(y)
-    ax.set_xticklabels(orbital_indices, fontsize=10, rotation=90)
-    ax.set_yticklabels(orbital_indices, fontsize=10)
+    display_indices = [str(i) for i in to_display_all(orbital_indices)]
+    ax.set_xticklabels(display_indices, fontsize=10, rotation=90)
+    ax.set_yticklabels(display_indices, fontsize=10)
 
 
 def mi_plot(
@@ -710,7 +718,8 @@ def _helper_mi(
     N = minfo.shape[0]
     minfo = minfo / np.max(minfo)  # Normalize MI values to [0, 1]
     mi_thresholds = [1, 1e-1, 1e-2, 1e-3]
-    mi_linestyles = ["-", "--", ":", (0, (1, 2))]
+    # matplotlib linestyle: a named style, or a (offset, on-off-dashes) tuple.
+    mi_linestyles: list[LineStyleType] = ["-", "--", ":", (0, (1, 2))]
     mi_linewidths = [2, 1.5, 1.3, 0.8]
     alphas = sns.color_palette("magma", n_colors=4)
 

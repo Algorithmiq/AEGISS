@@ -8,6 +8,8 @@ from typing import Any
 
 import numpy as np
 
+from aegiss.utils.orb_display import to_display
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,7 +36,8 @@ def save_orbitals(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     for i in candidate_indices:
-        filename = output_dir / f"{filename_prefix}_{i}.cube"
+        # File name carries the display-base index; slicing stays 0-based.
+        filename = output_dir / f"{filename_prefix}_{to_display(i)}.cube"
         cubegen.orbital(mol, str(filename), mo_coeff[:, i])
 
 
@@ -65,7 +68,8 @@ def save_orbitals_from_entropies(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     for i, _ in candidate_indices:
-        filename = output_dir / f"{filename_prefix}_{i}.cube"
+        # File name carries the display-base index; slicing stays 0-based.
+        filename = output_dir / f"{filename_prefix}_{to_display(i)}.cube"
         cubegen.orbital(mol, str(filename), mo_coeff[:, i])
 
 

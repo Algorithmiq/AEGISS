@@ -33,6 +33,7 @@ Set these before running any calculation to control memory and scratch space:
 | `SCRATCH_DIR` | `./tmp` | Directory for DMRG scratch files (MPS/MPO) |
 | `MEM` | `4` | Memory budget in **GiB** for block2's internal stack |
 | `PYSCF_MAX_MEMORY` | `4000` | PySCF memory budget in **MB** |
+| `AEGISS_ORB_BASE` | `0` | Base (`0` or `1`) for displaying and interpreting orbital indices — see [Orbital index base](orbital_indexing.md) |
 
 ```python
 import os
