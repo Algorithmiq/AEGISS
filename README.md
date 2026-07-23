@@ -193,7 +193,7 @@ This walkthrough reproduces the `main.py` example and explains each step.
 from aegiss.initial_guess import build_mol, run_scf
 
 mol = build_mol(
-    "aegiss/examples/data/benzene.xyz",
+    "docs/tutorials/data/benzene.xyz",
     basis="ccpvdz",
     symmetry=False,
     verbose=2,
@@ -300,7 +300,7 @@ shape and the rest of the pipeline is unaffected.
 
 Further step-by-step tutorials covering SCF & localization, DMRG, AO projection, and
 the full pipeline are available as Jupyter notebooks in
-[aegiss/examples/tutorials/](aegiss/examples/tutorials/README.md).
+[docs/tutorials/](docs/tutorials/index.md).
 
 ---
 

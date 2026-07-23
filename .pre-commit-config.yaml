@@ -24,9 +24,9 @@ repos:
     rev: v0.15.6
     hooks:
       - id: ruff-check
-        exclude: (examples/)
+        exclude: (docs/)
       - id: ruff-format
-        exclude: (examples/)
+        exclude: (docs/)
         args: [--check]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -36,7 +36,7 @@ repos:
         # `files`/`exclude` are configured in [tool.mypy]; passing filenames as
         # well makes mypy see each module twice ("Duplicate module named ...").
         pass_filenames: false
-        exclude: (tests/|examples/)
+        exclude: (tests/|docs/)
         additional_dependencies:
           - numpy
           - pyscf

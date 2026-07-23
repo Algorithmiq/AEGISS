@@ -49,6 +49,9 @@ interactive = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/aegiss"]
+
 [tool.uv]
 extra-index-url = ["https://block-hczhai.github.io/block2-preview/pypi/"]
 
@@ -69,7 +72,7 @@ addopts = [
 ]
 xfail_strict = true
 testpaths = ["tests"]
-pythonpath = ["."]
+pythonpath = ["src"]
 markers = [
     "slow: mark test as slow (>=1 minute runtime)",
 ]
@@ -95,7 +98,7 @@ report.exclude_also = [
 [tool.ruff]
 target-version = "py312"
 line-length = 88
-exclude = ["examples"]
+exclude = ["docs"]
 
 [tool.ruff.lint]
 select = [
@@ -167,11 +170,11 @@ flake8-annotations.allow-star-arg-any = true
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "D", "C901", "INP001", "E721", "T20"]
-"aegiss/cli.py" = ["T20"]  # a CLI is expected to print to stdout
+"src/aegiss/cli.py" = ["T20"]  # a CLI is expected to print to stdout
 "mol_tagger.py" = ["INP001"]
 "main.py" = ["INP001"]
 "tests/**/test_*.py" = ["ANN", "I002"]
-"aegiss/**/__init__.py" = ["I002"]
+"src/aegiss/**/__init__.py" = ["I002"]
 "*.ipynb" = ["I002"]
 
 [tool.ruff.lint.pycodestyle]
@@ -192,9 +195,9 @@ line-ending = "auto"
 python_version = "3.12"
 exclude = '''(?x)(
     tests/*
-    | examples/*
+    | docs/*
 )'''
-files = ["aegiss/**/*.py"]
+files = ["src/aegiss/**/*.py"]
 
 disallow_any_generics = false
 disallow_any_unimported = false
@@ -244,7 +247,7 @@ disable_error_code = ["misc"]
 
 [tool.pyright]
 pythonVersion = "3.12"
-include = ["aegiss/**/*.py", "tests/**/conftest.py"]
+include = ["src/aegiss/**/*.py", "tests/**/conftest.py"]
 exclude = ["test_*.py", "**/__pycache__"]
 typeCheckingMode = "basic"
 useLibraryCodeForTypes = true
