@@ -1,7 +1,8 @@
 # Tutorials
 
 The tutorials walk through the full AEGISS workflow using benzene as a running example.
-Each notebook is self-contained and builds on the previous one.
+Each notebook is self-contained and builds on the previous one. The input geometries used
+by the notebooks live alongside them in `docs/tutorials/data/`.
 
 | Notebook | Topic |
 |---|---|
