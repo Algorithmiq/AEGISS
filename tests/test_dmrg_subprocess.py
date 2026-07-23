@@ -2,21 +2,16 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
+from pyscf import scf
 
-if TYPE_CHECKING:
-    from pathlib import Path
-
-from aegiss.utils.dmrg_utils import _default_dmrg_schedule
 from aegiss.wavefunction.dmrg_subprocess import (
     _compute_soe,
+    _compute_spin_soe,
     _read_outputs,
-    _write_fcidump,
-    _write_input,
     run_dmrg_subprocess,
 )
 
@@ -54,14 +49,14 @@ def mocked_run_dmrg_subprocess():
             return_value=(_FAKE_ENERGY, _FAKE_PDM1, _FAKE_NPC1),
         ) as mock_read,
         patch(
-            "aegiss.wavefunction.dmrg_subprocess.mcscf.CASCI",
+            "aegiss.utils.dmrg_utils.mcscf.CASCI",
             return_value=mock_casci,
         ) as MockCASCI,
         patch(
-            "aegiss.wavefunction.dmrg_subprocess.ao2mo.restore",
+            "aegiss.utils.dmrg_utils.ao2mo.restore",
             return_value=np.zeros((_NCAS, _NCAS, _NCAS, _NCAS)),
         ),
-        patch("aegiss.wavefunction.dmrg_subprocess.tools.fcidump.from_integrals"),
+        patch("aegiss.utils.dmrg_utils.tools.fcidump.from_integrals"),
         patch(
             "aegiss.wavefunction.dmrg_subprocess.resolve_nelecas",
             return_value=(1, 1),
@@ -138,6 +133,66 @@ class TestRunDmrgSubprocessSymmTypeValidation:
 
 
 @pytest.mark.usefixtures("mocked_run_dmrg_subprocess")
+class TestRunDmrgSubprocessUnrestrictedDispatch:
+    """`unrestricted` selects the UHF writer; autodetect + override + SZ guard."""
+
+    @staticmethod
+    def _run_with_patched_writers(**kwargs):
+        with (
+            patch("aegiss.wavefunction.dmrg_subprocess._write_uhf_fcidump") as mock_uhf,
+            patch("aegiss.wavefunction.dmrg_subprocess._write_fcidump") as mock_rhf,
+        ):
+            run_dmrg_subprocess(ncas=_NCAS, get_qmi=False, **kwargs)
+        return mock_uhf, mock_rhf
+
+    def test_unrestricted_true_calls_uhf_writer(self) -> None:
+        mock_uhf, mock_rhf = self._run_with_patched_writers(
+            mf=None, nelecas=2, unrestricted=True
+        )
+        mock_uhf.assert_called_once()
+        mock_rhf.assert_not_called()
+
+    def test_unrestricted_false_calls_restricted_writer(self) -> None:
+        mock_uhf, mock_rhf = self._run_with_patched_writers(
+            mf=None, nelecas=2, unrestricted=False
+        )
+        mock_rhf.assert_called_once()
+        mock_uhf.assert_not_called()
+
+    def test_default_none_autodetects_uhf_from_mf(self) -> None:
+        mock_uhf, mock_rhf = self._run_with_patched_writers(
+            mf=MagicMock(spec=scf.uhf.UHF), nelecas=2
+        )
+        mock_uhf.assert_called_once()
+        mock_rhf.assert_not_called()
+
+    def test_default_none_uses_restricted_for_non_uhf_mf(self) -> None:
+        mock_uhf, mock_rhf = self._run_with_patched_writers(mf=None, nelecas=2)
+        mock_rhf.assert_called_once()
+        mock_uhf.assert_not_called()
+
+    def test_explicit_false_overrides_uhf_mf(self) -> None:
+        mock_uhf, mock_rhf = self._run_with_patched_writers(
+            mf=MagicMock(spec=scf.uhf.UHF), nelecas=2, unrestricted=False
+        )
+        mock_rhf.assert_called_once()
+        mock_uhf.assert_not_called()
+
+    def test_uhf_writer_receives_nalpha_nbeta_tuple(self) -> None:
+        # resolve_nelecas is patched to return (1, 1) by the fixture.
+        mock_uhf, _ = self._run_with_patched_writers(
+            mf=None, nelecas=2, unrestricted=True
+        )
+        assert mock_uhf.call_args[0][3] == (1, 1)
+
+    def test_unrestricted_with_su2_raises_value_error(self) -> None:
+        with pytest.raises(ValueError, match="require symm_type='SZ'"):
+            run_dmrg_subprocess(
+                mf=None, ncas=_NCAS, nelecas=2, symm_type="SU2", unrestricted=True
+            )
+
+
+@pytest.mark.usefixtures("mocked_run_dmrg_subprocess")
 class TestRunDmrgSubprocessEnvVars:
     """Environment variable handling for the subprocess backend."""
 
@@ -145,78 +200,36 @@ class TestRunDmrgSubprocessEnvVars:
         monkeypatch.setenv("OMP_NUM_THREADS", "8")
         with patch("aegiss.wavefunction.dmrg_subprocess._write_input") as mock_wi:
             run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
-        n_threads_arg = mock_wi.call_args[0][8]  # positional: n_threads
+        n_threads_arg = mock_wi.call_args[0][9]  # positional: n_threads
         assert n_threads_arg == 8
 
     def test_scratch_dir(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setenv("SCRATCH_DIR", str(tmp_path))
         with patch("aegiss.wavefunction.dmrg_subprocess._write_input") as mock_wi:
             run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
-        scratch_arg = mock_wi.call_args[0][4]  # positional: scratch_dir (Path)
+        scratch_arg = mock_wi.call_args[0][5]  # positional: scratch_dir (Path)
         assert str(scratch_arg).startswith(str(tmp_path))
 
     def test_mem_default(self, monkeypatch) -> None:
         monkeypatch.delenv("MEM", raising=False)
         with patch("aegiss.wavefunction.dmrg_subprocess._write_input") as mock_wi:
             run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
-        mem_gb_arg = mock_wi.call_args[0][9]  # positional: stack_mem_gb
+        mem_gb_arg = mock_wi.call_args[0][10]  # positional: stack_mem_gb
         assert mem_gb_arg == pytest.approx(4.0)
 
     def test_mem_env_var(self, monkeypatch) -> None:
         monkeypatch.setenv("MEM", "16")
         with patch("aegiss.wavefunction.dmrg_subprocess._write_input") as mock_wi:
             run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
-        mem_gb_arg = mock_wi.call_args[0][9]
+        mem_gb_arg = mock_wi.call_args[0][10]
         assert mem_gb_arg == pytest.approx(16.0)
 
     def test_mem_env_var_non_integer_falls_back_to_default(self, monkeypatch) -> None:
         monkeypatch.setenv("MEM", "not_an_int")
         with patch("aegiss.wavefunction.dmrg_subprocess._write_input") as mock_wi:
             run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
-        mem_gb_arg = mock_wi.call_args[0][9]
+        mem_gb_arg = mock_wi.call_args[0][10]
         assert mem_gb_arg == pytest.approx(4.0)
-
-
-class TestWriteInput:
-    """Unit-test _write_input in isolation by inspecting the written file."""
-
-    def _make_input(self, tmp_path: Path, symm_type: str = "SZ") -> str:
-
-        bond_dims, noises, thrds = _default_dmrg_schedule(max_bond_dim=500)
-        path = tmp_path / "dmrg.conf"
-        fcidump = tmp_path / "FCIDUMP"
-        _write_input(
-            path, fcidump, 2, 0, tmp_path, bond_dims, noises, thrds, 4, 4.0, symm_type
-        )
-        return path.read_text()
-
-    def test_sz_mode_has_nonspinadapted(self, tmp_path) -> None:
-        content = self._make_input(tmp_path, symm_type="SZ")
-        assert "nonspinadapted" in content
-
-    def test_su2_mode_no_nonspinadapted(self, tmp_path) -> None:
-        content = self._make_input(tmp_path, symm_type="SU2")
-        assert "nonspinadapted" not in content
-
-    def test_required_keywords_present(self, tmp_path) -> None:
-        content = self._make_input(tmp_path)
-        for keyword in (
-            "hf_occ integral",
-            "noreorder",
-            "onepdm",
-            "correlation",
-            "sym c1",
-        ):
-            assert keyword in content, f"Missing keyword: {keyword!r}"
-
-    def test_schedule_block_present(self, tmp_path) -> None:
-        content = self._make_input(tmp_path)
-        lines = content.splitlines()
-        assert "schedule" in lines
-        assert "end" in lines
-        sched_start = lines.index("schedule")
-        sched_end = lines.index("end")
-        assert sched_end > sched_start + 1, "schedule block contains no rows"
 
 
 class TestComputeSOE:
@@ -257,6 +270,48 @@ class TestComputeSOE:
         pdm1, npc1 = self._make_pdm_npc(0.5, 0.5, 0.25, ncas=4)
         soe = _compute_soe(pdm1, npc1)
         assert soe.shape == (4,)
+
+
+class TestComputeSpinSOE:
+    """Unit-test _compute_spin_soe: per-spin entropy = binary entropy of occupation."""
+
+    @staticmethod
+    def _pdm(n_alpha: float, n_beta: float, ncas: int = 1) -> np.ndarray:
+        pdm1 = np.zeros((2, ncas, ncas))
+        for i in range(ncas):
+            pdm1[0, i, i] = n_alpha
+            pdm1[1, i, i] = n_beta
+        return pdm1
+
+    def test_shape_is_two_by_ncas(self) -> None:
+        soe = _compute_spin_soe(self._pdm(0.5, 0.5, ncas=4))
+        assert soe.shape == (2, 4)
+
+    def test_empty_and_full_spin_orbitals_are_zero(self) -> None:
+        soe = _compute_spin_soe(self._pdm(1.0, 0.0))
+        # alpha fully occupied, beta empty -> both binary entropies vanish
+        assert soe[0, 0] == pytest.approx(0.0)
+        assert soe[1, 0] == pytest.approx(0.0)
+
+    def test_half_filled_spin_orbital_is_log2(self) -> None:
+        soe = _compute_spin_soe(self._pdm(0.5, 0.5))
+        assert soe[0, 0] == pytest.approx(np.log(2.0))
+        assert soe[1, 0] == pytest.approx(np.log(2.0))
+
+    def test_alpha_and_beta_independent(self) -> None:
+        # alpha half-filled (log2), beta fully occupied (0)
+        soe = _compute_spin_soe(self._pdm(0.5, 1.0))
+        assert soe[0, 0] == pytest.approx(np.log(2.0))
+        assert soe[1, 0] == pytest.approx(0.0)
+
+    def test_subadditive_vs_spin_summed(self) -> None:
+        # spin-summed orbital entropy must not exceed S_alpha + S_beta
+        pdm1 = self._pdm(0.5, 0.5)
+        npc1 = np.zeros((2, 1, 1))
+        npc1[0, 0, 0] = (0.5 + 0.5) + 2 * 0.25  # d = 0.25 -> equal-weight 4 states
+        summed = _compute_soe(pdm1, npc1)
+        spin = _compute_spin_soe(pdm1)
+        assert summed[0] <= spin.sum(axis=0)[0] + 1e-12
 
 
 class TestReadOutputs:
@@ -339,40 +394,3 @@ class TestReadOutputs:
         np.save(node0 / "1pdm.npy", np.zeros((2, 2, 2)))
         with pytest.raises(FileNotFoundError):
             _read_outputs(tmp_path, ncas=2)
-
-
-class TestWriteFcidump:
-    """Unit-test _write_fcidump — verify ms is derived from spin (nalpha - nbeta)."""
-
-    def _call_write_fcidump(self, tmp_path, nelecas):
-        ncas = 3
-        mock_casci = MagicMock()
-        mock_casci.get_h1eff.return_value = (np.zeros((ncas, ncas)), 0.0)
-        mock_casci.get_h2eff.return_value = np.zeros((4,))
-        with (
-            patch(
-                "aegiss.wavefunction.dmrg_subprocess.mcscf.CASCI",
-                return_value=mock_casci,
-            ),
-            patch(
-                "aegiss.wavefunction.dmrg_subprocess.ao2mo.restore",
-                return_value=np.zeros((ncas, ncas, ncas, ncas)),
-            ),
-            patch(
-                "aegiss.wavefunction.dmrg_subprocess.tools.fcidump.from_integrals"
-            ) as mock_fcidump,
-        ):
-            _write_fcidump(tmp_path / "FCIDUMP", mf=None, ncas=ncas, nelecas=nelecas)
-        return mock_fcidump.call_args
-
-    def test_ms_equals_nalpha_minus_nbeta_closed_shell(self, tmp_path) -> None:
-        call_args = self._call_write_fcidump(tmp_path, nelecas=(2, 2))
-        assert call_args.kwargs["ms"] == 0
-
-    def test_ms_equals_nalpha_minus_nbeta_doublet(self, tmp_path) -> None:
-        call_args = self._call_write_fcidump(tmp_path, nelecas=(2, 1))
-        assert call_args.kwargs["ms"] == 1
-
-    def test_ms_equals_nalpha_minus_nbeta_triplet(self, tmp_path) -> None:
-        call_args = self._call_write_fcidump(tmp_path, nelecas=(3, 1))
-        assert call_args.kwargs["ms"] == 2

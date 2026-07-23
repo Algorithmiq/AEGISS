@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
+from unittest.mock import MagicMock
 
 import numpy as np
-
-if TYPE_CHECKING:
-    from unittest.mock import MagicMock
 import pytest
 
 from aegiss.utils.orbital_indices import (
@@ -206,3 +204,61 @@ class TestGetSubspacesFromCas:
         active_occ, active_virt = get_subspaces_from_cas(mock_mf_7mo, ncas=4, nelecas=4)
         assert isinstance(active_occ, np.ndarray)
         assert isinstance(active_virt, np.ndarray)
+
+    # --- spin-aware placement (restricted + unrestricted references) ----------
+
+    @staticmethod
+    def _mock_mf(mo_occ, nmos: int) -> MagicMock:
+        """Mock mf with the given occupation (1-D restricted or 2-D UHF)."""
+        mf = MagicMock()
+        occ = np.asarray(mo_occ, dtype=float)
+        mf.mo_occ = occ
+        mf.mo_coeff = (
+            np.zeros((2, nmos, nmos)) if occ.ndim == 2 else np.zeros((nmos, nmos))
+        )
+        return mf
+
+    def test_restricted_window_placed_by_total_active_electrons(self) -> None:
+        # closed-shell reference (12 e in 10 MOs); window must sit at
+        # ncore = (12 - 6)/2 = 3 -> active [3..8], split at HOMO (6).
+        mf = self._mock_mf([2] * 6 + [0] * 4, nmos=10)
+        active_occ, active_virt = get_subspaces_from_cas(mf, ncas=6, nelecas=(3, 3))
+        np.testing.assert_array_equal(active_occ, [3, 4, 5])
+        np.testing.assert_array_equal(active_virt, [6, 7, 8])
+
+    def test_restricted_open_shell_target_does_not_shift_window(self) -> None:
+        # Same closed-shell reference, but an open-shell (triplet) DMRG target.
+        # The window must NOT shift with the nalpha/nbeta split: still [3..8],
+        # split at the RHF HOMO -> identical partition to the (3,3) case.
+        mf = self._mock_mf([2] * 6 + [0] * 4, nmos=10)
+        active_occ, active_virt = get_subspaces_from_cas(mf, ncas=6, nelecas=(4, 2))
+        np.testing.assert_array_equal(active_occ, [3, 4, 5])
+        np.testing.assert_array_equal(active_virt, [6, 7, 8])
+
+    def test_uhf_triplet_places_somos_in_active_occ(self) -> None:
+        # UHF triplet reference (Na=7, Nb=5, 2S=2) in 10 MOs. occ_per_orb =
+        # [2,2,2,2,2,1,1,0,0,0]; window ncore=(12-6)/2=3 -> [3..8]; SOMOs (5,6)
+        # are occupied so they land in active_occ.
+        mo_occ = np.array([[1] * 7 + [0] * 3, [1] * 5 + [0] * 5], dtype=float)
+        mf = self._mock_mf(mo_occ, nmos=10)
+        active_occ, active_virt = get_subspaces_from_cas(mf, ncas=6, nelecas=(4, 2))
+        np.testing.assert_array_equal(active_occ, [3, 4, 5, 6])
+        np.testing.assert_array_equal(active_virt, [7, 8])
+
+    def test_uhf_tuple_mo_coeff_and_occ(self) -> None:
+        # pyscf UHF exposes mo_coeff/mo_occ as *tuples* of per-spin blocks, not
+        # a stacked 3-D array; the partition must be identical to the array form.
+        mf = MagicMock()
+        mf.mo_occ = (np.array([1.0] * 7 + [0.0] * 3), np.array([1.0] * 5 + [0.0] * 5))
+        mf.mo_coeff = (np.zeros((10, 10)), np.zeros((10, 10)))
+        active_occ, active_virt = get_subspaces_from_cas(mf, ncas=6, nelecas=(4, 2))
+        np.testing.assert_array_equal(active_occ, [3, 4, 5, 6])
+        np.testing.assert_array_equal(active_virt, [7, 8])
+
+    def test_uhf_closed_core_violation_raises(self) -> None:
+        # UHF reference with 2S=2 but a closed-shell (3,3) active target:
+        # reference spin (2) != active spin (0) -> no single CAS window.
+        mo_occ = np.array([[1] * 7 + [0] * 3, [1] * 5 + [0] * 5], dtype=float)
+        mf = self._mock_mf(mo_occ, nmos=10)
+        with pytest.raises(ValueError, match="active spin"):
+            get_subspaces_from_cas(mf, ncas=6, nelecas=(3, 3))
