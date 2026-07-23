@@ -9,6 +9,7 @@ Each notebook is self-contained and builds on the previous one.
 | [02 — DMRG & Entropy](02_dmrg.ipynb) | `DMRGConfig`, running DMRG, inspecting single-orbital entropies, entropy screening |
 | [03 — AO Projection](03_ao_projection.ipynb) | `ProjectionConfig`, AO-projection selection, thresholds and top-N ranking |
 | [04 — Full Pipeline](04_aegiss.ipynb) | End-to-end AEGISS pipeline with all four config objects |
+| [05 — Unrestricted (UHF)](05_unrestricted.ipynb) | What changes for a UHF reference: 3-D `mo_coeff`, `symm_type="SZ"`, `spin_soe`, split α/β selection, per-channel thresholds |
 
 ---
 

@@ -9,6 +9,7 @@ from aegiss.active_space.entropy_screening import (
     _global_entropy_ranking,
     _relative_entropy_ranking,
     select_by_entropy,
+    select_by_spin_entropy,
 )
 
 
@@ -176,3 +177,63 @@ class TestSelectByEntropy:
         # The results may differ; at minimum both calls should succeed
         assert isinstance(sel_occ_r, list)
         assert isinstance(sel_occ_a, list)
+
+    def test_spin_resolved_array_raises(self, simple_orbs) -> None:
+        # a (2, ncas) spin-resolved array must be rejected with a clear message,
+        # not silently mishandled (previously an out-of-bounds IndexError).
+        occ, virt, soe1 = simple_orbs
+        soe2d = np.stack([soe1, soe1])
+        with pytest.raises(ValueError, match="select_by_spin_entropy"):
+            select_by_entropy(occ, virt, soe2d)
+
+
+class TestSelectBySpinEntropy:
+    @pytest.fixture
+    def spin_orbs(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        occ = np.array([0, 1, 2])
+        virt = np.array([3, 4, 5])
+        # alpha hot on 0,3 ; beta hot on 1,2,4 -> channels select different orbs
+        soe = np.array(
+            [
+                [0.6, 0.1, 0.02, 0.9, 0.0, 0.05],
+                [0.05, 0.7, 0.7, 0.0, 0.7, 0.04],
+            ]
+        )
+        return occ, virt, soe
+
+    def test_returns_alpha_beta_dict(self, spin_orbs) -> None:
+        occ, virt, soe = spin_orbs
+        sel = select_by_spin_entropy(occ, virt, soe, fraction=0.1, fraction_type="r")
+        assert set(sel) == {"alpha", "beta"}
+        for occ_sel, virt_sel in sel.values():
+            assert isinstance(occ_sel, list)
+            assert isinstance(virt_sel, list)
+
+    def test_channels_select_independently(self, spin_orbs) -> None:
+        occ, virt, soe = spin_orbs
+        sel = select_by_spin_entropy(occ, virt, soe, fraction=0.1, fraction_type="r")
+        alpha_idx = {i for i, _ in sel["alpha"][0] + sel["alpha"][1]}
+        beta_idx = {i for i, _ in sel["beta"][0] + sel["beta"][1]}
+        # the two channels keep genuinely different orbital sets
+        assert alpha_idx != beta_idx
+
+    def test_matches_per_channel_select_by_entropy(self, spin_orbs) -> None:
+        occ, virt, soe = spin_orbs
+        sel = select_by_spin_entropy(occ, virt, soe, fraction=0.2, fraction_type="a")
+        assert sel["alpha"] == select_by_entropy(
+            occ, virt, soe[0], fraction=0.2, fraction_type="a"
+        )
+        assert sel["beta"] == select_by_entropy(
+            occ, virt, soe[1], fraction=0.2, fraction_type="a"
+        )
+
+    def test_none_returns_empty_channels(self) -> None:
+        occ = np.array([0, 1])
+        virt = np.array([2, 3])
+        sel = select_by_spin_entropy(occ, virt, None)
+        assert sel == {"alpha": ([], []), "beta": ([], [])}
+
+    def test_one_dim_array_raises(self, spin_orbs) -> None:
+        occ, virt, soe = spin_orbs
+        with pytest.raises(ValueError, match="select_by_entropy"):
+            select_by_spin_entropy(occ, virt, soe[0])

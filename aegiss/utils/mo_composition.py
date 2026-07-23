@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from aegiss.utils.orb_display import from_display_all, to_display
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sequence
 
@@ -51,7 +53,12 @@ def _format_composition_table(
     for mo_idx, per_spin in composition.items():
         per_mo.append(
             [
-                (f"MO {mo_idx} {spin}" if unrestricted else f"MO {mo_idx}", entries)
+                (
+                    f"MO {to_display(mo_idx)} {spin}"
+                    if unrestricted
+                    else f"MO {to_display(mo_idx)}",
+                    entries,
+                )
                 for spin, entries in per_spin.items()
             ]
         )
@@ -248,7 +255,9 @@ def mo_ao_contributions(
             unrestricted ``(2, n_ao, n_mo)``; in the latter case both spins are
             reported.
         mo_indices (int or sequence of int): Index (or indices) of the molecular
-            orbital(s) to decompose.
+            orbital(s) to decompose, in the configured display base (0-based by
+            default; 1-based when ``AEGISS_ORB_BASE=1``). Returned dict keys are
+            always 0-based.
         top_n (int): Number of largest AO contributions (or element groups) to
             keep per orbital.
         group_by_element (bool): If ``True``, sum ``|coefficient|`` over all
@@ -273,7 +282,10 @@ def mo_ao_contributions(
     if clusters is not None and group_by_element:
         raise ValueError("Pass at most one of `group_by_element` and `clusters`.")
 
-    indices = [mo_indices] if isinstance(mo_indices, int) else list(mo_indices)
+    # `mo_indices` is user input in the display base; convert to 0-based storage.
+    indices = from_display_all(
+        [mo_indices] if isinstance(mo_indices, int) else mo_indices
+    )
 
     mo_coeff = mf.mo_coeff
     unrestricted = np.ndim(mo_coeff) == 3
@@ -294,7 +306,10 @@ def mo_ao_contributions(
     composition: dict[int, dict[str, list[tuple[int, str, float]]]] = {}
     for mo_idx in indices:
         if not 0 <= mo_idx < n_mo:
-            raise ValueError(f"MO index {mo_idx} out of range [0, {n_mo}).")
+            raise ValueError(
+                f"MO index {to_display(mo_idx)} out of range "
+                f"[{to_display(0)}, {to_display(n_mo)})."
+            )
         per_spin = {
             spin: _entries_for_coeff(
                 coeff_matrix[:, mo_idx],

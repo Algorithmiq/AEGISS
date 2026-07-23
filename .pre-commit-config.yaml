@@ -33,10 +33,14 @@ repos:
     rev: v1.15.0
     hooks:
       - id: mypy
+        # `files`/`exclude` are configured in [tool.mypy]; passing filenames as
+        # well makes mypy see each module twice ("Duplicate module named ...").
+        pass_filenames: false
         exclude: (tests/|examples/)
         additional_dependencies:
           - numpy
           - pyscf
+          - matplotlib
 
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.8.12
