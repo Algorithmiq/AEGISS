@@ -26,6 +26,24 @@ class DMRGConfig:
             calculations; ``'SU2'`` is faster but needs MPS conversion for entropies.
         verbosity (int, default 0):
             Verbosity level for block2 output.  Higher values produce more detailed logs.
+        unrestricted (bool or None, default None):
+            Whether to emit an unrestricted (UHF) FCIDUMP. ``None`` autodetects from
+            the mean-field type (``isinstance(mf, scf.uhf.UHF)``); pass ``True``/
+            ``False`` to override. UHF requires ``symm_type='SZ'``.
+        reorder ({'noreorder', 'fiedler'}, default 'noreorder'):
+            Orbital ordering for block2main. ``'noreorder'`` keeps the FCIDUMP order
+            and enables ``full_fci_space``; ``'fiedler'`` reorders by the Fiedler
+            vector and disables ``full_fci_space``.
+        spin_soe ({'auto', 'summed', 'resolved'}, default 'auto'):
+            Whether single-orbital entropies (and the selection built on them) are
+            spin-summed or spin-resolved. ``'summed'`` uses the 4-state spatial
+            entropy and yields a single spatial active space. ``'resolved'`` uses the
+            per-spin-orbital entropies ``H(n_alpha)`` / ``H(n_beta)`` and screens the
+            alpha and beta channels independently, yielding a split
+            ``{'alpha', 'beta'}`` active space. ``'auto'`` picks ``'resolved'`` when
+            the target is spin-polarised (``nalpha != nbeta``) and ``symm_type='SZ'``,
+            else ``'summed'``. ``'resolved'`` requires ``symm_type='SZ'`` (the
+            spin-resolved 1-PDM is only available without spin adaptation).
     """
 
     ncas: int
@@ -33,6 +51,9 @@ class DMRGConfig:
     max_bond_dim: int = 500
     symm_type: Literal["SZ", "SU2"] = "SZ"
     verbosity: int = 0
+    unrestricted: bool | None = None
+    reorder: Literal["noreorder", "fiedler"] = "noreorder"
+    spin_soe: Literal["auto", "summed", "resolved"] = "auto"
 
     def __post_init__(self) -> None:
         """Validate the configuration parameters.
@@ -40,6 +61,11 @@ class DMRGConfig:
         Raises:
             ValueError: If any of the parameters are out of their expected ranges or have invalid values.
         """
+        self._validate_cas()
+        self._validate_solver()
+
+    def _validate_cas(self) -> None:
+        """Validate the active-space size and electron count."""
         if self.ncas <= 0:
             raise ValueError(
                 f"DMRGConfig: Number of active orbitals (`ncas`) must be positive, got {self.ncas}."
@@ -57,6 +83,9 @@ class DMRGConfig:
             raise ValueError(
                 f"DMRGConfig: `nelecas` must satisfy nalpha >= nbeta >= 0, got {self.nelecas}."
             )
+
+    def _validate_solver(self) -> None:
+        """Validate the bond dimension, symmetry, verbosity, and ordering options."""
         if self.max_bond_dim <= 0:
             raise ValueError(
                 f"DMRGConfig: Target bond dimension (`max_bond_dim`) must be positive, got {self.max_bond_dim}."
@@ -73,3 +102,43 @@ class DMRGConfig:
             raise ValueError(
                 f"DMRGConfig: `verbosity` must be non-negative, got {self.verbosity}."
             )
+        if self.reorder not in ("noreorder", "fiedler"):
+            raise ValueError(
+                f"DMRGConfig: Invalid reorder {self.reorder!r}. "
+                "Must be 'noreorder' or 'fiedler'."
+            )
+        if self.unrestricted is True and self.symm_type != "SZ":
+            raise ValueError(
+                "DMRGConfig: `unrestricted=True` requires `symm_type='SZ'`, "
+                f"got {self.symm_type!r}."
+            )
+        if self.spin_soe not in ("auto", "summed", "resolved"):
+            raise ValueError(
+                f"DMRGConfig: Invalid spin_soe {self.spin_soe!r}. "
+                "Must be 'auto', 'summed', or 'resolved'."
+            )
+        if self.spin_soe == "resolved" and self.symm_type != "SZ":
+            raise ValueError(
+                "DMRGConfig: `spin_soe='resolved'` requires `symm_type='SZ'`, "
+                f"got {self.symm_type!r} (the spin-resolved 1-PDM is only "
+                "available without spin adaptation)."
+            )
+
+    def spin_resolved(self) -> bool:
+        """Resolve *spin_soe* to a concrete spin-resolved / spin-summed choice.
+
+        ``'auto'`` selects spin-resolved only for a spin-polarised target
+        (``nalpha != nbeta``) computed with ``symm_type='SZ'``; otherwise the
+        spin-summed spatial entropy is used.
+
+        Returns:
+        -------
+        bool
+            ``True`` if the single-orbital entropies should be spin-resolved.
+        """
+        if self.spin_soe == "resolved":
+            return True
+        if self.spin_soe == "summed":
+            return False
+        nalpha, nbeta = resolve_nelecas(self.nelecas)
+        return nalpha != nbeta and self.symm_type == "SZ"

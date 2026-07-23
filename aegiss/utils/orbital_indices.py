@@ -147,8 +147,16 @@ def get_subspaces_from_cas(
         nelecas,
     )
     nalpha, nbeta = resolve_nelecas(nelecas)
-    neletot = int(np.sum(mf.mo_occ))
-    nmos = mf.mo_coeff.shape[1]
+    mo_occ = np.asarray(mf.mo_occ)
+    # Collapse spin so the logic is identical for restricted (1-D ``mo_occ``) and
+    # unrestricted (2-D, shape ``(2, nmo)``) references: a per-spatial-orbital
+    # occupation with values 0 / 1 / 2.
+    occ_per_orb = mo_occ.sum(axis=0) if mo_occ.ndim == 2 else mo_occ
+    neletot = round(float(occ_per_orb.sum()))
+    # UHF ``mo_coeff`` is a tuple/array of two (nao, nmo) blocks, restricted is a
+    # single (nao, nmo) array; ``shape[-1]`` is nmo in both cases.
+    nmos = np.asarray(mf.mo_coeff).shape[-1]
+    nact = nalpha + nbeta
 
     if ncas > nmos:
         msg = "Number of active orbitals cannot exceed total number of MOs."
@@ -156,25 +164,48 @@ def get_subspaces_from_cas(
     if nbeta < 0 or nalpha < nbeta:
         msg = "nelecas must satisfy nalpha >= nbeta >= 0."
         raise ValueError(msg)
-    if nalpha + nbeta > neletot:
+    if nact > neletot:
         msg = "Number of active electrons cannot exceed total number of electrons."
         raise ValueError(msg)
 
-    nocc = np.count_nonzero(mf.mo_occ > 0)
+    # For an unrestricted reference, alpha and beta are distinct orbital sets, so a
+    # single active-orbital window only exists when their frozen cores coincide:
+    # ncore_a = Na - nalpha == Nb - nbeta = ncore_b, i.e. the reference spin
+    # polarisation must equal the requested active spin. (A *restricted* reference
+    # has one orbital set, so an open-shell active target on it is always fine.)
+    if mo_occ.ndim == 2:
+        na_ref = round(float(mo_occ[0].sum()))
+        nb_ref = round(float(mo_occ[1].sum()))
+        if (na_ref - nb_ref) != (nalpha - nbeta):
+            msg = (
+                f"Unrestricted reference: active spin (nalpha - nbeta = "
+                f"{nalpha - nbeta}) must equal the reference spin "
+                f"(Na - Nb = {na_ref - nb_ref}); otherwise the alpha and beta "
+                "active windows differ and no single CAS partition exists."
+            )
+            raise ValueError(msg)
+
+    # The frozen core is closed: ``ncore`` doubly-occupied spatial orbitals sit
+    # below the active window, placed by the *total* active electron count (this
+    # matches pyscf CASCI/UCASCI). The (nalpha, nbeta) split sets the DMRG target
+    # occupation, not the window position.
+    ncore = (neletot - nact) // 2
+    if ncore + ncas > nmos:
+        msg = "Not enough virtual orbitals to accommodate the active space."
+        raise ValueError(msg)
+
+    # The occupied/virtual label reflects the *reference* occupation: any orbital
+    # with occ > 0 is "occupied" (including the singly-occupied SOMOs of an
+    # open-shell reference), so the split sits at the reference HOMO boundary.
+    nocc = int(np.count_nonzero(occ_per_orb > 0))
+    active = np.arange(ncore, ncore + ncas)
+    active_occ = active[active < nocc]
+    active_virt = active[active >= nocc]
+
     logger.info(
         "Total MOs: %d, Occupied MOs: %d, Virtual MOs: %d", nmos, nocc, nmos - nocc
     )
-
-    n_active_occ = nalpha  # highest-energy nalpha occupied orbitals enter the CAS
-    n_active_virt = ncas - n_active_occ
-    if nmos - nocc - n_active_virt < 0:
-        msg = "Not enough virtual orbitals to accommodate the active space."
-        raise ValueError(msg)
-    logger.info("Active occupied orbitals: %d", n_active_occ)
-    logger.info("Active virtual orbitals: %d", n_active_virt)
-
-    active_occ = np.arange(nocc - n_active_occ, nocc)
-    active_virt = np.arange(nocc, nocc + n_active_virt)
+    logger.info("Frozen (doubly-occupied) core orbitals: %d", ncore)
     logger.info("Active occupied orbital indices: %s", to_display_all(active_occ))
     logger.info("Active virtual orbital indices: %s\n\n", to_display_all(active_virt))
 

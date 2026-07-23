@@ -38,6 +38,7 @@ workflows.
   - [run_scf](#run_scf)
   - [run_dmrg_subprocess](#run_dmrg_subprocess)
   - [select_by_entropy](#select_by_entropy)
+  - [select_by_spin_entropy](#select_by_spin_entropy)
   - [select_by_ao_projection](#select_by_ao_projection)
   - [plot_ao_contribution](#plot_ao_contribution)
   - [mo_ao_contributions](#mo_ao_contributions)
@@ -350,7 +351,8 @@ from aegiss.config_dataclasses import DMRGConfig, EntropyConfig, ProjectionConfi
 #### `DMRGConfig`
 
 ```python
-DMRGConfig(ncas, nelecas, max_bond_dim=500, symm_type="SZ", verbosity=0)
+DMRGConfig(ncas, nelecas, max_bond_dim=500, symm_type="SZ", verbosity=0,
+           unrestricted=None, reorder="noreorder", spin_soe="auto")
 ```
 
 | Field | Type | Default | Description |
@@ -360,8 +362,13 @@ DMRGConfig(ncas, nelecas, max_bond_dim=500, symm_type="SZ", verbosity=0)
 | `max_bond_dim` | `int` | `500` | Target DMRG bond dimension. The schedule starts at `max_bond_dim // 2` and ramps to `max_bond_dim`. Must be a positive multiple of 4. |
 | `symm_type` | `"SZ"` or `"SU2"` | `"SZ"` | Spin symmetry: `"SZ"` is required for entropy calculations; `"SU2"` is faster |
 | `verbosity` | `int` | `0` | block2main output verbosity |
+| `unrestricted` | `bool` or `None` | `None` | Emit unrestricted (UHF) integrals. `None` autodetects from the mean field (`isinstance(mf, scf.uhf.UHF)`); `True`/`False` overrides. Requires `symm_type="SZ"`. |
+| `reorder` | `"noreorder"` or `"fiedler"` | `"noreorder"` | Orbital ordering for block2main. `"noreorder"` keeps the FCIDUMP order and enables `full_fci_space`; `"fiedler"` reorders by the Fiedler vector and disables it. |
+| `spin_soe` | `"auto"`, `"summed"`, or `"resolved"` | `"auto"` | Whether single-orbital entropies (and the screening built on them) are spin-summed or spin-resolved. `"summed"` uses the 4-state spatial entropy → one spatial active space. `"resolved"` uses the per-spin-orbital entropies `H(n_α)`/`H(n_β)` and screens the α and β channels independently. `"auto"` picks `"resolved"` when the target is spin-polarised (`nα != nβ`) and `symm_type="SZ"`, else `"summed"`. `"resolved"` requires `symm_type="SZ"`. Resolve it with `DMRGConfig.spin_resolved()`. |
 
 Open-shell example: `DMRGConfig(ncas=10, nelecas=(5, 4))` sets up a doublet CAS with 5α and 4β electrons.
+
+Unrestricted example: `DMRGConfig(ncas=6, nelecas=(5, 3), unrestricted=True)` (or leaving `unrestricted=None` with a UHF mean field) writes UHF integrals. See [Unrestricted (UHF) references](#unrestricted-uhf-references) below.
 
 #### `EntropyConfig`
 
@@ -456,6 +463,10 @@ energy, soe1 = run_dmrg_subprocess(
     max_bond_dim=500,
     symm_type="SZ",
     verbosity=0,
+    unrestricted=None,
+    get_qmi=True,
+    spin_resolved=False,
+    reorder="noreorder",
 )
 ```
 
@@ -467,11 +478,46 @@ energy, soe1 = run_dmrg_subprocess(
 | `max_bond_dim` | `int` | `500` | Target DMRG bond dimension. The schedule starts at `max_bond_dim // 2` and ramps to `max_bond_dim`. Must be a positive multiple of 4. |
 | `symm_type` | `str` | `"SZ"` | Spin symmetry: `"SZ"` or `"SU2"` |
 | `verbosity` | `int` | `0` | block2main output verbosity |
+| `unrestricted` | `bool` or `None` | `None` | Emit unrestricted (UHF) integrals. `None` autodetects from `mf`; `True`/`False` overrides. Requires `symm_type="SZ"`. |
 | `get_qmi` | `bool` | `True` | If `True`, compute and return single-orbital entropies |
+| `spin_resolved` | `bool` | `False` | If `True`, return separate α/β spin-orbital entropies as a `(2, ncas)` array instead of the spin-summed `(ncas,)` vector. Only meaningful with `get_qmi=True`. |
+| `reorder` | `str` | `"noreorder"` | Orbital ordering: `"noreorder"` or `"fiedler"` (see `DMRGConfig`). |
 
-Returns `(energy, soe1)`. `soe1` is `None` when `get_qmi=False`.
+Returns `(energy, soe1)`. `soe1` is `None` when `get_qmi=False`, shape `(ncas,)` when `spin_resolved=False`, or `(2, ncas)` (row 0 = α, row 1 = β) when `spin_resolved=True`.
 
 `OMP_NUM_THREADS`, `SCRATCH_DIR`, and `MEM` environment variables are read at call time (see [Environment variables](#environment-variables) for details).
+
+#### Unrestricted (UHF) references
+
+The DMRG/entropy path supports unrestricted references end to end. With a UHF
+mean field (or `unrestricted=True`), an `IUHF=1` FCIDUMP with separate αα/ββ/αβ
+and α/β blocks is written, and block2main runs non-spin-adapted (`SZ` is
+required — `SU2` + UHF raises).
+
+- **SOE is spin-summed by default, spin-resolved on demand.** The DMRG always
+  produces α/β-resolved 1-particle density matrices. `spin_resolved=False` (the
+  default) contracts them to the 4-state entropy per *spatial* orbital;
+  `spin_resolved=True` returns the per-spin-orbital entropies `H(n_α)`/`H(n_β)`
+  as a `(2, ncas)` array. The choice is driven by `DMRGConfig.spin_soe`
+  (`"auto"`/`"summed"`/`"resolved"`, resolved via `DMRGConfig.spin_resolved()`):
+  `"auto"` uses spin-resolved only for a spin-polarised target (`nα != nβ`),
+  where the channels genuinely differ (e.g. an open-shell SOMO is entangled in
+  one spin channel and frozen in the other). Spin-summed selection is screened
+  with `select_by_entropy`; spin-resolved selection thresholds the α and β
+  channels independently with `select_by_spin_entropy`, yielding a split
+  `{"alpha", "beta"}` selection. (Note: `H(n_α) + H(n_β) ≥ S_spatial ≥
+  max(H_α, H_β)`, so the spin-summed threshold is always at least as inclusive
+  as either channel's.)
+- **CAS partitioning assumes a closed frozen core** — the reference spin
+  polarisation must equal the active spin (`Nα − Nβ == nα − nβ`); otherwise the
+  α and β active windows would differ and `get_subspaces_from_cas` raises. A
+  *restricted* reference with an open-shell active target (e.g. a triplet CAS on
+  an RHF orbital set) is always allowed.
+- **Initialization.** The block2main input seeds the reference determinant
+  (`warmup occ` with an aufbau occupation) plus `full_fci_space`; this avoids a
+  local-minimum trap that bare random init hits on near-degenerate / strongly
+  multireference active spaces. Selecting `reorder="fiedler"` drops
+  `full_fci_space` (that pairing can converge to a higher state).
 
 ---
 
@@ -500,6 +546,32 @@ selected_occ, selected_virt = select_by_entropy(
 Returns `(selected_occ, selected_virt)` — each a `list[tuple[int, float]]` of
 (orbital index, entropy value).
 
+`soe1` must be 1-D (spin-summed); passing a `(2, ncas)` spin-resolved array
+raises a `ValueError` pointing to `select_by_spin_entropy`.
+
+---
+
+### `select_by_spin_entropy`
+
+```python
+from aegiss.active_space.entropy_screening import select_by_spin_entropy
+
+selection = select_by_spin_entropy(
+    occ_orbs, virt_orbs, soe1,   # soe1 shape (2, ncas): row 0 = α, row 1 = β
+    fraction=0.1,
+    fraction_type="r",
+    ranking="global",
+)
+# selection == {"alpha": (occ_α, virt_α), "beta": (occ_β, virt_β)}
+```
+
+Screens the α and β channels **independently** (the same `fraction` applied to
+each) from the spin-resolved SOE returned by
+`run_dmrg_subprocess(..., spin_resolved=True)`, so the α and β active windows may
+contain different orbitals. Same parameters as `select_by_entropy`; returns a
+`dict` with `"alpha"`/`"beta"` keys, each an `(selected_occ, selected_virt)`
+pair. Passing a 1-D array raises a `ValueError` pointing to `select_by_entropy`.
+
 ---
 
 ### `select_by_ao_projection`
@@ -523,7 +595,7 @@ active_indices = select_by_ao_projection(
 | `mf` | SCF object | — | Converged mean-field |
 | `ao_labels` | `list[str]` or `list[list[str]]` | — | AO labels to project onto. Format: `"Element AtomicOrbital"` (e.g. `"C 2pz"`, `"Fe 3d"`, `"O.1 1s"` for the second oxygen). Each entry in the outer list is processed independently; the results are unioned. |
 | `projected_basis` | `str` or `None` | `"minao"` | Basis used for projection. A minimal basis focuses the selection on chemically relevant contributions. `None` uses the original molecular basis. |
-| `contribution` | `float` or `list[float]` or `None` | `None` | Projection weight threshold. A single float applies to all labels; a list assigns per-label thresholds. Mutually exclusive with `top_n`. |
+| `contribution` | `float` or `list[float]` or `dict[str, ...]` or `None` | `None` | Projection weight threshold. A single float applies to all labels; a list assigns per-label thresholds. For a UHF reference it may also be a `{"alpha": ..., "beta": ...}` dict (each value a float or per-label list) to threshold the two spin channels differently; a non-dict value is shared by both. A dict is rejected for a restricted reference. Mutually exclusive with `top_n`. |
 | `contribution_type` | `"r"` or `"a"` or `None` | `None` | Required when `contribution` is set. `"r"`: threshold relative to the maximum weight; `"a"`: absolute threshold. |
 | `top_n` | `int` or `list[int]` or `None` | `None` | Alternative to `contribution`: keep the top-N orbitals per label. A list assigns per-label counts. |
 | `restricted_space` | `list[int]` or `list[tuple[int, float]]` or `tuple[list, list]` or `None` | `None` | Restrict candidates to a pre-filtered set. Pass a plain list of orbital indices (e.g. `list(range(34, 131))`), a list of `(index, score)` pairs, or a `(occ_list, virt_list)` tuple as returned by `select_by_entropy`. `None` considers all molecular orbitals. A plain index list is read in the configured base (see [Orbital index base](#orbital-index-base-0--or-1-based)); the pair/tuple forms are internal and always 0-based. |

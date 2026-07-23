@@ -169,7 +169,10 @@ def _resolve_space(
         logger.info(
             "No restriction on orbital indices for selection. Using all orbitals."
         )
-        return [(idx, 0.0) for idx in range(mf.mo_coeff.shape[1])]
+        # ``shape[-1]`` is the number of MOs for both a restricted ``(nao, nmo)``
+        # and an unrestricted ``(2, nao, nmo)`` coefficient array.
+        n_mo = np.asarray(mf.mo_coeff).shape[-1]
+        return [(idx, 0.0) for idx in range(n_mo)]
     if isinstance(restricted_space, tuple):
         space = combine_candidate_entropies(*restricted_space)
         logger.info(
@@ -252,91 +255,116 @@ def _resolve_top_n(
     return [top_n] * n_labels
 
 
-def select_by_ao_projection(
-    mf: Any,
-    ao_labels: list[str | list[str]],
-    projected_basis: str | None = "minao",
-    contribution_type: Literal["r", "a"] = "a",
-    contribution: float | list[float] = 0.0,
-    top_n: int | list[int] | None = None,
-    restricted_space: list[int]
-    | list[tuple[int, float]]
-    | tuple[list[tuple[int, float]], list[tuple[int, float]]]
-    | None = None,
-    save_path: str | None = None,
-) -> np.ndarray:
-    """Select active orbitals by their projection onto a set of target AOs.
+def _resolve_thresholds(
+    contribution: float | list[float],
+    top_n: int | list[int] | None,
+    n_labels: int,
+) -> tuple[list[float], list[int] | None]:
+    """Resolve the per-label contribution thresholds and top-N counts.
+
+    Wraps :func:`_resolve_contribution` and :func:`_resolve_top_n` and applies the
+    rule that *top_n*, when given, overrides *contribution* (the thresholds are
+    zeroed so selection is purely top-N). Called once per spin channel so an
+    unrestricted run can resolve different thresholds for alpha and beta.
 
     Args:
-        mf (pyscf.scf.hf.SCF or pyscf.dft.rks.KohnShamDFT):
-            Mean-field object containing the molecular orbitals and occupation numbers.
-        ao_labels (list[str | list[str]]): List of AO label entries. Each entry is either a single label string
-            (e.g. ``"Fe 3d"``) or a list of strings treated as one group
-            (e.g. ``["Fe 3d", "Fe 4d"]``). Entries can be freely mixed, e.g.
-            ``["C 2pz", "Fe 3d", ["Fe 3d", "Fe 4d"]]``.
-        projected_basis (str or None, default 'minao'):
-            Basis set to use for the projection. ``None`` uses the original basis.
-            A minimal basis (e.g. ``'minao'``) helps focus the selection on
-            chemically relevant orbitals and reduces noise from diffuse functions.
-        contribution_type ({'r', 'a'}): Relative (``'r'``) or absolute (``'a'``) contribution. Required when
-            *contribution* is specified.
-        contribution (float or list of float, default 0.0): Threshold for selecting
-            orbitals based on their contribution.
-            A single float applies to all AO groups; a list specifies per-group
-            thresholds and must match the length of *ao_labels*.
-        top_n (int or list of int, optional): Alternative to *contribution* thresholding. Selects the top N orbitals
-            per AO group. A list specifies per-group counts.
-        restricted_space (list of int, list of tuple, or tuple of lists, optional):
-            Orbital indices to restrict selection to. Can be a plain list of
-            integers (e.g. ``list(range(34, 131))``), a list of ``(index, entropy)``
-            pairs, or a ``(occ_list, virt_list)`` tuple from ``select_by_entropy``.
-            ``None`` considers all orbitals. A plain list of integers is treated
-            as user input in the configured display base (0-based by default;
-            1-based when ``AEGISS_ORB_BASE=1``); the ``(index, entropy)`` pair
-            and tuple forms come from AEGISS internals and are always 0-based.
-            The returned indices are always 0-based regardless of the base.
-        save_path (str or None, optional):
-            If provided, saves a heatmap of AO contributions to the specified path.
+        contribution (float or list of float): Contribution threshold(s) for one
+            channel, already extracted from any per-channel dict.
+        top_n (int, list of int, or None): Top-N count(s), or ``None`` to
+            threshold by *contribution* instead.
+        n_labels (int): Number of AO labels being considered.
 
     Returns:
-        active_indices (np.ndarray of int): Array of orbital indices selected for the active space.
+        resolved (tuple[list of float, list of int or None]): The per-label
+            contribution thresholds and per-label top-N counts (``None`` when
+            *top_n* is ``None``).
     """
-    logger.info("----------------AO Projection Screening for AEGISS----------------\n")
-    logger.info("AO labels for projection: %s", ao_labels)
-
-    logger.info("Contribution threshold: %s", contribution)
-    logger.info("Contribution type: %s", contribution_type)
-
+    resolved_contribution = _resolve_contribution(contribution, n_labels)
+    resolved_top_n: list[int] | None = None
     if top_n is not None:
-        logger.info("Top N orbitals to select: %s", top_n)
+        resolved_top_n = _resolve_top_n(top_n, n_labels)
+        # Override contribution thresholds if top-N is specified.
+        resolved_contribution = [0.0] * n_labels
+    return resolved_contribution, resolved_top_n
 
-    space = _resolve_space(mf, restricted_space)
-    resolved_contribution = _resolve_contribution(contribution, len(ao_labels))
-    if top_n is not None:
-        resolved_top_n = _resolve_top_n(top_n, len(ao_labels))
-        resolved_contribution = [0.0] * len(
-            ao_labels
-        )  # Override contribution thresholds if top-N is specified
 
-    if projected_basis is not None:
-        logger.info("Using projected basis for AO projection: %s", projected_basis)
-    else:
-        logger.info("Using molecule for AO projection")
+def _channel_save_path(save_path: str | None, channel: str) -> str | None:
+    """Insert a spin-channel tag before the extension of *save_path*.
+
+    ``".../ao.png"`` becomes ``".../ao_alpha.png"`` so the alpha and beta
+    heatmaps of an unrestricted run do not overwrite each other.
+
+    Args:
+        save_path (str or None): Base plot path, or ``None`` for no plotting.
+        channel (str): Spin-channel tag to insert (``"alpha"`` / ``"beta"``).
+
+    Returns:
+        path (str or None): Tagged path, or ``None`` when *save_path* is ``None``.
+    """
+    if save_path is None:
+        return None
+    p = Path(save_path)
+    return str(p.with_name(f"{p.stem}_{channel}{p.suffix}"))
+
+
+def _run_ao_selection(
+    mf: Any,
+    ao_labels: list[str | list[str]],
+    full_mo_coeff: np.ndarray,
+    space: list[tuple[int, float]],
+    resolved_contribution: list[float],
+    resolved_top_n: list[int] | None,
+    contribution_type: Literal["r", "a"],
+    projected_basis: str | None,
+    save_path: str | None,
+    labels_idx: dict[int, str | list[str]],
+) -> np.ndarray:
+    """Run the AO-projection selection for a single 2D coefficient matrix.
+
+    Loops over *ao_labels*, accumulates the selected orbital indices, and
+    optionally writes the AO-contribution heatmap. This is the per-spin-channel
+    core shared by the restricted and unrestricted paths of
+    :func:`select_by_ao_projection`; the AO overlaps are spin-independent, so
+    only *full_mo_coeff* differs between channels.
+
+    Args:
+        mf (pyscf.scf.hf.SCF): Mean-field object (used for the molecule/basis).
+        ao_labels (list[str | list[str]]): AO label entries to screen against.
+        full_mo_coeff (np.ndarray): 2D ``(nao, nmo)`` coefficient matrix for one
+            spin channel (or the restricted MOs).
+        space (list of tuple[int, float]): Orbital index/entropy search space.
+        resolved_contribution (list of float): Per-label contribution thresholds.
+        resolved_top_n (list of int or None): Per-label top-N counts, or ``None``
+            to threshold by *resolved_contribution* instead.
+        contribution_type ({'r', 'a'}): Relative or absolute contribution type.
+        projected_basis (str or None): Projection basis; ``None`` uses the
+            molecule's own basis.
+        save_path (str or None): If provided, save the AO-contribution heatmap.
+        labels_idx (dict[int, str | list[str]]): Loop-index to AO-label map for
+            plot annotation.
+
+    Returns:
+        active_indices (np.ndarray of int): Sorted selected orbital indices.
+    """
+    if not space:
+        # An empty search space (e.g. a spin channel with no screened orbitals)
+        # has nothing to project; return early before any ``max()`` over weights.
+        logger.info("Empty search space for this channel; nothing selected.")
+        return np.asarray([], dtype=int)
 
     selected_indices: set[int] = set()
     projected_total_weights: dict[int, list[tuple[int, float]]] = {}
-    labels_idx: dict[int, str | list[str]] = dict(enumerate(ao_labels))
     for loop_idx, label in enumerate(ao_labels):
         selected_indices_for_label, projected_weights = select_by_label(
             label=label,
             projected_basis=projected_basis,
             mf=mf,
-            full_mo_coeff=mf.mo_coeff,
+            full_mo_coeff=full_mo_coeff,
             space=space,
             contribution=resolved_contribution[loop_idx],
             contribution_type=contribution_type,
         )
-        if top_n is not None:
+        if resolved_top_n is not None:
             selected_indices_for_label = selected_indices_for_label[
                 : resolved_top_n[loop_idx]
             ]
@@ -359,3 +387,156 @@ def select_by_ao_projection(
         logger.info("\tOrbital %d", to_display(idx))
     # Return values stay 0-based so results round-trip safely into further logic.
     return np.asarray(sorted(selected_indices))
+
+
+def select_by_ao_projection(
+    mf: Any,
+    ao_labels: list[str | list[str]],
+    projected_basis: str | None = "minao",
+    contribution_type: Literal["r", "a"] = "a",
+    contribution: float | list[float] | dict[str, float | list[float]] = 0.0,
+    top_n: int | list[int] | None = None,
+    restricted_space: list[int]
+    | list[tuple[int, float]]
+    | tuple[list[tuple[int, float]], list[tuple[int, float]]]
+    | dict[str, tuple[list[tuple[int, float]], list[tuple[int, float]]]]
+    | None = None,
+    save_path: str | None = None,
+) -> np.ndarray | dict[str, np.ndarray]:
+    """Select active orbitals by their projection onto a set of target AOs.
+
+    Args:
+        mf (pyscf.scf.hf.SCF or pyscf.dft.rks.KohnShamDFT):
+            Mean-field object containing the molecular orbitals and occupation numbers.
+        ao_labels (list[str | list[str]]): List of AO label entries. Each entry is either a single label string
+            (e.g. ``"Fe 3d"``) or a list of strings treated as one group
+            (e.g. ``["Fe 3d", "Fe 4d"]``). Entries can be freely mixed, e.g.
+            ``["C 2pz", "Fe 3d", ["Fe 3d", "Fe 4d"]]``.
+        projected_basis (str or None, default 'minao'):
+            Basis set to use for the projection. ``None`` uses the original basis.
+            A minimal basis (e.g. ``'minao'``) helps focus the selection on
+            chemically relevant orbitals and reduces noise from diffuse functions.
+        contribution_type ({'r', 'a'}): Relative (``'r'``) or absolute (``'a'``) contribution. Required when
+            *contribution* is specified.
+        contribution (float, list of float, or dict, default 0.0): Threshold for
+            selecting orbitals based on their contribution.
+            A single float applies to all AO groups; a list specifies per-group
+            thresholds and must match the length of *ao_labels*.
+            For an unrestricted mean-field it may also be a spin-resolved
+            ``{"alpha": ..., "beta": ...}`` mapping (each value itself a float or
+            per-group list), applying a different threshold to each spin channel.
+            A non-dict value is shared by both channels. A dict is rejected for a
+            restricted mean-field.
+        top_n (int or list of int, optional): Alternative to *contribution* thresholding. Selects the top N orbitals
+            per AO group. A list specifies per-group counts.
+        restricted_space (list of int, list of tuple, tuple of lists, dict, optional):
+            Orbital indices to restrict selection to. Can be a plain list of
+            integers (e.g. ``list(range(34, 131))``), a list of ``(index, entropy)``
+            pairs, or a ``(occ_list, virt_list)`` tuple from ``select_by_entropy``.
+            For an unrestricted mean-field it may also be a spin-resolved
+            ``{"alpha": ..., "beta": ...}`` mapping (as produced by
+            ``select_by_spin_entropy``), in which case each spin channel is
+            restricted to its own space. A non-dict value is shared by both
+            channels. ``None`` considers all orbitals.
+        save_path (str or None, optional):
+            If provided, saves a heatmap of AO contributions to the specified path.
+            For an unrestricted mean-field the alpha/beta channels are written to
+            separate ``*_alpha`` / ``*_beta`` files.
+
+    Returns:
+        active_indices (np.ndarray of int, or dict[str, np.ndarray]):
+            Selected orbital indices. For a restricted mean-field a single array
+            is returned. For an unrestricted (UHF) mean-field -- detected from a
+            3D ``mf.mo_coeff`` of shape ``(2, nao, nmo)`` -- the selection is
+            always done per spin (the AO overlaps are spin-independent, only the
+            MO coefficients differ) and the result is a split
+            ``{"alpha": ..., "beta": ...}`` mapping. Whether the two channels
+            share one search space (spin-summed *restricted_space*) or use their
+            own (spin-resolved dict *restricted_space*), the alpha and beta
+            selections are kept separate here: they are deliberately *not*
+            reconciled into a common set of spatial orbitals, since an orbital
+            index refers to a different MO in each spin channel.
+    """
+    logger.info("----------------AO Projection Screening for AEGISS----------------\n")
+    logger.info("AO labels for projection: %s", ao_labels)
+
+    logger.info("Contribution threshold: %s", contribution)
+    logger.info("Contribution type: %s", contribution_type)
+
+    if top_n is not None:
+        logger.info("Top N orbitals to select: %s", top_n)
+
+    if projected_basis is not None:
+        logger.info("Using projected basis for AO projection: %s", projected_basis)
+    else:
+        logger.info("Using molecule for AO projection")
+
+    labels_idx: dict[int, str | list[str]] = dict(enumerate(ao_labels))
+    mo_coeff = np.asarray(mf.mo_coeff)
+
+    if mo_coeff.ndim != 3:
+        if isinstance(restricted_space, dict):
+            msg = (
+                "A spin-resolved restricted_space ({'alpha', 'beta'} dict) requires "
+                "an unrestricted mean-field with a 3D mo_coeff; got a restricted one."
+            )
+            raise ValueError(msg)
+        if isinstance(contribution, dict):
+            msg = (
+                "A spin-resolved contribution ({'alpha', 'beta'} dict) requires an "
+                "unrestricted mean-field with a 3D mo_coeff; got a restricted one."
+            )
+            raise ValueError(msg)
+        resolved_contribution, resolved_top_n = _resolve_thresholds(
+            contribution, top_n, len(ao_labels)
+        )
+        return _run_ao_selection(
+            mf=mf,
+            ao_labels=ao_labels,
+            full_mo_coeff=mo_coeff,
+            space=_resolve_space(mf, restricted_space),
+            resolved_contribution=resolved_contribution,
+            resolved_top_n=resolved_top_n,
+            contribution_type=contribution_type,
+            projected_basis=projected_basis,
+            save_path=save_path,
+            labels_idx=labels_idx,
+        )
+
+    logger.info(
+        "Unrestricted mean-field detected (mo_coeff shape %s); screening the "
+        "alpha and beta channels per spin (%s search space).",
+        mo_coeff.shape,
+        "per-channel" if isinstance(restricted_space, dict) else "shared",
+    )
+    selection: dict[str, np.ndarray] = {}
+    for spin, channel in enumerate(("alpha", "beta")):
+        logger.info("=============== %s channel ===============", channel.upper())
+        # A dict restricted_space carries its own window per spin channel
+        # (spin-resolved entropy screening); anything else is shared by both.
+        channel_space = (
+            restricted_space[channel]
+            if isinstance(restricted_space, dict)
+            else restricted_space
+        )
+        # A dict contribution carries its own threshold(s) per spin channel;
+        # anything else is shared by both.
+        channel_contribution = (
+            contribution[channel] if isinstance(contribution, dict) else contribution
+        )
+        resolved_contribution, resolved_top_n = _resolve_thresholds(
+            channel_contribution, top_n, len(ao_labels)
+        )
+        selection[channel] = _run_ao_selection(
+            mf=mf,
+            ao_labels=ao_labels,
+            full_mo_coeff=mo_coeff[spin],
+            space=_resolve_space(mf, channel_space),
+            resolved_contribution=resolved_contribution,
+            resolved_top_n=resolved_top_n,
+            contribution_type=contribution_type,
+            projected_basis=projected_basis,
+            save_path=_channel_save_path(save_path, channel),
+            labels_idx=labels_idx,
+        )
+    return selection

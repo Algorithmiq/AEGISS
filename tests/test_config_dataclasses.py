@@ -20,6 +20,54 @@ class TestDMRGConfig:
         assert cfg.max_bond_dim == 500
         assert cfg.symm_type == "SZ"
         assert cfg.verbosity == 0
+        assert cfg.unrestricted is None
+        assert cfg.reorder == "noreorder"
+        assert cfg.spin_soe == "auto"
+
+    def test_spin_soe_auto_summed_for_closed_shell(self) -> None:
+        # nalpha == nbeta -> spin-summed
+        assert DMRGConfig(ncas=4, nelecas=(2, 2)).spin_resolved() is False
+
+    def test_spin_soe_auto_resolved_for_spin_polarised(self) -> None:
+        # nalpha != nbeta with SZ -> spin-resolved
+        assert DMRGConfig(ncas=4, nelecas=(3, 2)).spin_resolved() is True
+
+    def test_spin_soe_auto_stays_summed_for_su2(self) -> None:
+        # spin-resolved 1-PDM needs SZ; auto must not pick resolved under SU2
+        cfg = DMRGConfig(ncas=4, nelecas=(3, 2), symm_type="SU2")
+        assert cfg.spin_resolved() is False
+
+    def test_spin_soe_force_summed(self) -> None:
+        cfg = DMRGConfig(ncas=4, nelecas=(3, 2), spin_soe="summed")
+        assert cfg.spin_resolved() is False
+
+    def test_spin_soe_force_resolved(self) -> None:
+        cfg = DMRGConfig(ncas=4, nelecas=(2, 2), spin_soe="resolved")
+        assert cfg.spin_resolved() is True
+
+    def test_spin_soe_resolved_with_su2_raises(self) -> None:
+        with pytest.raises(ValueError, match="spin_soe='resolved'"):
+            DMRGConfig(ncas=4, nelecas=(3, 2), spin_soe="resolved", symm_type="SU2")
+
+    def test_invalid_spin_soe_raises(self) -> None:
+        with pytest.raises(ValueError, match="spin_soe"):
+            DMRGConfig(ncas=4, nelecas=4, spin_soe="bogus")  # type: ignore[arg-type]
+
+    def test_reorder_fiedler_valid(self) -> None:
+        cfg = DMRGConfig(ncas=4, nelecas=4, reorder="fiedler")
+        assert cfg.reorder == "fiedler"
+
+    def test_invalid_reorder_raises(self) -> None:
+        with pytest.raises(ValueError, match="reorder"):
+            DMRGConfig(ncas=4, nelecas=4, reorder="bogus")  # type: ignore[arg-type]
+
+    def test_unrestricted_override_valid(self) -> None:
+        cfg = DMRGConfig(ncas=4, nelecas=(3, 1), unrestricted=True)
+        assert cfg.unrestricted is True
+
+    def test_unrestricted_with_su2_raises(self) -> None:
+        with pytest.raises(ValueError, match="symm_type='SZ'"):
+            DMRGConfig(ncas=4, nelecas=4, unrestricted=True, symm_type="SU2")
 
     def test_zero_ncas_raises(self) -> None:
         with pytest.raises(ValueError, match="ncas"):
