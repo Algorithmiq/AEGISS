@@ -76,11 +76,15 @@ logging.getLogger("aegiss").setLevel(logging.WARNING)
 ## Development
 
 ```bash
-uv sync                   # install all dependency groups
-pre-commit install        # install git hooks
-pytest                    # run test suite
-pytest --cov=aegiss       # run with coverage report
+uv sync --all-groups --all-extras   # install every dependency group (dev, test, docs, …) + extras
+pre-commit install                  # install git hooks
+pytest                              # run test suite
+pytest --cov=aegiss                 # run with coverage report
 ```
+
+A bare `uv sync` installs only the default `dev` group (ruff, mypy, pre-commit); the
+`test`, `docs`, and `interactive` groups are opt-in, hence `--all-groups` above (or, more
+narrowly, `uv sync --group test` to just run the suite).
 
 Code style is enforced by **ruff** (linting + formatting) and **mypy** (strict type
 checking). Both run automatically as pre-commit hooks and in CI.
