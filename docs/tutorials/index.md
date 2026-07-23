@@ -92,33 +92,65 @@ improve physical interpretability of entropy screening:
 
 ## Step 3a — Correlated wavefunction in active region
 
-Solve a correlated wavefunction method (e.g. CASSCF, DMRG, CISD) within the active
-region $\mathbf{A}$ to obtain the many-body state $|\Psi\rangle$.
+AEGISS solves the active-space problem with **DMRG**, run through the `block2main`
+subprocess (`run_dmrg_subprocess`). PySCF builds the CAS integrals (a `FCIDUMP`) for
+the active region $\mathbf{A}$; block2 then converges the DMRG ground state
+$|\Psi\rangle$ and writes out the spin-resolved one-particle density matrix (`1pdm`)
+and the diagonal number–number correlation (`1npc`) — together these provide
+everything needed for the single-orbital entropies below.
 
 ### One-orbital reduced density matrix
 
-For each orbital $p \in \mathbf{A}$, construct the one-orbital reduced density matrix
-(1-RDM) $\rho^p$ by tracing $|\Psi\rangle\langle\Psi|$ over all orbitals except $p$:
+For each orbital $p \in \mathbf{A}$, the one-orbital reduced density matrix $\rho^p$
+is defined by tracing $|\Psi\rangle\langle\Psi|$ over all orbitals except $p$:
 
 $$
 \rho^p = \mathrm{Tr}_{\mathbf{A} \setminus \{p\}} \left( |\Psi\rangle\langle\Psi| \right)
 $$
 
-Each orbital $p$ can be in one of four occupation states
-$|\alpha\rangle \in \{|0\rangle,\, |\!\uparrow\rangle,\, |\!\downarrow\rangle,\, |\!\uparrow\downarrow\rangle\}$,
-so $\rho^p$ is a $4\times 4$ matrix. Its eigenvalues $\{\omega_{\alpha,p}\}$ are the
-probabilities of finding orbital $p$ in each of those states, satisfying
-$\omega_{\alpha,p} \geq 0$ and $\sum_\alpha \omega_{\alpha,p} = 1$.
+In the local occupation basis
+$|\alpha\rangle \in \{|0\rangle,\, |\!\uparrow\rangle,\, |\!\downarrow\rangle,\, |\!\uparrow\downarrow\rangle\}$
+a single orbital carries no coherences, so $\rho^p$ is **diagonal** and its four
+eigenvalues are precisely the occupation probabilities $\{\omega_{\alpha,p}\}$
+(with $\omega_{\alpha,p} \geq 0$ and $\sum_\alpha \omega_{\alpha,p} = 1$).
+
+Rather than forming $\rho^p$ explicitly, AEGISS reconstructs these probabilities from
+the DMRG one-particle observables: the spin occupations $\langle n_{p\uparrow}\rangle$,
+$\langle n_{p\downarrow}\rangle$ (diagonal of the `1pdm`) and the double occupancy
+$d_p = \langle n_{p\uparrow} n_{p\downarrow}\rangle$. The double occupancy is recovered
+from the diagonal of the number–number correlation, since
+$\langle n_p^2\rangle = \langle n_p\rangle + 2\,d_p$ for $n_p = n_{p\uparrow} + n_{p\downarrow}$:
+
+$$
+d_p = \tfrac{1}{2}\left(\langle n_p^2\rangle - \langle n_p\rangle\right),
+\qquad
+\langle n_p\rangle = \langle n_{p\uparrow}\rangle + \langle n_{p\downarrow}\rangle
+$$
+
+which fixes the four occupation probabilities as
+
+$$
+\begin{aligned}
+\omega_{\uparrow\downarrow,\,p} &= d_p, &
+\omega_{\uparrow,\,p}           &= \langle n_{p\uparrow}\rangle - d_p, \\[2pt]
+\omega_{\downarrow,\,p}         &= \langle n_{p\downarrow}\rangle - d_p, &
+\omega_{0,\,p}                  &= 1 - \langle n_p\rangle + d_p .
+\end{aligned}
+$$
 
 ---
 
 ## Step 3b — Entropy-based reduction
 
-For each orbital $p$, compute the single-orbital entropy from the eigenvalues of $\rho^p$:
+For each orbital $p$, the single-orbital entropy is the von Neumann entropy of
+$\rho^p$ — equivalently, the Shannon entropy of its four occupation probabilities:
 
 $$
-S(1)_p = -\sum_{\alpha=1}^{4} \omega_{\alpha,p} \ln \omega_{\alpha,p}
+S(1)_p = -\sum_{\alpha \in \{0,\,\uparrow,\,\downarrow,\,\uparrow\downarrow\}}
+\omega_{\alpha,p} \, \ln \omega_{\alpha,p}
 $$
+
+where any state with $\omega_{\alpha,p} \to 0$ contributes nothing to the sum.
 
 $S(1)_p$ quantifies the entanglement of orbital $p$ with the rest of the active space.
 It is zero for orbitals that are fully occupied or fully empty (doubly occupied core or
@@ -137,6 +169,17 @@ $$
 
 The threshold is applied **independently** to occupied and virtual subspaces
 (`ranking='subset'`, default) or to all CAS orbitals jointly (`ranking='global'`).
+
+!!! tip "Diagnostics"
+    The entropy spectrum is best read visually with
+    [`soe_heatmap`](../api/utils.md#plotting) and [`th_plots`](../api/utils.md#plotting)
+    (utilities reference). For a benzene CAS(30,30), the entanglement concentrates on the
+    π-type frontier orbitals, and the threshold curve exposes two plateaus — CAS(6,6) and,
+    at higher thresholds, the π-only CAS(4,4):
+
+    ![SOE heatmap](../assets/images/example_soe_heatmap.png)
+
+    ![TH plot](../assets/images/example_th_plot.png){ width="85%" }
 
 ---
 
@@ -195,6 +238,17 @@ Two modes are available, controlled by `ProjectionConfig`:
 
 - **Threshold** — keep all $\psi_p$ where $w_p^D \geq \epsilon_D$
 - **Top-N** — keep the $n_D$ orbitals with the largest $w_p^D$, regardless of magnitude
+
+!!! tip "Diagnostics"
+    The projection weights $w_p^D$ can be inspected with
+    [`plot_ao_contribution`](../api/utils.md#plotting) (a per-MO / per-AO-group heatmap)
+    and the per-orbital composition with
+    [`plot_pie_contribution`](../api/utils.md#plotting) (utilities reference). For benzene,
+    the π orbitals concentrate on `C 2pz` while the σ framework mixes `C 2s`/`C 2px`/`H 1s`:
+
+    ![AO contribution heatmap](../assets/images/example_ao_contribution_heatmap.png)
+
+    ![Pie composition](../assets/images/example_pie_composition_alpha.png){ width="90%" }
 
 ---
 
