@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://algorithmiq.github.io/AEGISS/
+    about: Check the documentation before opening an issue.
+  - name: Tutorials
+    url: https://algorithmiq.github.io/AEGISS/tutorials/
+    about: Worked examples of the SCF, DMRG, AO projection, and full AEGISS workflows.

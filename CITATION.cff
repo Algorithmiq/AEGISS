@@ -1,0 +1,62 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "AEGISS"
+abstract: >-
+  AEGISS (Atomic orbital and Entropy-based Guided Inference for Space Selection)
+  is a semi-automated active space selection workflow for multireference quantum
+  chemistry and quantum computing applications.
+authors:
+  - family-names: "Tarocco"
+    given-names: "Fabio"
+  - family-names: "Haase"
+    given-names: "Pi A. B."
+  - family-names: "Pavošević"
+    given-names: "Fabijan"
+  - family-names: "Krishna"
+    given-names: "Vijay"
+  - family-names: "Guidoni"
+    given-names: "Leonardo"
+  - family-names: "Knecht"
+    given-names: "Stefan"
+  - family-names: "Stella"
+    given-names: "Martina"
+repository-code: "https://github.com/Algorithmiq/AEGISS"
+url: "https://algorithmiq.github.io/AEGISS/"
+keywords:
+  - active space selection
+  - quantum chemistry
+  - multireference methods
+  - DMRG
+  - orbital entanglement entropy
+  - quantum computing
+preferred-citation:
+  type: article
+  title: >-
+    AEGISS -- Atomic orbital and Entropy-based Guided Inference for Space
+    Selection -- A novel semi-automated active space selection workflow for
+    quantum chemistry and quantum computing applications
+  authors:
+    - family-names: "Tarocco"
+      given-names: "Fabio"
+    - family-names: "Haase"
+      given-names: "Pi A. B."
+    - family-names: "Pavošević"
+      given-names: "Fabijan"
+    - family-names: "Krishna"
+      given-names: "Vijay"
+    - family-names: "Guidoni"
+      given-names: "Leonardo"
+    - family-names: "Knecht"
+      given-names: "Stefan"
+    - family-names: "Stella"
+      given-names: "Martina"
+  journal: "arXiv"
+  year: 2025
+  month: 8
+  doi: "10.48550/arXiv.2508.10671"
+  url: "https://arxiv.org/abs/2508.10671"
+  identifiers:
+    - type: other
+      value: "arXiv:2508.10671"
+      description: "arXiv eprint identifier; the current revision is v3"
