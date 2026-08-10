@@ -24,10 +24,11 @@ repos:
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: v0.15.6
     hooks:
+      # Only the tutorial notebooks are exempt; docs/scripts/ is linted like any source.
       - id: ruff-check
-        exclude: (docs/)
+        exclude: ^docs/tutorials/
       - id: ruff-format
-        exclude: (docs/)
+        exclude: ^docs/tutorials/
         args: [--check]
 
   - repo: https://github.com/pre-commit/mirrors-mypy

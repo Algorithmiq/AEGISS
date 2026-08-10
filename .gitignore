@@ -212,3 +212,7 @@ __marimo__/
 # AEGISS runtime scratch/output (SCRATCH_DIR default, OutputConfig default)
 /tmp/
 aegiss_output/
+
+# Local developer scratch scripts and their DMRG scratch dir — never pushed.
+# Also excluded from ruff via [tool.ruff] exclude in pyproject.toml.
+/scripts/

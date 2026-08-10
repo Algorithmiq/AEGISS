@@ -98,7 +98,9 @@ report.exclude_also = [
 [tool.ruff]
 target-version = "py312"
 line-length = 88
-exclude = ["docs"]
+# `docs/tutorials` holds the tutorial notebooks; `scripts/` holds local, unversioned
+# developer scratch scripts. Both are unlinted — but `docs/scripts/` is checked.
+exclude = ["docs/tutorials", "scripts"]
 
 [tool.ruff.lint]
 select = [
@@ -173,6 +175,7 @@ flake8-annotations.allow-star-arg-any = true
 "src/aegiss/cli.py" = ["T20"]  # a CLI is expected to print to stdout
 "mol_tagger.py" = ["INP001"]
 "main.py" = ["INP001"]
+"docs/scripts/*.py" = ["INP001"]  # standalone docs helpers, not an importable package
 "tests/**/test_*.py" = ["ANN", "I002"]
 "src/aegiss/**/__init__.py" = ["I002"]
 "*.ipynb" = ["I002"]

@@ -56,7 +56,23 @@ docs/
     utils.md
   javascripts/
     mathjax.js        # MathJax configuration
+  scripts/
+    generate_doc_plots.py  # regenerates the example plots in assets/images/
 ```
+
+## Regenerating the example plots
+
+The diagnostic plots shown on the [Utilities API page](api/utils.md) are checked into
+`assets/images/`. To refresh them from a real benzene calculation (RHF/cc-pVDZ, DMRG in
+the frontier CAS(30,30), and an AO projection onto `minao`):
+
+```bash
+python docs/scripts/generate_doc_plots.py
+```
+
+This needs the full AEGISS stack including `block2`, takes a few minutes, and writes
+its DMRG scratch to `tmp/_doc_plots_scratch/` (git-ignored). Files under
+`docs/scripts/` are excluded from the built site via `exclude_docs` in `mkdocs.yml`.
 
 ## Adding a new page
 

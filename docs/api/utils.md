@@ -78,7 +78,7 @@ orbital contributions to each MO.
 ## Plotting
 
 The examples below are produced by
-[`scripts/generate_doc_plots.py`](https://github.com/Algorithmiq/AEGISS/blob/main/scripts/generate_doc_plots.py)
+[`docs/scripts/generate_doc_plots.py`](https://github.com/Algorithmiq/AEGISS/blob/main/docs/scripts/generate_doc_plots.py)
 from a real benzene calculation (RHF/cc-pVDZ, a DMRG in the frontier CAS(30,30),
 and an AO projection onto the `minao` reference). Re-run that script to refresh them.
 
