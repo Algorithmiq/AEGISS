@@ -50,8 +50,8 @@ def main() -> None:
     mf = run_scf(mol)
 
     dmrg_config = DMRGConfig(
-        ncas=20,
-        nelecas=20,
+        ncas=30,
+        nelecas=30,
         max_bond_dim=200,
         symm_type="SZ",
         verbosity=0,
