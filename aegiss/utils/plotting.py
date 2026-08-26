@@ -579,7 +579,7 @@ def th_plots(
     ax.fill_between(np.arange(-0.05, 1.06, 0.01), shade, 100, color="grey", alpha=0.3)
     ax.plot(x_values, y_values, marker="s", markersize=6, ls="", color=c[0])
     ax.plot(
-        plateau_index, plateau_vector, ls="", marker="x", color="teal", markersize=5
+        plateau_index, plateau_vector, ls="", marker="X", color="white", markersize=5
     )
     ax.set_ylabel("# Selected MOs", fontsize=20)
     ax.set_xlabel(r"Threshold as % of largest $S(1)_\mathrm{max}$", fontsize=18)
