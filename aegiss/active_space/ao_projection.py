@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, Literal, cast, overload
 
 import numpy as np
 from pyscf import gto
@@ -14,6 +14,15 @@ from aegiss.utils.orbital_indices import combine_candidate_entropies
 from aegiss.utils.plotting import plot_ao_contribution
 
 logger = logging.getLogger(__name__)
+
+_RestrictedSpace = (
+    list[int]
+    | list[tuple[int, float]]
+    | tuple[list[tuple[int, float]], list[tuple[int, float]]]
+    | dict[str, tuple[list[tuple[int, float]], list[tuple[int, float]]]]
+    | None
+)
+_AoContributions = dict[int, list[tuple[int, float]]]
 
 
 def _compute_contribution(
@@ -318,11 +327,11 @@ def _run_ao_selection(
     projected_basis: str | None,
     save_path: str | None,
     labels_idx: dict[int, str | list[str]],
-) -> np.ndarray:
+) -> tuple[np.ndarray, _AoContributions]:
     """Run the AO-projection selection for a single 2D coefficient matrix.
 
-    Loops over *ao_labels*, accumulates the selected orbital indices, and
-    optionally writes the AO-contribution heatmap. This is the per-spin-channel
+    Loops over *ao_labels*, accumulates the selected orbital indices and the
+    per-group AO contributions, and optionally writes the AO-contribution heatmap. This is the per-spin-channel
     core shared by the restricted and unrestricted paths of
     :func:`select_by_ao_projection`; the AO overlaps are spin-independent, so
     only *full_mo_coeff* differs between channels.
@@ -345,15 +354,18 @@ def _run_ao_selection(
 
     Returns:
         active_indices (np.ndarray of int): Sorted selected orbital indices.
+        ao_contributions (dict[int, list[tuple[int, float]]]): Group index to
+            ``(orbital_index, weight)`` pairs over the whole search space, in the
+            format expected by :func:`~aegiss.utils.plotting.plot_ao_contribution`.
     """
     if not space:
         # An empty search space (e.g. a spin channel with no screened orbitals)
         # has nothing to project; return early before any ``max()`` over weights.
         logger.info("Empty search space for this channel; nothing selected.")
-        return np.asarray([], dtype=int)
+        return np.asarray([], dtype=int), {}
 
     selected_indices: set[int] = set()
-    projected_total_weights: dict[int, list[tuple[int, float]]] = {}
+    projected_total_weights: _AoContributions = {}
     for loop_idx, label in enumerate(ao_labels):
         selected_indices_for_label, projected_weights = select_by_label(
             label=label,
@@ -369,8 +381,7 @@ def _run_ao_selection(
                 : resolved_top_n[loop_idx]
             ]
         selected_indices.update(orb_idx for orb_idx, _ in selected_indices_for_label)
-        if save_path is not None:
-            projected_total_weights[loop_idx] = projected_weights
+        projected_total_weights[loop_idx] = projected_weights
 
     if save_path is not None and projected_total_weights:
         _p = Path(save_path)
@@ -386,7 +397,40 @@ def _run_ao_selection(
     for idx in sorted(selected_indices):
         logger.info("\tOrbital %d", to_display(idx))
     # Return values stay 0-based so results round-trip safely into further logic.
-    return np.asarray(sorted(selected_indices))
+    return np.asarray(sorted(selected_indices)), projected_total_weights
+
+
+@overload
+def select_by_ao_projection(
+    mf: Any,
+    ao_labels: list[str | list[str]],
+    projected_basis: str | None = "minao",
+    contribution_type: Literal["r", "a"] = "a",
+    contribution: float | list[float] | dict[str, float | list[float]] = 0.0,
+    top_n: int | list[int] | None = None,
+    restricted_space: _RestrictedSpace = None,
+    save_path: str | None = None,
+    *,
+    return_contributions: Literal[False] = False,
+) -> np.ndarray | dict[str, np.ndarray]: ...
+
+
+@overload
+def select_by_ao_projection(
+    mf: Any,
+    ao_labels: list[str | list[str]],
+    projected_basis: str | None = "minao",
+    contribution_type: Literal["r", "a"] = "a",
+    contribution: float | list[float] | dict[str, float | list[float]] = 0.0,
+    top_n: int | list[int] | None = None,
+    restricted_space: _RestrictedSpace = None,
+    save_path: str | None = None,
+    *,
+    return_contributions: Literal[True],
+) -> (
+    tuple[np.ndarray, _AoContributions]
+    | tuple[dict[str, np.ndarray], dict[str, _AoContributions]]
+): ...
 
 
 def select_by_ao_projection(
@@ -396,13 +440,16 @@ def select_by_ao_projection(
     contribution_type: Literal["r", "a"] = "a",
     contribution: float | list[float] | dict[str, float | list[float]] = 0.0,
     top_n: int | list[int] | None = None,
-    restricted_space: list[int]
-    | list[tuple[int, float]]
-    | tuple[list[tuple[int, float]], list[tuple[int, float]]]
-    | dict[str, tuple[list[tuple[int, float]], list[tuple[int, float]]]]
-    | None = None,
+    restricted_space: _RestrictedSpace = None,
     save_path: str | None = None,
-) -> np.ndarray | dict[str, np.ndarray]:
+    *,
+    return_contributions: bool = False,
+) -> (
+    np.ndarray
+    | dict[str, np.ndarray]
+    | tuple[np.ndarray, _AoContributions]
+    | tuple[dict[str, np.ndarray], dict[str, _AoContributions]]
+):
     """Select active orbitals by their projection onto a set of target AOs.
 
     Args:
@@ -442,6 +489,9 @@ def select_by_ao_projection(
             If provided, saves a heatmap of AO contributions to the specified path.
             For an unrestricted mean-field the alpha/beta channels are written to
             separate ``*_alpha`` / ``*_beta`` files.
+        return_contributions (bool, default False): If ``True``, also return the
+            per-group AO contributions so they can be passed straight to
+            :func:`~aegiss.utils.plotting.plot_ao_contribution` for custom plots.
 
     Returns:
         active_indices (np.ndarray of int, or dict[str, np.ndarray]):
@@ -456,6 +506,10 @@ def select_by_ao_projection(
             selections are kept separate here: they are deliberately *not*
             reconciled into a common set of spatial orbitals, since an orbital
             index refers to a different MO in each spin channel.
+        ao_contributions (dict, only if *return_contributions* is ``True``):
+            Group index (position in *ao_labels*) to ``(orbital_index, weight)``
+            pairs over the whole search space. For an unrestricted mean-field
+            this is a ``{"alpha": ..., "beta": ...}`` mapping of such dicts.
     """
     logger.info("----------------AO Projection Screening for AEGISS----------------\n")
     logger.info("AO labels for projection: %s", ao_labels)
@@ -490,7 +544,7 @@ def select_by_ao_projection(
         resolved_contribution, resolved_top_n = _resolve_thresholds(
             contribution, top_n, len(ao_labels)
         )
-        return _run_ao_selection(
+        indices, contributions = _run_ao_selection(
             mf=mf,
             ao_labels=ao_labels,
             full_mo_coeff=mo_coeff,
@@ -502,6 +556,7 @@ def select_by_ao_projection(
             save_path=save_path,
             labels_idx=labels_idx,
         )
+        return (indices, contributions) if return_contributions else indices
 
     logger.info(
         "Unrestricted mean-field detected (mo_coeff shape %s); screening the "
@@ -510,6 +565,7 @@ def select_by_ao_projection(
         "per-channel" if isinstance(restricted_space, dict) else "shared",
     )
     selection: dict[str, np.ndarray] = {}
+    channel_contributions: dict[str, _AoContributions] = {}
     for spin, channel in enumerate(("alpha", "beta")):
         logger.info("=============== %s channel ===============", channel.upper())
         # A dict restricted_space carries its own window per spin channel
@@ -527,7 +583,7 @@ def select_by_ao_projection(
         resolved_contribution, resolved_top_n = _resolve_thresholds(
             channel_contribution, top_n, len(ao_labels)
         )
-        selection[channel] = _run_ao_selection(
+        selection[channel], channel_contributions[channel] = _run_ao_selection(
             mf=mf,
             ao_labels=ao_labels,
             full_mo_coeff=mo_coeff[spin],
@@ -539,4 +595,4 @@ def select_by_ao_projection(
             save_path=_channel_save_path(save_path, channel),
             labels_idx=labels_idx,
         )
-    return selection
+    return (selection, channel_contributions) if return_contributions else selection
