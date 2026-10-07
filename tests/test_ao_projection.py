@@ -15,6 +15,7 @@ from aegiss.active_space.ao_projection import (
     select_by_ao_projection,
     select_by_label,
 )
+from aegiss.utils.plotting import plot_ao_contribution
 
 
 class TestComputeContributionValues:
@@ -656,3 +657,74 @@ class TestSelectByAoProjectionSpinResolvedContribution:
                 contribution={"alpha": 0.0, "beta": 0.5},
                 contribution_type="r",
             )
+
+
+class TestSelectByAoProjectionReturnContributions:
+    """``return_contributions=True`` exposes the heatmap input (issue #68)."""
+
+    def test_default_return_unchanged(self, h2_rhf) -> None:
+        result = select_by_ao_projection(
+            mf=h2_rhf, ao_labels=["H 1s"], projected_basis="minao"
+        )
+        assert isinstance(result, np.ndarray)
+
+    def test_restricted_returns_indices_and_contributions(self, h2_rhf) -> None:
+        indices, contributions = select_by_ao_projection(
+            mf=h2_rhf,
+            ao_labels=["H 1s", ["H 1s"]],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+            return_contributions=True,
+        )
+        plain = select_by_ao_projection(
+            mf=h2_rhf,
+            ao_labels=["H 1s", ["H 1s"]],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+        )
+        assert indices.tolist() == plain.tolist()
+        # One entry per AO group, each covering the whole search space.
+        n_mo = h2_rhf.mo_coeff.shape[1]
+        assert set(contributions) == {0, 1}
+        for weights in contributions.values():
+            assert [idx for idx, _ in weights] == list(range(n_mo))
+
+    def test_contributions_feed_plot_standalone(self, h2_rhf, tmp_path) -> None:
+        """The returned dict plugs straight into ``plot_ao_contribution``."""
+        _, contributions = select_by_ao_projection(
+            mf=h2_rhf,
+            ao_labels=["H 1s"],
+            projected_basis="minao",
+            return_contributions=True,
+        )
+        plot_ao_contribution(
+            ao_contributions=contributions, folder=str(tmp_path), filename="ao"
+        )
+        assert (tmp_path / "ao_heatmap.pdf").exists()
+
+    def test_unrestricted_returns_per_channel_contributions(self, c_sto3g_uhf) -> None:
+        selection, contributions = select_by_ao_projection(
+            mf=c_sto3g_uhf,
+            ao_labels=["C 2p"],
+            projected_basis="minao",
+            contribution=0.0,
+            contribution_type="a",
+            return_contributions=True,
+        )
+        assert set(selection) == {"alpha", "beta"}
+        assert set(contributions) == {"alpha", "beta"}
+        for channel_contributions in contributions.values():
+            assert set(channel_contributions) == {0}
+
+    def test_empty_channel_gives_empty_contributions(self, c_sto3g_uhf) -> None:
+        _, contributions = select_by_ao_projection(
+            mf=c_sto3g_uhf,
+            ao_labels=["C 2p"],
+            projected_basis="minao",
+            restricted_space={"alpha": ([], []), "beta": ([(2, 0.0)], [])},
+            return_contributions=True,
+        )
+        assert contributions["alpha"] == {}
+        assert [idx for idx, _ in contributions["beta"][0]] == [2]

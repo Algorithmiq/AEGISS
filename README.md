@@ -599,8 +599,13 @@ active_indices = select_by_ao_projection(
 | `contribution_type` | `"r"` or `"a"` or `None` | `None` | Required when `contribution` is set. `"r"`: threshold relative to the maximum weight; `"a"`: absolute threshold. |
 | `top_n` | `int` or `list[int]` or `None` | `None` | Alternative to `contribution`: keep the top-N orbitals per label. A list assigns per-label counts. |
 | `restricted_space` | `list[int]` or `list[tuple[int, float]]` or `tuple[list, list]` or `None` | `None` | Restrict candidates to a pre-filtered set. Pass a plain list of orbital indices (e.g. `list(range(34, 131))`), a list of `(index, score)` pairs, or a `(occ_list, virt_list)` tuple as returned by `select_by_entropy`. `None` considers all molecular orbitals. A plain index list is read in the configured base (see [Orbital index base](#orbital-index-base-0--or-1-based)); the pair/tuple forms are internal and always 0-based. |
+| `save_path` | `str` or `None` | `None` | Base path (no extension) for the AO-contribution heatmap; `_heatmap.pdf` is appended. For a UHF reference, `_alpha` / `_beta` files are written. |
+| `return_contributions` | `bool` (keyword-only) | `False` | Also return the per-group AO contributions, ready for [`plot_ao_contribution`](#plot_ao_contribution). |
 
-Returns `np.ndarray` of sorted orbital indices.
+Returns `np.ndarray` of sorted orbital indices (a `{"alpha": ..., "beta": ...}`
+dict for a UHF reference). With `return_contributions=True`, returns
+`(indices, contributions)`, where `contributions` maps each AO-group index to its
+`(orbital_index, weight)` pairs (again split per spin for UHF).
 
 **Restricting to occupied orbitals**
 
@@ -643,20 +648,35 @@ from aegiss.utils.plotting import plot_ao_contribution
 Renders the per-orbital AO projection weights as a heatmap — one row per AO
 group, columns are MOs, colour is the (normalised) projection weight. Wide
 orbital ranges are paginated into stacked panels (`mos_per_plot`).
-`select_by_ao_projection(..., save_path=...)` calls this internally for the
-restricted case; call it directly for finer control or to combine spin channels.
+`select_by_ao_projection(..., save_path=...)` calls this internally; to call it
+directly for finer control or to combine spin channels, get the contributions with
+`return_contributions=True`.
 
 ```python
 # Restricted: one row per AO group
-plot_ao_contribution(alpha_contributions, folder="./", filename="ao")
-
-# Unrestricted: alpha and beta interleaved (alpha above beta) within each
-# group, with a thin white line separating consecutive groups
+indices, contributions = select_by_ao_projection(
+    mf, ao_labels, return_contributions=True
+)
 plot_ao_contribution(
-    alpha_contributions,
-    beta_contributions,
+    ao_contributions=contributions,
     folder="./",
     filename="ao",
+    ao_labels=dict(enumerate(ao_labels)),
+    mo_labels=[idx for idx, _ in contributions[0]],
+)
+
+# Unrestricted: alpha and beta interleaved (alpha above beta) within each
+# group, with a thin white line separating consecutive groups. Both channels
+# must share the same search space so the columns line up.
+selection, contributions = select_by_ao_projection(
+    uhf, ao_labels, return_contributions=True
+)
+plot_ao_contribution(
+    ao_contributions=contributions["alpha"],
+    ao_contributions_beta=contributions["beta"],
+    folder="./",
+    filename="ao",
+    ao_labels=dict(enumerate(ao_labels)),
     normalization="global",
 )
 ```
