@@ -45,6 +45,8 @@ workflows.
   - [localize](#localize)
   - [save_orbitals](#save_orbitals)
 - [Development](#development)
+- [Contributing](#contributing)
+- [Citation](#citation)
 
 ---
 
@@ -193,7 +195,7 @@ This walkthrough reproduces the `main.py` example and explains each step.
 from aegiss.initial_guess import build_mol, run_scf
 
 mol = build_mol(
-    "aegiss/examples/data/benzene.xyz",
+    "docs/tutorials/data/benzene.xyz",
     basis="ccpvdz",
     symmetry=False,
     verbose=2,
@@ -300,7 +302,7 @@ shape and the rest of the pipeline is unaffected.
 
 Further step-by-step tutorials covering SCF & localization, DMRG, AO projection, and
 the full pipeline are available as Jupyter notebooks in
-[aegiss/examples/tutorials/](aegiss/examples/tutorials/README.md).
+[docs/tutorials/](docs/tutorials/index.md).
 
 ---
 
@@ -896,3 +898,40 @@ mkdocs build                  # write static site to site/
 
 See [docs/README.md](docs/README.md) for a full description of the docs layout and
 how to add new pages.
+
+---
+
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for the
+development setup, branch and commit conventions, and testing requirements, and note
+that all contributions require agreement to the
+[Contributor License Agreement](CLA.md). All interactions in this repository are
+covered by our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+Bugs and feature requests go through the
+[issue templates](https://github.com/Algorithmiq/AEGISS/issues/new/choose). Security
+issues should be reported privately to
+[legal@algorithmiq.fi](mailto:legal@algorithmiq.fi) rather than as a public issue.
+
+---
+
+## Citation
+
+If you use AEGISS in your work, please cite the paper:
+
+```bibtex
+@misc{tarocco2025aegissatomicorbital,
+      title={AEGISS -- Atomic orbital and Entropy-based Guided Inference for Space Selection -- A novel semi-automated active space selection workflow for quantum chemistry and quantum computing applications},
+      author={Fabio Tarocco and Pi A. B. Haase and Fabijan Pavošević and Vijay Krishna and Leonardo Guidoni and Stefan Knecht and Martina Stella},
+      year={2025},
+      eprint={2508.10671},
+      archivePrefix={arXiv},
+      primaryClass={physics.chem-ph},
+      url={https://arxiv.org/abs/2508.10671},
+}
+```
+
+Machine-readable metadata for both the software and the paper is in
+[CITATION.cff](CITATION.cff) — GitHub's "Cite this repository" widget reads it
+directly.

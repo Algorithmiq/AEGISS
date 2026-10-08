@@ -1,0 +1,15 @@
+# Default owners for everything in the repository. Listed owners are requested for
+# review automatically on every pull request, so they need write access here.
+#
+# Add co-maintainers to the line below (space-separated), or an org team such as
+# @Algorithmiq/quantum-chemistry once it has been granted access to this repository.
+* @FabioTarocco
+
+# Per-area owners take precedence over the default above. Uncomment and fill in as
+# the maintainer group grows.
+#
+# src/aegiss/active_space/**   @handle
+# src/aegiss/wavefunction/**   @handle
+# src/aegiss/utils/mol_tagger/** @handle
+# docs/**                      @handle
+# .github/**                   @handle

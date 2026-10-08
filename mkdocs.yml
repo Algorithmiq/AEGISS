@@ -6,8 +6,10 @@ repo_name: Algorithmiq/AEGISS
 edit_uri: ""
 
 # Contributor-facing readme for the docs/ dir; not a site page (would clash with index.md).
+# scripts/ holds helpers that regenerate documentation assets — not site content.
 exclude_docs: |
   README.md
+  scripts/
 
 theme:
   icon:
@@ -56,7 +58,11 @@ markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - admonition
