@@ -42,7 +42,7 @@ from aegiss.config_dataclasses import DMRGConfig
 
 dmrg_config = DMRGConfig(
     ncas=20,
-    nelecas=(11, 9),      # (nalpha, nbeta) for an open-shell target
+    nelecas=(11, 9),      # (nalpha, nbeta); nalpha - nbeta must equal mol.spin
     symm_type="SZ",       # required for UHF and for spin-resolved SOE
     unrestricted=None,    # None → autodetect isinstance(mf, scf.uhf.UHF)
     spin_soe="auto",      # "auto" | "summed" | "resolved"
@@ -214,7 +214,7 @@ from aegiss.config_dataclasses import (
     DMRGConfig, EntropyConfig, ProjectionConfig, OutputConfig,
 )
 
-mol = build_mol("open_shell.xyz", basis="ccpvdz")
+mol = build_mol("open_shell.xyz", basis="ccpvdz", spin=2)  # triplet: matches nelecas=(11, 9)
 mf  = run_scf(mol, method="UHF")
 
 active = select_aegiss(
