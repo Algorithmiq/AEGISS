@@ -822,7 +822,7 @@ Additional keyword for `"pm"`:
 
 | Keyword | Type | Default | Description |
 |---|---|---|---|
-| `pop_method` | `str` | `"becke"` | Population analysis scheme for the virtual block |
+| `pop_method` | `str` | `"mulliken"` | Population analysis scheme for the virtual block |
 
 Additional keywords for `"ibos"` / `"iaos"`:
 
