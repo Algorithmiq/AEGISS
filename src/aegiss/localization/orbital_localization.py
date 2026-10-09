@@ -93,7 +93,7 @@ def localize_pipek_mezey(
     n_occ: int | None = None,
     *,
     on_virtual: bool = False,
-    pop_method: str = "becke",
+    pop_method: str = "mulliken",
 ) -> np.ndarray:
     """Pipek-Mezey localization — maximises orbital partial charges on atoms.
 
@@ -107,7 +107,7 @@ def localize_pipek_mezey(
         on_virtual (bool):
             Whether to also localize the virtual space.
         pop_method (str):
-            Population analysis scheme used for the virtual block (default ``"becke"``).
+            Population analysis scheme used for the virtual block (default ``"mulliken"``).
 
     Returns:
         new_mos (np.ndarray, shape (nao, nmo)):
