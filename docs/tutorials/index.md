@@ -6,7 +6,7 @@ by the notebooks live alongside them in `docs/tutorials/data/`.
 
 | Notebook | Topic |
 |---|---|
-| [01 — SCF & Localization](01_scf_and_localization.ipynb) | Building the molecule, running HF/DFT, solvation models (PCM, DD-COSMO), scalar relativistic corrections (X2C), orbital localization (Boys, PM, ER, NOs, FNOs) |
+| [01 — SCF & Localization](01_scf_and_localization.ipynb) | Building the molecule, running HF/DFT, scalar relativistic corrections (X2C), orbital localization (Boys, PM, ER, IBOs, IAOs, NOs, FNOs) |
 | [02 — DMRG & Entropy](02_dmrg.ipynb) | `DMRGConfig`, running DMRG, inspecting single-orbital entropies, entropy screening |
 | [03 — AO Projection](03_ao_projection.ipynb) | `ProjectionConfig`, AO-projection selection, thresholds and top-N ranking |
 | [04 — Full Pipeline](04_aegiss.ipynb) | End-to-end AEGISS pipeline with all four config objects |
@@ -86,8 +86,14 @@ improve physical interpretability of entropy screening:
 | `"boys"` | Foster–Boys | Minimum orbital spread |
 | `"pm"` | Pipek–Mezey | Maximum atomic charge; preserves σ/π separation |
 | `"er"` | Edmiston–Ruedenberg | Maximum self-repulsion energy |
+| `"ibos"` | Intrinsic Bond Orbitals | Maximum population on intrinsic atomic orbitals |
+| `"iaos"` | Intrinsic Atomic Orbitals | Minimal-basis-like basis of the occupied space (returns the IAO basis, not a replacement for `mo_coeff`) |
 | `"nos"` | Natural Orbitals | Diagonalise correlated 1-RDM |
 | `"fnos"` | Frozen Natural Orbitals | As NOs but with a frozen core |
+
+Localized orbitals have no orbital energies, so the index-based CAS window built on them
+is no longer a Fermi-level window; see the
+[methodology](../index.md#3-single-orbital-entropy-screening).
 
 ---
 
