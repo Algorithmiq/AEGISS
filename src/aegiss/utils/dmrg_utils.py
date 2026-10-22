@@ -27,7 +27,7 @@ _SCHEDULE_THRDS = [1e-8, 1e-10, 1e-12, 1e-12, 1e-12]
 def _default_dmrg_schedule(
     max_bond_dim: int = 500,
 ) -> tuple[list[int], list[float], list[float]]:
-    """Define a default DMRG sweep schedule for the Block2 ``DMRGDriver.dmrg`` method.
+    """Define a default DMRG sweep schedule for the block2main input file.
 
     Builds a 30-sweep schedule from fixed waypoints at sweeps ``[0, 4, 8, 12, 16]``.
     The first segment uses ``max_bond_dim // 2``; all subsequent segments use

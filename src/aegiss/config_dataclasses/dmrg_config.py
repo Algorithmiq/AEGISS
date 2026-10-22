@@ -22,8 +22,10 @@ class DMRGConfig:
             Target DMRG bond dimension (must be a positive multiple of 4).
             The sweep schedule starts at ``max_bond_dim // 2`` and ramps up to ``max_bond_dim``.
         symm_type ({'SZ', 'SU2'}, default 'SZ'):
-            Spin symmetry used by block2.  ``'SZ'`` is required for entropy
-            calculations; ``'SU2'`` is faster but needs MPS conversion for entropies.
+            Spin symmetry used by block2. Both give spin-summed single-orbital
+            entropies directly from the ``1pdm``/``1npc`` output; ``'SU2'`` is
+            spin-adapted and faster. ``'SZ'`` is required only for
+            ``spin_soe='resolved'`` and for unrestricted (UHF) integrals.
         verbosity (int, default 0):
             Verbosity level for block2 output.  Higher values produce more detailed logs.
         unrestricted (bool or None, default None):
@@ -132,9 +134,8 @@ class DMRGConfig:
         spin-summed spatial entropy is used.
 
         Returns:
-        -------
-        bool
-            ``True`` if the single-orbital entropies should be spin-resolved.
+            spin_resolved (bool): ``True`` if the single-orbital entropies
+                should be spin-resolved.
         """
         if self.spin_soe == "resolved":
             return True

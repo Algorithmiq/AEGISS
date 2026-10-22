@@ -132,9 +132,12 @@ def run_dmrg_subprocess(
         spin_resolved (bool): If ``True``, return separate alpha/beta
             spin-orbital entropies as a ``(2, ncas)`` array (row 0 = alpha,
             row 1 = beta) instead of the spin-summed ``(ncas,)`` vector. Only
-            meaningful with *get_qmi*; the spin-summed default feeds the
-            entropy-screening pipeline, so callers that screen orbitals should
-            leave this ``False``.
+            meaningful with *get_qmi*. The spin-summed vector feeds
+            :func:`~aegiss.active_space.entropy_screening.select_by_entropy`;
+            the ``(2, ncas)`` array feeds
+            :func:`~aegiss.active_space.entropy_screening.select_by_spin_entropy`.
+            :func:`~aegiss.active_space.aegiss.select_aegiss` sets this from
+            :meth:`DMRGConfig.spin_resolved`.
         reorder ({'noreorder', 'fiedler'}): Orbital ordering for block2main.
             ``'noreorder'`` (default) keeps the FCIDUMP order and enables
             ``full_fci_space``; ``'fiedler'`` reorders by the Fiedler vector and
@@ -151,6 +154,14 @@ def run_dmrg_subprocess(
             and mutual information are not available from the ``1pdm`` +
             ``1npc`` output; pass them from an external source to any downstream
             plotting functions if needed.
+
+    Raises:
+        ValueError: If *symm_type* or *reorder* is not a supported value, if
+            *unrestricted* is used with ``symm_type='SU2'``, or if
+            *max_bond_dim* is not a positive multiple of 4.
+        RuntimeError: If the ``block2main`` executable cannot be found.
+        subprocess.CalledProcessError: If ``block2main`` exits with a non-zero
+            status.
     """
     if symm_type not in _VALID_SYMM_TYPES:
         raise ValueError(

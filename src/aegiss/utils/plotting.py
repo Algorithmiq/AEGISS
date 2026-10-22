@@ -90,7 +90,10 @@ def _save_contributions(
         filename (str): Output filename without extension.
         min_pct (float): Minimum fractional contribution below which the slice label and
             percentage are hidden.
-        fmt (str or None): Output format for the figure (e.g., "pdf", "png"). If None, the default (`pdf`) is used.
+        fmt (str or None): Output format for the figure (e.g., "pdf", "png").
+            If ``None``, no extension is
+            appended and matplotlib takes the format from the filename's
+            extension, falling back to ``rcParams["savefig.format"]``.
     """
     n_orbs, n_labels = len(orbs), len(ao_labels)
     total_ao_idx = np.unique(
@@ -164,7 +167,10 @@ def plot_pie_contribution(
         orb_for_row: Number of orbitals per row in the subplot grid.
         min_pct: Minimum fractional contribution (0-1) below which the slice label
             and percentage are hidden. Default is 0.01 (1 %).
-        fmt: Output format for the figure (e.g., "pdf", "png"). If None, the default (`pdf`) is used.
+        fmt: Output format for the figure (e.g., "pdf", "png").
+            If ``None``, no extension is
+            appended and matplotlib takes the format from the filename's
+            extension, falling back to ``rcParams["savefig.format"]``.
     """
     if isinstance(ao_labels, str):
         ao_labels = [ao_labels]
@@ -316,13 +322,15 @@ def plot_ao_contribution(
         filename: Base name of the output file (without extension); ``_heatmap`` is
             appended automatically.
         ao_labels: Dict mapping each group index to its label string (or list of strings,
-            which are joined with a space). When *None* (default), letter
+            which are joined with newlines). When *None* (default), letter
             identifiers A, B, C, … are used as y-tick labels.
         mo_labels: Orbital indices to use as x-tick labels. Defaults to sequential
             integers when *None*.
         mos_per_plot: Maximum number of MOs shown in each subplot panel.
-        fmt: Output format for the figure (e.g., ``"pdf"``, ``"png"``). If ``None``,
-            matplotlib infers the format from the filename.
+        fmt: Output format for the figure (e.g., ``"pdf"``, ``"png"``).
+            If ``None``, no extension is
+            appended and matplotlib takes the format from the filename's
+            extension, falling back to ``rcParams["savefig.format"]``.
         normalization: ``"global"`` (default) divides every row by the single maximum across
             the whole matrix, preserving magnitude differences between AO groups.
             ``"relative"`` normalises each group by its own maximum (jointly over
@@ -389,19 +397,24 @@ def soe_heatmap(
 ) -> None:
     """Plot a single-orbital entropy (SOE) heatmap.
 
-    Displays a 5-row matrix where the top three rows show the relative S(1)
-    values as a continuous colormap, and the bottom two rows show binary
-    threshold indicators. Saves the figure as a PDF.
+    Displays a 5-row matrix where the top three rows show the absolute S(1)
+    values on a fixed [0, 1] colormap, and the bottom two rows show binary
+    threshold indicators: ``S(1)_i / S(1)_max >= 0.1`` (relative rule) and
+    ``S(1)_i > 0.06`` (absolute empirical rule). The title reports
+    ``S(1)_max``. Saves the figure in the *fmt* format.
 
     Args:
-        so1_entropies: List of (orbital_index, relative_entropy) tuples, where the entropy
-            is already normalised by ``max_so1``.
+        so1_entropies: List of (orbital_index, entropy) tuples with the absolute
+            single-orbital entropies; the relative values are computed here by
+            dividing by their maximum.
         n_occ: Number of occupied orbitals. When non-zero, a dashed vertical line is
             drawn at ``n_occ - 0.5`` to mark the occupied/virtual boundary.
         folder: Directory where the PDF is saved.
         filename: Base name of the output file (without extension).
-        fmt: Output format for the figure (e.g., ``"pdf"``, ``"png"``). If ``None``,
-            matplotlib infers the format from the filename.
+        fmt: Output format for the figure (e.g., ``"pdf"``, ``"png"``).
+            If ``None``, no extension is
+            appended and matplotlib takes the format from the filename's
+            extension, falling back to ``rcParams["savefig.format"]``.
     """
     so1_abs = np.array([x[1] for x in so1_entropies])
     max_so1 = max(so1_abs)
@@ -538,19 +551,23 @@ def th_plots(
     the number of orbitals whose relative entropy exceeds τ and plots the
     resulting staircase curve. Plateau regions — where the orbital count is
     stable across a range of thresholds — are highlighted and annotated with
-    the implied CAS(n_elec, n_orbs) sizes. Saves the figure as a PDF.
+    the implied CAS(n_elec, n_orbs) sizes. Horizontal guides mark the
+    orbital count of the absolute empirical rule (``S(1)_i > 0.06``) and of
+    the ``0.1 * S(1)_max`` threshold. Saves the figure in the *fmt* format.
 
     Args:
-        so1_entropies: List of (orbital_index, relative_entropy) tuples, where the entropy
-            is already normalised by ``max_so1``.
+        so1_entropies: List of (orbital_index, entropy) tuples with the absolute
+            single-orbital entropies; they are divided by their maximum here.
         folder: Directory where the PDF is saved.
         occ_index: Index of the first virtual orbital (HOMO + 1). Orbitals with an index
             below this are treated as occupied when computing the implied CAS electron count.
         plateau_size: Minimum number of consecutive threshold steps (out of 101) for a
             flat region to be considered a plateau and annotated on the plot.
         filename: Base name of the output file (without extension).
-        fmt: Output format for the figure (e.g., ``"pdf"``, ``"png"``). If ``None``,
-            matplotlib infers the format from the filename.
+        fmt: Output format for the figure (e.g., ``"pdf"``, ``"png"``).
+            If ``None``, no extension is
+            appended and matplotlib takes the format from the filename's
+            extension, falling back to ``rcParams["savefig.format"]``.
     """
     so1_abs = np.array([x[1] for x in so1_entropies])
     max_so1 = max(so1_abs)
@@ -676,8 +693,10 @@ def mi_plot(
         soe1: List of (orbital_index, single_orbital_entropy) tuples for all orbitals
         folder: Directory where the PDF is saved.
         filename: Base name of the output file (without extension).
-        fmt: Output format for the figure (e.g., ``"pdf"``, ``"png"``). If ``None``,
-            matplotlib infers the format from the filename.
+        fmt: Output format for the figure (e.g., ``"pdf"``, ``"png"``).
+            If ``None``, no extension is
+            appended and matplotlib takes the format from the filename's
+            extension, falling back to ``rcParams["savefig.format"]``.
     """
     fig, ax = plt.subplots(figsize=(8, 8))
     ax.matshow(minfo, cmap="magma", vmin=0, vmax=np.max(minfo))
@@ -766,10 +785,11 @@ def _helper_soe(
     orb_indices = np.array([orb[0] for orb in soe1])
     soe_values = np.array([orb[1] for orb in soe1])
     soe_values = soe_values / max(soe_values)  # Normalize SOE values to [0, 1]
-    soe1_thresholds = [x / 20 for x in range(20)][:0:-1]  # 3 thresholds excluding 0
-    soe1_sizes = [x * 10 for x in np.linspace(5, 35, 20)][
-        :0:-1
-    ]  # Fixed marker size for all thresholds
+    # 19 descending thresholds 0.95, 0.90, ..., 0.05 (0 excluded), so orbitals
+    # below 5% of the maximum SOE get no marker.
+    soe1_thresholds = [x / 20 for x in range(20)][:0:-1]
+    # One marker size per threshold, from 350 down: size grows in steps with SOE.
+    soe1_sizes = [x * 10 for x in np.linspace(5, 35, 20)][:0:-1]
 
     for xi, yi, soe in zip(x, y, soe_values, strict=False):
         for thresh, size in zip(soe1_thresholds, soe1_sizes, strict=False):
@@ -818,18 +838,21 @@ def entanglement_diagrams(
 ) -> None:
     """Plot entanglement diagrams for active and virtual orbitals.
 
-    Each orbital is represented by an individual marker (different colors for different irreps).
-    The size of the marker is proportional to its single-orbital entropy (SOE).
-    Solid to dotted is the gradient for the Mutual Information (MI) between orbitals.
-    The plot is saved as a PDF file.
+    Each orbital is drawn as a marker on a circle, all in the same colour. The
+    marker size grows in fixed steps with the orbital's single-orbital entropy
+    (SOE) relative to the largest SOE, in 5% bins; orbitals below 5% of the
+    maximum get no marker. Solid to dotted is the gradient for the Mutual
+    Information (MI) between orbitals. The plot is saved in the *fmt* format.
 
     Args:
         soe1 (list of tuples): List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
         minfo (np.ndarray): Mutual Information matrix between orbitals.
         folder (str, default "./"): Directory where the PDF file will be saved.
         filename (str, default "entanglement_diagrams"): Base name of the output PDF file (without extension).
-        fmt (str or None, default "pdf"): Output format for the figure (e.g., ``"pdf"``, ``"png"``). If ``None``,
-            matplotlib infers the format from the filename.
+        fmt (str or None, default "pdf"): Output format for the figure (e.g., ``"pdf"``, ``"png"``).
+            If ``None``, no extension is appended and matplotlib takes the
+            format from the filename's extension, falling back to
+            ``rcParams["savefig.format"]``.
     """
     N = len(soe1)
 
@@ -887,8 +910,9 @@ def _make_soe_plots(
             are appended (plus the format extension).
         minfo (np.ndarray or None): Mutual information matrix for all CAS orbitals.  When ``None``, the
             entanglement diagram and MI heatmap are skipped.
-        fmt (str or None): Output format for all figures (e.g., ``"pdf"``, ``"png"``). If ``None``,
-            matplotlib infers the format from the filename.
+        fmt (str or None): Output format for all figures (e.g., ``"pdf"``, ``"png"``).
+            If ``None``, no extension is appended and matplotlib uses
+            ``rcParams["savefig.format"]``.
     """
     tagged = [(orb_id, soe1[idx]) for idx, orb_id in enumerate(active_orbs)]
     tagged += [

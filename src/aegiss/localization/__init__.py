@@ -1,4 +1,4 @@
-"""Orbital localization: Boys, Edmiston-Ruedenberg, Pipek-Mezey, NOs, FNOs."""
+"""Orbital localization: Boys, Edmiston-Ruedenberg, Pipek-Mezey, IBOs, IAOs, NOs, FNOs."""
 
 from aegiss.localization.fnos import compute_fnos
 from aegiss.localization.nos import compute_nos

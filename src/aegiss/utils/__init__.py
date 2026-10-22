@@ -1,4 +1,4 @@
-"""Utilities: DMRG helpers, orbital index partitioning, cube file export."""
+"""Utilities: DMRG helpers, orbital index partitioning, cube file export, plotting, banner."""
 
 from aegiss.utils.banner import print_banner
 from aegiss.utils.orbital_indices import get_orbital_spaces, get_subspaces_from_cas

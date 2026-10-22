@@ -12,10 +12,13 @@ class OutputConfig:
     Args:
         saving_folder (str, default './aegiss_output/'):
             Directory where cube files are written when *save_orb* is ``True``.
-        saving_prefix (str, default 'benzene'):
+        saving_prefix (str, default 'aegiss_selection'):
             Prefix used for output cube file names.
         save_plots (bool, default False):
-            Whether to generate and save diagnostic plots (SOE heatmap and TH plot).
+            Whether to generate and save diagnostic plots: the SOE heatmap and
+            TH plot (spin-summed entropies only), the AO-contribution heatmaps of
+            the projection step, and the AO pie chart of the final active
+            orbitals (restricted references only).
         save_orb (bool, default True):
             Write cube files for the entropy-screened and final active orbitals.
     """

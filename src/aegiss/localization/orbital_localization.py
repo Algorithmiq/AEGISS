@@ -343,6 +343,9 @@ def localize(method: str, *args: Any, **kwargs: Any) -> Any:
         **kwargs:
             Keyword arguments forwarded to the selected method.
 
+    Raises:
+        ValueError: If *method* is not one of the names listed above.
+
     Note:
         Localized orbitals have no orbital energies, so the index-based DMRG window
         (``ncas`` orbitals around the occupied/virtual boundary) is no longer a
@@ -350,10 +353,11 @@ def localize(method: str, *args: Any, **kwargs: Any) -> Any:
 
     Example:
         >>> localize('pm', mol, mf, on_virtual=True)
-    >>> localize('ibos', mol, mf)
-    >>> localize('iaos', mol, mf, minao='minao')
-    >>> localize('nos', mf, correlated_method='mp2', frozen=[0])
-    >>> localize('boys', mol, mf, n_occ=5, on_virtual=False)
+        >>> localize('ibos', mol, mf)
+        >>> localize('iaos', mol, mf, minao='minao')
+        >>> localize('nos', mf, correlated_method='mp2')
+        >>> localize('fnos', mf, correlated_method='mp2', frozen=[0])
+        >>> localize('boys', mol, mf, n_occ=5, on_virtual=False)
     """
     if method not in _METHODS:
         raise ValueError(

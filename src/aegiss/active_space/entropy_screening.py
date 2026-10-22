@@ -153,6 +153,10 @@ def select_by_entropy(
     Returns:
         selected_occ (list of tuple[int, float]): Selected occupied orbitals with entropy values.
         selected_virt (list of tuple[int, float]): Selected virtual orbitals with entropy values.
+
+    Raises:
+        ValueError: If *soe1* is not 1-D (e.g. a spin-resolved ``(2, ncas)``
+            array; use :func:`select_by_spin_entropy` for that).
     """
     logger.info("----------------Entropy Screening for AEGISS----------------\n")
     if soe1 is None:
@@ -211,23 +215,29 @@ def select_by_spin_entropy(
     channel is thresholded on its own. This yields a *split* selection: the alpha
     and beta active windows may contain different orbitals.
 
-    Parameters
-    ----------
-    occ_orbs, virt_orbs : np.ndarray
-        Occupied / virtual orbital indices of the screening window (shared by
-        both spin channels; the split is in which of them each channel keeps).
-    soe1 : np.ndarray, shape (2, n_occ + n_virt)
-        Spin-resolved single spin-orbital entropies (row 0 = alpha, row 1 =
-        beta), as returned by ``run_dmrg_subprocess(..., spin_resolved=True)``.
-    fraction, fraction_type, ranking
-        Same meaning as :func:`select_by_entropy`; applied independently to each
-        channel (a single ``fraction`` is used for both channels).
+    Args:
+        occ_orbs (np.ndarray): Occupied orbital indices of the screening window
+            (shared by both spin channels; the split is in which of them each
+            channel keeps).
+        virt_orbs (np.ndarray): Virtual orbital indices of the screening window.
+        soe1 (np.ndarray, shape (2, n_occ + n_virt)): Spin-resolved single
+            spin-orbital entropies (row 0 = alpha, row 1 = beta), as returned by
+            ``run_dmrg_subprocess(..., spin_resolved=True)``. ``None`` returns
+            an empty selection for both channels.
+        fraction (float, optional): Same meaning as in :func:`select_by_entropy`;
+            a single value is used for both channels.
+        fraction_type ({'r', 'a'}, optional): Same meaning as in
+            :func:`select_by_entropy`.
+        ranking ({'global', 'subset'}, optional): Same meaning as in
+            :func:`select_by_entropy`; applied to each channel independently.
 
     Returns:
-    -------
-    selection : dict[str, tuple[list, list]]
-        ``{"alpha": (occ_alpha, virt_alpha), "beta": (occ_beta, virt_beta)}``,
-        each entry an ``(index, entropy)`` list as from :func:`select_by_entropy`.
+        selection (dict[str, tuple[list, list]]): ``{"alpha": (occ_alpha,
+            virt_alpha), "beta": (occ_beta, virt_beta)}``, each entry an
+            ``(index, entropy)`` list as from :func:`select_by_entropy`.
+
+    Raises:
+        ValueError: If *soe1* is not a ``(2, ncas)`` array.
     """
     if soe1 is None:
         logger.info("No single-orbital entropies provided. Returning empty selection.")

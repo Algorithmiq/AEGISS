@@ -76,8 +76,15 @@ def run_scf(
         xc (str, optional): Exchange-correlation functional; only used when *method* is
             ``'RKS'`` or ``'UKS'``. Default is ``'b3lyp'``.
         solvent_info (tuple[str, float], optional): Solvent model to use, specified as
-            ``(model, dielectric_constant)``, e.g. ``('PCM', 78.4)`` for water.
-            Default is ``None`` (no solvent).
+            ``(model, dielectric_constant)``, e.g. ``('IEF-PCM', 78.4)`` for water.
+            *model* is case-insensitive. ``'C-PCM'`` / ``'CPCM'`` and
+            ``'IEF-PCM'`` / ``'IEFPCM'`` select PySCF's PCM solver with that
+            variant; ``'DDCOSMO'`` selects ddCOSMO. Any other name containing
+            ``'PCM'`` (including plain ``'PCM'``) makes PySCF raise
+            ``RuntimeError`` when the SCF runs; any name containing neither
+            ``'PCM'`` nor ``'DDCOSMO'`` (e.g. ``'COSMO'``) is silently ignored
+            and the calculation runs without solvent. Default is ``None`` (no
+            solvent).
         relativistic ({'x2c'} or None, optional): Relativistic correction to apply.
             ``'x2c'`` applies the scalar exact two-component (X2C) transformation via
             ``mf.x2c()``. Default is ``None`` (no relativistic correction).
@@ -86,6 +93,12 @@ def run_scf(
 
     Returns:
         mf (pyscf.scf.SCF or pyscf.dft.KohnShamDFT): Converged mean-field object.
+
+    Raises:
+        ValueError: If *method* is not one of ``'RHF'``, ``'UHF'``, ``'RKS'``,
+            ``'UKS'``, or if *relativistic* is empty or not ``'x2c'``.
+        RuntimeError: Raised by PySCF if *solvent_info* names an unsupported
+            PCM variant (see *solvent_info*).
     """
     method = method.upper()
 

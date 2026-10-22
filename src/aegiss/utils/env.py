@@ -94,7 +94,3 @@ def pyscf_max_memory() -> int:
         raise ValueError(
             f"Invalid value for PYSCF_MAX_MEMORY: {value!r}. Expected an integer number of MB."
         ) from exc
-
-
-# PySCF scratch directory: set the PYSCF_TMPDIR environment variable before
-# importing PySCF. PySCF reads it at import time and uses it as its temp dir.

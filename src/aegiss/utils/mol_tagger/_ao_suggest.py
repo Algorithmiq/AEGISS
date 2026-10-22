@@ -222,7 +222,7 @@ def _pi_labels(
 
     Args:
         metals: ``(atom_index, Z, symbol)`` triples for metal atoms.
-        organics: ``(atom_index, Z, symbol)`` triples for non-metal atoms.
+        organics: ``(atom_index, Z, bare_sym, prefix)`` 4-tuples for non-metal atoms.
         pos: Full position array for all atoms (indexed by atom index).
 
     Returns:

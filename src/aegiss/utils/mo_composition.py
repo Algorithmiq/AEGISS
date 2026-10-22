@@ -222,7 +222,7 @@ def mo_ao_contributions(
     group_by_element: bool = False,
     clusters: Mapping[int, Sequence[int]] | None = None,
 ) -> dict[int, dict[str, list[tuple[int, str, float]]]]:
-    """Print the top-N atomic-orbital contributions to one or more MOs.
+    """Log and return the top-N atomic-orbital contributions to one or more MOs.
 
     For each requested molecular orbital the AO basis functions are ranked by
     the magnitude of their expansion coefficient ``mo_coeff[mu, i]`` and the
@@ -264,7 +264,9 @@ def mo_ao_contributions(
             atoms of the same element sharing a basis label, ranking the
             resulting groups instead of individual AOs.
         clusters (mapping of int to sequence of int, optional): Maps a cluster id
-            to the atom indices it contains. When given, sum ``|coefficient|``
+            to the atom indices it contains. Atom indices are always 0-based
+            (PySCF atom order), regardless of the orbital display base. When
+            given, sum ``|coefficient|``
             over the atoms of each cluster sharing a basis label. Atoms must each
             belong to at most one cluster; any not listed fall into the catch-all
             ``U`` group. Mutually exclusive with *group_by_element*.

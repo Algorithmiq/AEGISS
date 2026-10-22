@@ -15,7 +15,11 @@ def compute_fnos(
     frozen: list[int],
     active: list[int],
 ) -> np.ndarray:
-    """Construct frozen natural orbitals by truncating weakly occupied NOs.
+    """Construct frozen natural orbitals by rotating the virtual space into NOs.
+
+    Only the virtual block of the 1-RDM is diagonalised; the virtual NOs are
+    sorted by decreasing occupation. The occupied orbitals are returned
+    unchanged and no orbital is discarded.
 
     Args:
         wfn_obj (correlated PySCF solver object):
@@ -27,7 +31,8 @@ def compute_fnos(
 
     Returns:
         mo_coeff (np.ndarray, shape (nao, nmo)):
-            FNO coefficients in the AO basis, including both frozen and active orbitals.
+            Unchanged occupied (frozen and active) orbitals followed by the
+            virtual FNOs, in the AO basis.
     """
     rdm1 = wfn_obj.make_rdm1()
 

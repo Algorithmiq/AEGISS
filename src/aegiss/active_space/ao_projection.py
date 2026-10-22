@@ -47,8 +47,8 @@ def _compute_contribution(
 
     Returns:
         selected (list of tuple[int, float]): Orbital index/weight pairs above the contribution threshold.
-        all_contributions (list of tuple[int, float]): Orbital index/weight pairs for all orbitals, ordered by index,
-            for potential further analysis or plotting.
+        all_contributions (list of tuple[int, float]): Orbital index/weight pairs for all orbitals, in the
+            order of *reduced_space_indices*, for potential further analysis or plotting.
     """
     mol2 = mf.mol  # original basis
     projection_mol = mol2.copy()  # extended basis
@@ -118,9 +118,11 @@ def select_by_label(
     """Select orbitals based on their contribution to a specific AO label.
 
     Args:
-        label (str or list of str): AO label(s) to compute contributions for. Each label should be in the
-            format ``"Element.Index AtomicOrbital"``, e.g. ``"O.1 1s"`` for the
-            second oxygen atom. If a list is provided, contributions are computed
+        label (str or list of str): AO label(s) to compute contributions for, as accepted by
+            ``mol.search_ao_label``, e.g. ``"O 1s"``. For a molecule loaded from
+            a MolTagger-tagged XYZ file, ``"O.1 1s"`` matches the 1s AOs of the
+            oxygen atom(s) the user tagged ``O.1``; the number is the user's tag,
+            not an atom index. If a list is provided, contributions are computed
             for each label separately and combined.
         mf (pyscf.scf.hf.SCF): Mean-field object containing the molecule and MO coefficients.
         full_mo_coeff (np.ndarray): Coefficients of the full MOs.
@@ -131,8 +133,8 @@ def select_by_label(
 
     Returns:
         selected_indices (list of tuple[int, float]): Orbital index/weight pairs selected based on their contribution.
-        projected_weights (list of tuple[int, float]): Orbital index/weight pairs for all orbitals, ordered by index,
-            for potential further analysis or plotting.
+        projected_weights (list of tuple[int, float]): Orbital index/weight pairs for all orbitals, in the
+            order of *space*, for potential further analysis or plotting.
     """
     return _compute_contribution(
         mf,
@@ -463,19 +465,23 @@ def select_by_ao_projection(
             Basis set to use for the projection. ``None`` uses the original basis.
             A minimal basis (e.g. ``'minao'``) helps focus the selection on
             chemically relevant orbitals and reduces noise from diffuse functions.
-        contribution_type ({'r', 'a'}): Relative (``'r'``) or absolute (``'a'``) contribution. Required when
-            *contribution* is specified.
+        contribution_type ({'r', 'a'}, default 'a'): Relative (``'r'``, each group's weights divided
+            by their maximum over the search space) or absolute (``'a'``) contribution.
         contribution (float, list of float, or dict, default 0.0): Threshold for
             selecting orbitals based on their contribution.
             A single float applies to all AO groups; a list specifies per-group
-            thresholds and must match the length of *ao_labels*.
+            thresholds and should match the length of *ao_labels*; on a length
+            mismatch a warning is logged and the first value is used for every
+            group. Ignored when *top_n* is given.
             For an unrestricted mean-field it may also be a spin-resolved
             ``{"alpha": ..., "beta": ...}`` mapping (each value itself a float or
             per-group list), applying a different threshold to each spin channel.
             A non-dict value is shared by both channels. A dict is rejected for a
             restricted mean-field.
         top_n (int or list of int, optional): Alternative to *contribution* thresholding. Selects the top N orbitals
-            per AO group. A list specifies per-group counts.
+            per AO group. A list specifies per-group counts; on a length
+            mismatch with *ao_labels* a warning is logged and the first value is
+            used for every group.
         restricted_space (list of int, list of tuple, tuple of lists, dict, optional):
             Orbital indices to restrict selection to. Can be a plain list of
             integers (e.g. ``list(range(34, 131))``), a list of ``(index, entropy)``
@@ -510,6 +516,10 @@ def select_by_ao_projection(
             Group index (position in *ao_labels*) to ``(orbital_index, weight)``
             pairs over the whole search space. For an unrestricted mean-field
             this is a ``{"alpha": ..., "beta": ...}`` mapping of such dicts.
+
+    Raises:
+        ValueError: If *restricted_space* or *contribution* is a spin-resolved
+            ``{"alpha", "beta"}`` dict but *mf* is restricted.
     """
     logger.info("----------------AO Projection Screening for AEGISS----------------\n")
     logger.info("AO labels for projection: %s", ao_labels)

@@ -30,7 +30,6 @@ class MolTagger:
             filepath (str or Path): Path to the XYZ file to visualise.
 
         Raises:
-            ImportError: If the ``viz`` extras are not installed.
             FileNotFoundError: If *filepath* does not exist.
         """
         self.filepath = Path(filepath).resolve()
