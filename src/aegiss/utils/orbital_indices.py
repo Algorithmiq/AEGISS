@@ -89,22 +89,27 @@ def get_orbital_spaces(
     Args:
         mf (PySCF SCF object): Converged mean-field object exposing ``mo_occ``.
         orbital_list (list of int): Orbital indices (0-based) that define the active / selected space.
-        unique_virt_space (bool): If ``True``, the virtual space is partitioned into active and frozen
-            virtuals based on *orbital_list*. If ``False``, all virtual orbitals
-            are considered active and *orbital_list* only affects the occupied space.
+            An empty list selects every orbital: no occupied orbital is frozen
+            and, when *unique_virt_space* is ``False``, every virtual orbital is
+            active.
+        unique_virt_space (bool): If ``True``, *orbital_list* only affects the occupied space:
+            every virtual orbital is returned in *frozen_virt* and *active_virt*
+            is empty. If ``False``, the virtual space is partitioned into active
+            and frozen virtuals based on *orbital_list*.
 
     Returns:
         frozen_occ (np.ndarray of int): Occupied orbitals **not** in *orbital_list* (core / frozen occupied).
         active_occ (np.ndarray of int): Occupied orbitals that **are** in *orbital_list*.
         active_virt (np.ndarray of int): Virtual orbitals that **are** in *orbital_list* (empty when
             *unique_virt_space* is ``True``).
-        frozen_virt (np.ndarray of int): Virtual orbitals **not** in *orbital_list* (external / frozen virtual).
+        frozen_virt (np.ndarray of int): Virtual orbitals **not** in *orbital_list* (external / frozen virtual);
+            all virtual orbitals when *unique_virt_space* is ``True``.
     """
     selected = set(orbital_list)
     if not selected:
         logger.info(
-            "Using all the occupied orbitals and all virtual orbitals as"
-            " frozen and active spaces, respectively."
+            "Empty orbital list: treating all orbitals as selected"
+            " (no frozen occupied orbitals)."
         )
         selected = set(range(len(mf.mo_occ)))
     occ_mask = mf.mo_occ > 0
@@ -129,7 +134,10 @@ def get_subspaces_from_cas(
     ncas: int,
     nelecas: int | tuple[int, int],
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Partition MO indices into active and virtual spaces from a CAS definition.
+    """Split the CAS window into its occupied and virtual parts.
+
+    The window holds the ``ncas`` orbitals directly above the closed frozen
+    core. Its orbitals are split at the reference HOMO/LUMO boundary.
 
     Args:
         mf (PySCF SCF object): Converged mean-field object exposing ``mo_occ``.
@@ -138,8 +146,17 @@ def get_subspaces_from_cas(
             ``(nalpha, nbeta)`` pair (same convention as PySCF's CASCI).
 
     Returns:
-        active_orbs (np.ndarray of int): Orbital indices (0-based) of the active space.
-        virt_orbs (np.ndarray of int): Orbital indices (0-based) of the virtual space (not in the active space).
+        active_occ (np.ndarray of int): Orbital indices (0-based) of the CAS window that are occupied
+            in the reference (``mo_occ > 0``, SOMOs included).
+        active_virt (np.ndarray of int): Orbital indices (0-based) of the CAS window that are virtual
+            in the reference.
+
+    Raises:
+        ValueError: If *ncas* exceeds the number of MOs, if *nelecas* does not
+            satisfy ``nalpha >= nbeta >= 0``, if it exceeds the total electron
+            count, if the window does not fit above the frozen core, or, for an
+            unrestricted reference, if the active spin ``nalpha - nbeta``
+            differs from the reference spin.
     """
     logger.info(
         "----------DMRG CAS Subspace Selection (ncas=%d, nelecas=%s)----------",

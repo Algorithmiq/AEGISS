@@ -32,9 +32,17 @@ def configure_logging(
 ) -> None:
     """Configure structlog over stdlib logging, writing to stdout.
 
-    Redirect stdout from the shell to control the destination:
+    Replaces any handlers on the root logger and clamps noisy third-party
+    loggers (matplotlib, h5py) to ``WARNING``. Redirect stdout from the shell to
+    control the destination:
+
         python main.py > log.out        # local
         #SBATCH -o slurm-%j.out         # SLURM
+
+    Args:
+        level (int): Root logger level (default ``logging.INFO``).
+        timestamp_fmt (str): ``strftime`` format for the timestamp of each log
+            line (default ``"%Y-%m-%d %H:%M:%S"``).
     """
     shared_processors: list[Processor] = [
         structlog.stdlib.add_log_level,

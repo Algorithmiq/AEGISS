@@ -88,7 +88,7 @@ class MolViewWindow(QMainWindow):
 
     Attributes:
         xyz_path: Path to the loaded XYZ file.
-        tags: Mapping from atom index to comma-separated tag string.
+        tags: Mapping from atom index to its ``Element.N`` tag (e.g. ``"C.1"``).
         selected: Set of currently selected atom indices.
     """
 

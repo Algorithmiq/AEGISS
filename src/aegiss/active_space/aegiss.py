@@ -375,6 +375,8 @@ def select_aegiss(
             orbital indices of the selected active space. A single array for a
             restricted mean-field; a split ``{"alpha": ..., "beta": ...}``
             mapping (kept separate, not reconciled) for an unrestricted one.
+            When no orbital passes the entropy screening, an empty flat
+            ``np.ndarray`` is returned, also for an unrestricted reference.
     """
     active_orbs, virt_orbs = get_subspaces_from_cas(
         mf, ncas=dmrg_config.ncas, nelecas=dmrg_config.nelecas
@@ -403,7 +405,7 @@ def select_aegiss(
     if _screening_empty(screened):
         logger.info(
             "No orbitals passed the entropy screening step. Consider adjusting the "
-            "entropy_fraction or using 'global' ranking for a more inclusive selection."
+            "EntropyConfig.fraction or using 'global' ranking for a more inclusive selection."
         )
         return np.array([], dtype=int)
 

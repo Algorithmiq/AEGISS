@@ -27,7 +27,9 @@ def save_orbitals(
         mo_coeff (np.ndarray): Molecular orbital coefficients in the AO basis. Shape (n_ao, n_mo).
         candidate_indices (np.ndarray): Indices of the orbitals to save.
         filename_prefix (str): Prefix for the output cube files. Each orbital is saved as
-            ``"{filename_prefix}_{i}.cube"``.
+            ``"{filename_prefix}_{i}.cube"``, where ``i`` is the orbital index
+            in the configured display base (see
+            :func:`aegiss.utils.orb_display.to_display`).
         folder (str): Output directory path. Created if it does not exist.
     """
     from pyscf.tools import cubegen  # noqa: PLC0415
@@ -58,7 +60,9 @@ def save_orbitals_from_entropies(
         candidate_indices (list of tuple[int, float]):
             Orbital index/entropy pairs; only the indices are used for saving.
         filename_prefix (str):
-            Prefix for the output cube files. Each orbital is saved as ``"{filename_prefix}_{i}.cube"``.
+            Prefix for the output cube files. Each orbital is saved as ``"{filename_prefix}_{i}.cube"``,
+            where ``i`` is the orbital index in the configured display base (see
+            :func:`aegiss.utils.orb_display.to_display`).
         folder (str):
             Output directory path. Created if it does not exist.
     """
@@ -85,7 +89,8 @@ def dump_qmi(
         minfo (np.ndarray): Mutual information matrix.
         soe1 (np.ndarray): Single orbital entropy values.
         soe2 (np.ndarray or None): Double orbital entropy values, or ``None`` if not computed.
-        path (Path or str): Output file path (without extension; ``.npz`` is appended by numpy).
+        path (Path or str): Output file path. numpy appends ``.npz`` when the
+            path does not already end with it.
     """
     filename = Path(path)
     data: dict[str, np.ndarray] = {"minfo": minfo, "soe1": soe1}

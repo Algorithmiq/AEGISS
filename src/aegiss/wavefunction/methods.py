@@ -1,4 +1,4 @@
-"""Other wavefunction methods (FCI, CISD, CCSD) via PySCF."""
+"""Other wavefunction methods (MP2, CISD, CCSD) via PySCF."""
 
 from __future__ import annotations
 
