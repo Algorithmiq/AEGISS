@@ -334,6 +334,7 @@ def _plot_active(
         labels_names=projection_config.ao_labels,
         orbs=active_indices,
         folder=output_config.saving_folder,
+        filename=output_config.saving_prefix + "_composition",
     )
 
 

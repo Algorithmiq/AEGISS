@@ -67,7 +67,6 @@ def run_ccsd(mf: Any, **kwargs: Any) -> Any:
 def build_correlated_wfn(
     mf: Any,
     method: Literal["mp2", "cisd", "ccsd"],
-    *args: Any,
     **kwargs: Any,
 ) -> Any:
     """Build a correlated wavefunction object for NO computation.
@@ -75,7 +74,6 @@ def build_correlated_wfn(
     Args:
         mf (pyscf.scf.hf.SCF): Converged mean-field object.
         method ({'mp2', 'cisd', 'ccsd'}): Correlated method to use.
-        *args: Positional arguments forwarded to the method runner.
         **kwargs: Keyword arguments forwarded to the method runner.
 
     Returns:
