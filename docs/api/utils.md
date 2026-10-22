@@ -57,6 +57,46 @@ from aegiss.utils.mo_composition import mo_ao_contributions
 
 ## Entropy and mutual information
 
+The AEGISS pipeline computes **single-orbital entropies** only: `select_aegiss` and
+`run_dmrg_subprocess` do not return an orbital mutual-information (MI) matrix. The MI
+plots ([`mi_plot`](#plotting) and [`entanglement_diagrams`](#plotting)) and
+[`dump_qmi`](#aegiss.utils.dump.dump_qmi) therefore take a matrix computed elsewhere,
+for example with block2's Python API, where
+`DMRGDriver.get_orbital_interaction_matrix(ket)` returns
+$I_{ij} = \tfrac{1}{2}(S_i + S_j - S_{ij})$ with a zero diagonal, or with any other
+DMRG or CI code.
+
+```python
+import numpy as np
+
+from aegiss.utils.dump import dump_qmi
+from aegiss.utils.plotting import entanglement_diagrams, mi_plot
+
+window = [16, 19, 20, 21, 22, 29]           # 0-based MO indices of the orbitals
+s1 = np.array([0.31, 0.52, 0.55, 0.54, 0.51, 0.30])  # S(1) per orbital (illustrative)
+minfo = np.load("benzene_mi.npy")           # (6, 6) MI matrix in the same order
+
+soe1 = list(zip(window, s1))                # (orbital_index, S1) pairs
+mi_plot(minfo, soe1, folder="plots", filename="benzene_MI")
+entanglement_diagrams(soe1, minfo, folder="plots", filename="benzene_entanglement")
+dump_qmi(minfo, s1, path="plots/benzene_qmi.npz")
+```
+
+What the external matrix must satisfy:
+
+- It is a symmetric `(n, n)` array whose row and column `k` belong to the orbital
+  `soe1[k][0]`, the same orbitals (same `mo_coeff`) that the entropies refer to. If the
+  external calculation reorders the orbitals, for example with a Fiedler ordering, map
+  the matrix back to your orbital order first.
+- `entanglement_diagrams` reads only the upper triangle and normalises by the largest
+  value, so the overall scale and the MI convention (with or without the factor 1/2)
+  do not change the diagram.
+- `mi_plot` draws the whole matrix on a 0 to max colour scale, so set the diagonal to
+  zero.
+- The single-orbital entropies can come from AEGISS itself: `run_dmrg_subprocess`
+  returns them for the window from `get_subspaces_from_cas`, ordered occupied first,
+  then virtual.
+
 ::: aegiss.utils.dump.dump_qmi
     options:
       heading_level: 3
