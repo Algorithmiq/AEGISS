@@ -21,7 +21,7 @@ viz = [
     "pyvista",
     "pyvistaqt",
     "qtpy",
-    "pyqt5",
+    "pyside6-essentials>=6.5",  # QtCore/QtGui/QtWidgets only; LGPL-3.0
 ]
 
 [dependency-groups]
