@@ -107,7 +107,8 @@ def localize_pipek_mezey(
         on_virtual (bool):
             Whether to also localize the virtual space.
         pop_method (str):
-            Population analysis scheme used for the virtual block (default ``"mulliken"``).
+            Population analysis scheme used for both the occupied and the virtual
+            block (default ``"mulliken"``).
 
     Returns:
         new_mos (np.ndarray, shape (nao, nmo)):
@@ -115,7 +116,7 @@ def localize_pipek_mezey(
     """
     if n_occ is None:
         n_occ = int(np.count_nonzero(mf.mo_occ > 0))
-    loc_occ = lo.PM(mol, mf.mo_coeff[:, :n_occ]).kernel()
+    loc_occ = lo.PM(mol, mf.mo_coeff[:, :n_occ], pop_method=pop_method).kernel()
     loc_virt = (
         lo.PM(mol, mf.mo_coeff[:, n_occ:], pop_method=pop_method).kernel()
         if on_virtual
@@ -181,6 +182,10 @@ def localize_iaos(
     chemically meaningful occupied basis for population analysis and as a
     starting point for IBO construction.
 
+    There is one IAO per function of the reference minimal basis, which is in
+    general more than the number of occupied orbitals, so the result is a basis
+    for the occupied space and cannot replace ``mf.mo_coeff``.
+
     Args:
         mol (pyscf.gto.Mole):
             Molecular geometry and basis set.
@@ -192,24 +197,18 @@ def localize_iaos(
             Reference minimal basis (default ``"minao"``).
 
     Returns:
-        new_mos (np.ndarray, shape (nao, nmo)):
-            Löwdin-orthogonalized IAOs for the occupied block; virtual block is
-            unchanged.
+        iaos (np.ndarray, shape (nao, n_iao)):
+            Löwdin-orthogonalized IAO coefficients, with ``n_iao`` the size of the
+            *minao* basis (``n_iao >= n_occ``).
     """
     from pyscf.lo import iao as _iao  # noqa: PLC0415
     from pyscf.lo import orth as _orth  # noqa: PLC0415
 
-    if mol.natm == 1:
-        logger.warning(
-            "IAO localization skipped: single-atom molecule has no off-site contributions."
-        )
-        return np.array(mf.mo_coeff)
     if n_occ is None:
         n_occ = int(np.count_nonzero(mf.mo_occ > 0))
     iaos = _iao.iao(mol, mf.mo_coeff[:, :n_occ], minao=minao)
     s = mol.intor_symmetric("int1e_ovlp")
-    loc_occ = _orth.vec_lowdin(iaos, s)
-    return np.hstack((loc_occ, mf.mo_coeff[:, n_occ:]))
+    return np.asarray(_orth.vec_lowdin(iaos, s))
 
 
 def localize_fnos(

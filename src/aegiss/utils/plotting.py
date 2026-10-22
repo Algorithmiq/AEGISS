@@ -397,7 +397,7 @@ def soe_heatmap(
         so1_entropies: List of (orbital_index, relative_entropy) tuples, where the entropy
             is already normalised by ``max_so1``.
         n_occ: Number of occupied orbitals. When non-zero, a dashed vertical line is
-            drawn at ``n_occ + 0.5`` to mark the occupied/virtual boundary.
+            drawn at ``n_occ - 0.5`` to mark the occupied/virtual boundary.
         folder: Directory where the PDF is saved.
         filename: Base name of the output file (without extension).
         fmt: Output format for the figure (e.g., ``"pdf"``, ``"png"``). If ``None``,
@@ -440,7 +440,7 @@ def soe_heatmap(
     ax.xaxis.set_ticks_position("bottom")
 
     if n_occ:
-        ax.axvline(x=n_occ + 0.5, ymin=0.4, color="red", linestyle="--", linewidth=4)
+        ax.axvline(x=n_occ - 0.5, ymin=0.4, color="red", linestyle="--", linewidth=4)
     ax.axhline(y=2.5, color="red", linewidth=2)
     ax.axhline(y=3.5, color="red", linewidth=2)
 

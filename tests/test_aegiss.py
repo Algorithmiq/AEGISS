@@ -234,6 +234,38 @@ class TestSubsetProjectionRanking:
         assert any("_occ" in p for p in paths if p)
         assert any("_virt" in p for p in paths if p)
 
+    def test_pie_plot_uses_saving_prefix(
+        self,
+        tmp_path: pytest.TempPathFactory,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        dmrg_config: DMRGConfig,
+        entropy_config: EntropyConfig,
+        projection_config_subset: ProjectionConfig,
+    ) -> None:
+        with (
+            patch(
+                f"{_MODULE}.select_by_ao_projection",
+                side_effect=[np.array([2, 3]), np.array([5])],
+            ),
+            patch(f"{_MODULE}.plot_pie_contribution") as mock_pie,
+        ):
+            select_aegiss(
+                mol_mock,
+                mf_mock,
+                dmrg_config=dmrg_config,
+                entropy_config=entropy_config,
+                projection_config=projection_config_subset,
+                output_config=OutputConfig(
+                    save_orb=False,
+                    save_plots=True,
+                    saving_folder=str(tmp_path) + "/",
+                    saving_prefix="mytest",
+                ),
+            )
+
+        assert mock_pie.call_args.kwargs["filename"] == "mytest_composition"
+
 
 @pytest.mark.usefixtures("pipeline_patches")
 class TestGlobalProjectionRanking:
