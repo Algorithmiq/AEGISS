@@ -27,6 +27,18 @@ from aegiss.localization import localize
 
 ---
 
+::: aegiss.localization.orbital_localization.localize_ibos
+
+---
+
+::: aegiss.localization.orbital_localization.localize_iaos
+
+---
+
+::: aegiss.localization.orbital_localization.localize_fnos
+
+---
+
 ::: aegiss.localization.nos.compute_nos
 
 ---

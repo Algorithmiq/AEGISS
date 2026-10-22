@@ -34,12 +34,14 @@ print(tagger.export_tags())   # {atom_index: "Element.N", ...}
 │                                             │  Tag Selected│
 │           3D viewport                       │  Atom Info   │
 │        (PyVistaQt / VTK)                    │  AO Labels   │
+│                                             │  Geometry    │
 │                                             │  Export      │
 └─────────────────────────────────────────────┴──────────────┘
 ```
 
 The 3D viewport supports standard mouse navigation: rotate (left-drag), zoom (scroll), pan (middle-drag).
-Additional camera controls — fixed orientations and auto-alignment — are described in the [Camera / Navigation](#camera-navigation) section.
+Fixed camera orientations are described in the [Camera / Navigation](#camera-navigation) section,
+and aligning the molecule to a plane in [Align selection plane](#align-selection-plane).
 
 ### Selecting atoms
 
@@ -107,16 +109,20 @@ The planarity score is `s₂ / s₁` from the singular values.
 | < 0.25 | Planar | `C 2pz` (or `px`/`py` as appropriate) |
 | ≥ 0.25 | Non-planar | All `C 2p` (warning shown in orange) |
 
-#### Auto-alignment
+#### Align selection plane
 
-The **Auto-align** button uses the SVD-detected plane normal to orient the camera perpendicular to
-the molecular plane of the selected atoms, so the ring (or ligand framework) appears face-on.
+The **Geometry** panel's **Align Selection Plane → XY** button rotates the whole molecule
+(about its centroid) so that the best-fit plane of the selected atoms becomes the XY plane,
+with its normal along Z. It moves the atoms, not the camera, so the `2pz` labels then refer
+to the out-of-plane direction of the selection. It needs at least three non-collinear selected
+atoms; **Ctrl+Z** undoes the last alignment.
 
 ![auto_align](assets/images/auto_align.png){ width="60%" }
 
-Auto-alignment is only meaningful for planar selections (score < 0.25). For non-planar selections
-the button is still available but the resulting view is along the dominant singular vector, which
-may not be chemically intuitive.
+![geometry_section](assets/images/geometry_section.png){ width="40%" }
+
+The alignment is most meaningful for planar selections (score < 0.25); for a non-planar
+selection the fitted plane is a compromise.
 
 ### Transition metal classification
 
@@ -161,17 +167,17 @@ Select **Ce** in d-shell mode:
 
 ### Fixed orientations
 
-Four preset buttons snap the camera to a standard plane-aligned view, keeping the current molecule
+Six preset buttons snap the camera to a standard plane-aligned view, keeping the current molecule
 centre:
 
 ![spatial_orientation](assets/images/spatial_orientation.png){ width="50%" }
 
-| Button | Camera looks along | Plane shown |
-|---|---|---|
-| **XY** | +Z axis | XY plane (top view) |
-| **XZ** | +Y axis | XZ plane (front view) |
-| **YZ** | +X axis | YZ plane (side view) |
-| **\*** | — | Reset to default isometric view |
+| Button | Plane shown |
+|---|---|
+| **XY** | XY plane (top view) |
+| **XZ** | XZ plane (front view) |
+| **YZ** | YZ plane (side view) |
+| **XY\***, **XZ\***, **YZ\*** | The same planes, seen from the opposite side |
 
 ---
 

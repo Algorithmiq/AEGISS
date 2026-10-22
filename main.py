@@ -1,7 +1,7 @@
 """Runnable example: AEGISS active space selection for the benzene pi system.
 
 Builds benzene at the RHF/cc-pVDZ level, runs a DMRG calculation in the frontier
-CAS(20, 20), then narrows that space with the two AEGISS criteria applied in
+CAS(30, 30), then narrows that space with the two AEGISS criteria applied in
 sequence: single-orbital entanglement entropy first, followed by projection onto
 the carbon 2p_z manifold. Only orbitals selected by *both* criteria survive.
 
