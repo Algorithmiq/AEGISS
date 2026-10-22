@@ -57,6 +57,16 @@ All orbitals with $S(1)_p > \tau_E = S(1)_{\max}/10$ are retained. In practice, 
 active region $N_A$ as a Fermi-level window a few times larger than the expected final CAS
 and check that the highly entropic orbitals lie well inside it.
 
+The window is taken by orbital index (`ncas` orbitals around the occupied/virtual
+boundary), which follows the Fermi level only for **canonical** orbitals, ordered by
+orbital energy. Localized orbitals (Boys, Pipek–Mezey, Edmiston–Ruedenberg, IBOs) are
+obtained by rotating the occupied and virtual blocks separately: the occupied/virtual
+partition is preserved, but localized orbitals have no orbital energies, so their order
+within each block is arbitrary and an index window over them is no longer a frontier
+window. Natural orbitals are ordered by occupation number instead, a different but
+still meaningful criterion. Localization can be combined with AEGISS, but then check
+explicitly that the window contains the orbitals of interest.
+
 ### 4 · Atomic-orbital selection
 
 Chemically relevant AOs are identified from prior chemical knowledge: for each cluster
