@@ -14,6 +14,8 @@ from aegiss.utils.plotting import (
     _build_ao_heatmap_matrix,
     _define_cas_size,
     _detect_plateaus,
+    entanglement_diagrams,
+    mi_plot,
     plot_ao_contribution,
     plot_pie_contribution,
     soe_heatmap,
@@ -164,6 +166,51 @@ class TestThPlots:
     ) -> None:
         th_plots(so1_entropies=simple_entropies, folder=str(tmp_path))
         assert (tmp_path / "TH_plot.pdf").exists()
+
+
+@pytest.fixture
+def external_mi() -> tuple[list[tuple[int, float]], np.ndarray]:
+    """SOE pairs and an MI matrix built the way block2 does, I = (S_i + S_j - S_ij) / 2."""
+    rng = np.random.default_rng(7)
+    window = [16, 19, 20, 21, 22, 29]
+    s1 = rng.uniform(0.2, 0.6, size=len(window))
+    s2 = s1[:, None] + s1[None, :] - rng.uniform(0.0, 0.3, size=(6, 6))
+    s2 = (s2 + s2.T) / 2
+    minfo = 0.5 * (s1[:, None] + s1[None, :] - s2) * (1 - np.identity(len(s1)))
+    return list(zip(window, s1, strict=True)), minfo
+
+
+class TestMiPlot:
+    def test_creates_pdf_from_external_matrix(
+        self, tmp_path: pytest.FixturePath, external_mi: tuple
+    ) -> None:
+        soe1, minfo = external_mi
+        mi_plot(minfo, soe1, folder=str(tmp_path), filename="mi")
+        assert (tmp_path / "mi.pdf").exists()
+
+    def test_png_format(self, tmp_path: pytest.FixturePath, external_mi: tuple) -> None:
+        soe1, minfo = external_mi
+        mi_plot(minfo, soe1, folder=str(tmp_path), filename="mi", fmt="png")
+        assert (tmp_path / "mi.png").exists()
+
+
+class TestEntanglementDiagrams:
+    def test_creates_pdf_from_external_matrix(
+        self, tmp_path: pytest.FixturePath, external_mi: tuple
+    ) -> None:
+        soe1, minfo = external_mi
+        entanglement_diagrams(soe1, minfo, folder=str(tmp_path), filename="ent")
+        assert (tmp_path / "ent.pdf").exists()
+
+    def test_mi_convention_and_diagonal_do_not_matter(
+        self, tmp_path: pytest.FixturePath, external_mi: tuple
+    ) -> None:
+        # Without the factor 1/2 and with a non-zero diagonal, the diagram still
+        # renders: MI is normalised by its maximum and only i < j pairs are drawn.
+        soe1, minfo = external_mi
+        unhalved = 2 * minfo + np.diag(np.ones(len(soe1)))
+        entanglement_diagrams(soe1, unhalved, folder=str(tmp_path), filename="ent2")
+        assert (tmp_path / "ent2.pdf").exists()
 
 
 class TestPlotPieContribution:

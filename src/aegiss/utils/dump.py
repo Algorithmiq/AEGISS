@@ -85,6 +85,11 @@ def dump_qmi(
 ) -> None:
     """Dump QMI, SOE1, and optional SOE2 data to disk.
 
+    The arrays are stored under the keys ``"minfo"``, ``"soe1"`` and ``"soe2"``
+    and can be read back with ``np.load``. The AEGISS pipeline does not compute
+    mutual information, so *minfo* comes from an external calculation (see
+    :func:`aegiss.utils.plotting.mi_plot`).
+
     Args:
         minfo (np.ndarray): Mutual information matrix.
         soe1 (np.ndarray): Single orbital entropy values.

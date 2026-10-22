@@ -686,11 +686,20 @@ def mi_plot(
     filename: str = "MI_plot",
     fmt: str | None = "pdf",
 ) -> None:
-    """Plot an entanglement diagram based on mutual information (MI) and single-orbital entropy (SOE).
+    """Plot the orbital mutual-information (MI) matrix as a heatmap.
+
+    The AEGISS pipeline computes single-orbital entropies only, so *minfo* must
+    come from an external calculation, for example
+    ``DMRGDriver.get_orbital_interaction_matrix`` in block2's Python API. The
+    colour scale runs from 0 to the largest element of *minfo*, so the diagonal
+    should be zero.
 
     Args:
-        minfo: Mutual Information matrix between orbitals.
-        soe1: List of (orbital_index, single_orbital_entropy) tuples for all orbitals
+        minfo: Symmetric ``(n, n)`` MI matrix. Row and column ``k`` belong to the
+            orbital ``soe1[k][0]``.
+        soe1: List of (orbital_index, single_orbital_entropy) tuples for all
+            orbitals, in the row order of *minfo*. Only the indices are used,
+            as tick labels (shown in the configured orbital index base).
         folder: Directory where the PDF is saved.
         filename: Base name of the output file (without extension).
         fmt: Output format for the figure (e.g., ``"pdf"``, ``"png"``).
@@ -844,9 +853,18 @@ def entanglement_diagrams(
     maximum get no marker. Solid to dotted is the gradient for the Mutual
     Information (MI) between orbitals. The plot is saved in the *fmt* format.
 
+    The AEGISS pipeline computes single-orbital entropies only, so *minfo* must
+    come from an external calculation, for example
+    ``DMRGDriver.get_orbital_interaction_matrix`` in block2's Python API. MI
+    values are normalised by their maximum before the line styles are chosen
+    (thresholds 1, 0.1, 0.01 and 0.001 of the maximum), so the overall scale
+    and the MI convention (with or without the factor 1/2) do not matter.
+
     Args:
-        soe1 (list of tuples): List of (orbital_index, single_orbital_entropy) tuples for all orbitals.
-        minfo (np.ndarray): Mutual Information matrix between orbitals.
+        soe1 (list of tuples): List of (orbital_index, single_orbital_entropy) tuples for all orbitals,
+            in the row order of *minfo*.
+        minfo (np.ndarray): Symmetric ``(n, n)`` Mutual Information matrix between the orbitals of
+            *soe1*. Only the upper triangle is read, so the diagonal is ignored.
         folder (str, default "./"): Directory where the PDF file will be saved.
         filename (str, default "entanglement_diagrams"): Base name of the output PDF file (without extension).
         fmt (str or None, default "pdf"): Output format for the figure (e.g., ``"pdf"``, ``"png"``).
