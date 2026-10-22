@@ -9,7 +9,7 @@ PySCF-compatible `ao_labels` strings ready to paste into `ProjectionConfig`.
 pip install aegiss[viz]
 ```
 
-The `viz` extra pulls in `ase`, `pyvista`, `pyvistaqt`, `qtpy`, and `PyQt5`
+The `viz` extra pulls in `ase`, `pyvista`, `pyvistaqt`, `qtpy`, and `PySide6`
 as the Qt backend.
 
 ---

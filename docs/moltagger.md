@@ -12,7 +12,7 @@ MolTagger requires the `viz` optional extra:
 uv sync --extra viz
 ```
 
-This pulls in `ase`, `pyvista`, `pyvistaqt`, `qtpy`, and `PyQt5`.
+This pulls in `ase`, `pyvista`, `pyvistaqt`, `qtpy`, and `PySide6`.
 
 ## Quick start
 
