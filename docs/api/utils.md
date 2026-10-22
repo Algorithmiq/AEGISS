@@ -43,6 +43,37 @@ from aegiss.utils.mo_composition import mo_ao_contributions
 
 ---
 
+## Orbital index base
+
+Display and input conversion for the configured orbital index base; see
+[Orbital index base](../orbital_indexing.md).
+
+::: aegiss.utils.orb_display.orbital_base
+    options:
+      heading_level: 3
+
+::: aegiss.utils.orb_display.to_display
+    options:
+      heading_level: 3
+
+::: aegiss.utils.orb_display.to_display_all
+    options:
+      heading_level: 3
+
+::: aegiss.utils.orb_display.from_display
+    options:
+      heading_level: 3
+
+::: aegiss.utils.orb_display.from_display_all
+    options:
+      heading_level: 3
+
+::: aegiss.utils.orb_display.reset_cache
+    options:
+      heading_level: 3
+
+---
+
 ## Orbital export
 
 ::: aegiss.utils.dump.save_orbitals

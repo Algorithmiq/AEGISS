@@ -38,7 +38,9 @@ publishing.
 mkdocs.yml            # site configuration and nav tree
 docs/
   index.md            # home page
-  installation.md     # installation and environment variables
+  installation.md     # installation, environment variables and logging
+  orbital_indexing.md # 0- vs 1-based orbital indices
+  uhf.md              # unrestricted (UHF) references
   moltagger.md        # MolTagger interactive viewer
   tutorials/
     index.md          # tutorials overview
@@ -46,6 +48,8 @@ docs/
     02_dmrg.ipynb
     03_ao_projection.ipynb
     04_aegiss.ipynb
+    05_unrestricted.ipynb
+    data/             # XYZ geometries used by the notebooks
   api/
     index.md          # API overview
     active_space.md
@@ -54,6 +58,7 @@ docs/
     wavefunction.md
     localization.md
     utils.md
+  assets/images/      # screenshots and example plots
   javascripts/
     mathjax.js        # MathJax configuration
   scripts/
@@ -94,8 +99,8 @@ Docstrings follow the **Google** style (configured in `mkdocs.yml`).
 
 ## Publishing
 
-The site is deployed automatically by CI on every push to `main`. To trigger a
-manual deploy from your local machine:
+There is no CI deploy workflow yet, so the site is published manually from your
+local machine:
 
 ```bash
 mkdocs gh-deploy
