@@ -65,8 +65,11 @@ control memory and scratch space (`OMP_NUM_THREADS`, `SCRATCH_DIR`, `MEM`,
 1. **Branch off `main`.** Direct commits to `main` are blocked by a pre-commit hook.
    Branch names may only contain letters, digits, `_`, `-`, and `/` — we use
    `<type>/<short-description>`, e.g. `feat/spin-entropy-screening`.
-2. **Write [conventional commit](https://www.conventionalcommits.org) messages** —
-   `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, `ci:`.
+2. **Write [conventional commit](https://www.conventionalcommits.org) messages** with a
+   [gitmoji](https://gitmoji.dev) — `<type>(<optional scope>): <gitmoji> <description>`,
+   e.g. `fix(projection): 🐛 normalise AO weights`. Types: `feat`, `fix`, `docs`,
+   `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`; add `!` for breaking
+   changes. PR titles follow the same format.
 3. **Add or update tests** covering your change (see below).
 4. **Update the docs** — docstrings for API changes, and the relevant page under
    [docs/](docs/) for user-facing behaviour.
@@ -112,5 +115,5 @@ add a page or a tutorial notebook, add it to the `nav:` tree in
 
 ## Reporting a security issue
 
-Please do **not** open a public issue for security problems. Email
-[legal@algorithmiq.fi](mailto:legal@algorithmiq.fi) instead.
+Please do **not** open a public issue for security problems. See
+[SECURITY.md](SECURITY.md) for how to report them privately.

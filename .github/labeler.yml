@@ -1,0 +1,25 @@
+python:
+  - changed-files:
+    - any-glob-to-any-file:
+      - "src/**"
+      - "tests/**"
+      - "*.py"
+
+documentation:
+  - changed-files:
+    - any-glob-to-any-file:
+      - "docs/**"
+      - "mkdocs.yml"
+      - "*.md"
+
+ci:
+  - changed-files:
+    - any-glob-to-any-file:
+      - ".github/**"
+      - ".pre-commit-config.yaml"
+
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file:
+      - "pyproject.toml"
+      - "uv.lock"
