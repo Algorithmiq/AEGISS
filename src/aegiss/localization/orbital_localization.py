@@ -344,6 +344,11 @@ def localize(method: str, *args: Any, **kwargs: Any) -> Any:
         **kwargs:
             Keyword arguments forwarded to the selected method.
 
+    Note:
+        Localized orbitals have no orbital energies, so the index-based DMRG window
+        (``ncas`` orbitals around the occupied/virtual boundary) is no longer a
+        Fermi-level window when built on them.
+
     Example:
         >>> localize('pm', mol, mf, on_virtual=True)
     >>> localize('ibos', mol, mf)
