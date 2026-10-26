@@ -1,0 +1,8 @@
+# Entries in this file are made for two reasons:
+# 1) to merge multiple git commit authors that correspond to a single author
+# 2) to change the canonical name and/or email address of an author.
+#
+# See `git help mailmap` for the format.
+
+Fabio Tarocco <fabio.tarocco@algorithmiq.fi> FabioTarocco <fabio.tarocco.vr@gmail.com>
+Fabio Tarocco <fabio.tarocco@algorithmiq.fi> FabioTarocco <54395661+FabioTarocco@users.noreply.github.com>

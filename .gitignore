@@ -216,3 +216,9 @@ aegiss_output/
 # Local developer scratch scripts and their DMRG scratch dir — never pushed.
 # Also excluded from ruff via [tool.ruff] exclude in pyproject.toml.
 /scripts/
+
+# Local, never-pushed working files (generated cubes/plots, FCIDUMPs, test runs).
+/local/
+
+# Written by hatch-vcs at build time
+src/aegiss/_version.py
