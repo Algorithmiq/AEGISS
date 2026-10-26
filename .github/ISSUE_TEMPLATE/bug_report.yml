@@ -81,7 +81,7 @@ body:
     id: dependency_versions
     attributes:
       label: PySCF and block2 versions
-      placeholder: "e.g. pyscf 2.12.1, block2 0.5.4rc13 — run: uv pip show pyscf block2"
+      placeholder: "e.g. pyscf 2.12.1, block2 0.5.4 — run: uv pip show pyscf block2"
     validations:
       required: true
 

@@ -20,8 +20,6 @@ just build --all-groups --all-extras   # every dependency group and the viz extr
 uv run prek install                    # git hooks: ruff, ty and the repository checks
 ```
 
-`block2` comes from its own package index, declared in `pyproject.toml`; `uv` fetches it.
-
 ## Day to day
 
 | Recipe | What it does |

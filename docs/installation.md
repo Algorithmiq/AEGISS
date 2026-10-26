@@ -11,9 +11,6 @@ uv sync
 source .venv/bin/activate
 ```
 
-`block2` is fetched from its own package index declared in `pyproject.toml` —
-`uv sync` handles it automatically.
-
 ## MolTagger: interactive atom tagging
 
 An interactive 3D molecular viewer for selecting atoms and generating PySCF-compatible
