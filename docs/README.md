@@ -9,7 +9,7 @@ This directory contains the source for the AEGISS documentation site, built with
 **1. Install the `docs` dependency group**
 
 ```bash
-uv sync --group docs
+just build --group docs
 ```
 
 This pulls in `mkdocs-material`, `mkdocs-jupyter`, and `mkdocstrings[python]`.
@@ -17,7 +17,7 @@ This pulls in `mkdocs-material`, `mkdocs-jupyter`, and `mkdocstrings[python]`.
 **2. Preview with live reload**
 
 ```bash
-mkdocs serve
+just serve-docs
 ```
 
 Open <http://127.0.0.1:8000> in your browser. The site rebuilds automatically
@@ -26,11 +26,14 @@ whenever you save a file.
 **3. Build a static copy**
 
 ```bash
-mkdocs build
+just docs
 ```
 
-Output lands in `site/` (git-ignored). Use this to verify the final HTML before
-publishing.
+Output lands in `site/` (git-ignored). The build is `--strict`, with link and anchor
+validation, exactly as in CI. `just doctest` runs the Python blocks of the pages and
+`just check-doc-links` checks the external links of the built site (needs
+[lychee](https://lychee.cli.rs)). See the [Documenting](documenting.md) page for the
+conventions.
 
 ## Project layout
 
@@ -42,6 +45,10 @@ docs/
   orbital_indexing.md # 0- vs 1-based orbital indices
   uhf.md              # unrestricted (UHF) references
   moltagger.md        # MolTagger interactive viewer
+  contributing.md     # developer guide: set up, recipes, pull requests
+  developer.md        # developer guide: architecture and extending
+  testing.md          # developer guide: tests
+  documenting.md      # developer guide: docstrings and doc pages
   tutorials/
     index.md          # tutorials overview
     01_scf_and_localization.ipynb
@@ -99,11 +106,6 @@ Docstrings follow the **Google** style (configured in `mkdocs.yml`).
 
 ## Publishing
 
-There is no CI deploy workflow yet, so the site is published manually from your
-local machine:
-
-```bash
-mkdocs gh-deploy
-```
-
-This builds the site and force-pushes it to the `gh-pages` branch.
+`.github/workflows/docs.yml` builds the site, runs the doc code blocks and the
+examples, and checks the links on every pull request. On `main` it also deploys the
+site to GitHub Pages (Settings → Pages → Source: GitHub Actions).

@@ -31,6 +31,39 @@ test-ci LABEL:
     uv run --no-sync pytest -r aR --durations=20 --durations-min=5.0 -o log_cli=false \
         --junit-xml=pytest-{{ LABEL }}.xml -o junit_family=legacy
 
+# Run the Python code blocks of README.md and docs/ in a scratch directory (they write files).
+doctest:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    root="$(pwd)"
+    cd "$(mktemp -d)"
+    uv run --project "$root" --no-sync pytest --markdown-docs --markdown-docs-syntax=superfences \
+        -p no:cacheprovider --rootdir "$root" -c "$root/pyproject.toml" -o log_cli=false \
+        --ignore="$root/docs/scripts" --ignore="$root/docs/tutorials" \
+        "$root/README.md" "$root/docs"
+
+# Run the examples in a scratch directory (they write files).
+example:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    root="$(pwd)"
+    cd "$(mktemp -d)"
+    for script in "$root"/examples/*.py; do
+        uv run --project "$root" --no-sync python "$script"
+    done
+
+# Build the documentation into site/.
+docs:
+    uv run --no-sync mkdocs build --strict
+
+# Serve the documentation with live reload.
+serve-docs:
+    uv run --no-sync mkdocs serve
+
+# Check the links of the built site, external ones included. Needs `lychee` on PATH.
+check-doc-links: docs
+    lychee --config .lychee.toml 'site/**/*.html'
+
 # The test suite with branch coverage, written to coverage.xml.
 coverage:
     uv run --no-sync pytest -o log_cli=false --cov --cov-branch --cov-report=xml:coverage.xml \

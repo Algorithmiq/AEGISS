@@ -16,7 +16,7 @@ This pulls in `ase`, `pyvista`, `pyvistaqt`, `qtpy`, and `PySide6`.
 
 ## Quick start
 
-```python
+```{.python notest}
 from aegiss.utils.mol_tagger import MolTagger
 
 tagger = MolTagger("my_molecule.xyz")

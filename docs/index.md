@@ -97,7 +97,7 @@ and hybrid classical–quantum calculations.
 
 ## Quick start
 
-```python
+```{.python notest}
 from aegiss.initial_guess import build_mol, run_scf
 from aegiss.active_space import select_aegiss
 from aegiss.config_dataclasses import DMRGConfig, EntropyConfig, ProjectionConfig, OutputConfig

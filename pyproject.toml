@@ -70,6 +70,7 @@ test = [
     "ase>=3",
     "pytest>=8.2.2,<10.0",
     "pytest-cov>=4.0",
+    "pytest-markdown-docs>=0.9",
 ]
 interactive = [
     "jupyter",
@@ -123,7 +124,7 @@ pythonpath = ["src"]
 markers = [
     "slow: mark test as slow (>=1 minute runtime)",
 ]
-required_plugins = ["pytest-cov"]
+required_plugins = ["pytest-cov", "pytest-markdown-docs"]
 filterwarnings = [
     "error",
     # pyscf suggests an optional package whenever a basis is looked up by an unknown name
@@ -195,6 +196,7 @@ flake8-annotations.allow-star-arg-any = true
 "main.py" = ["INP001"]
 "docs/scripts/*.py" = ["INP001"]  # standalone docs helpers, not an importable package
 "tools/**" = ["INP001", "T201"]  # standalone repository helpers
+"examples/**" = ["INP001", "T201"]  # runnable scripts that print their results
 "tests/**/test_*.py" = ["ANN", "I002"]
 "src/aegiss/**/__init__.py" = ["I002"]
 "*.ipynb" = ["I002"]
@@ -220,7 +222,7 @@ line-ending = "auto"
 python-version = "3.12"
 
 [tool.ty.src]
-include = ["src", "tests/conftest.py", "docs/scripts", "main.py", "mol_tagger.py", "tools"]
+include = ["src", "tests/conftest.py", "docs/scripts", "main.py", "mol_tagger.py", "tools", "examples"]
 
 # The MolTagger GUI goes through qtpy and pyvistaqt, whose stubs miss most of the Qt enums
 # and the pyvista Plotter API that QtInteractor inherits.

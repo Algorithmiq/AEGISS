@@ -59,7 +59,7 @@ AEGISS_ORB_BASE=0 python your_script.py
 
 With `AEGISS_ORB_BASE=1`:
 
-```python
+```{.python notest}
 from aegiss.active_space.ao_projection import select_by_ao_projection
 
 # You pass 1-based indices …
