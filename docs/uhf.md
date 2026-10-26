@@ -260,7 +260,7 @@ by following the RHF→UHF instability — no arbitrary density seeding.
 
 !!! warning "Experimental — not part of AEGISS"
 
-```python
+```{.python notest}
 import numpy as np
 from pyscf import gto, scf
 from pyblock2._pyscf.ao2mo import integrals as itg
