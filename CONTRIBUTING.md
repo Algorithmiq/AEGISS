@@ -92,10 +92,13 @@ the API reference is generated from them by `mkdocstrings`.
 ### Tests
 
 ```bash
-pytest                              # full suite
-pytest --cov=aegiss --cov-branch    # with coverage
-pytest -m "not slow"                # skip tests marked slow (>= 1 minute)
+just test                           # full suite
+just coverage                       # with branch coverage
+just test -m "not slow"             # skip tests marked slow (>= 1 minute)
 ```
+
+The CI workflows run the same [`just`](https://just.systems) recipes; `just` with no
+arguments lists them.
 
 Tests live in [tests/](tests/), one `test_<module>.py` per source module. Mark tests
 that take a minute or more with `@pytest.mark.slow`. Quantum-chemistry calculations in

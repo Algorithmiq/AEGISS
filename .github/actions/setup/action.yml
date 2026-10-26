@@ -1,0 +1,33 @@
+name: Set up an AEGISS CI environment
+description: >-
+  Install just, uv and OpenMPI. Installs tools, not commands: anything a developer
+  also runs belongs in the justfile.
+
+inputs:
+  python-version:
+    description: Python version handed to setup-uv.
+    required: false
+    default: "3.12"
+
+runs:
+  using: composite
+  steps:
+    - name: Install just
+      uses: extractions/setup-just@v4.0.0
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v10.3.0
+      with:
+        enable-cache: true
+        python-version: ${{ inputs.python-version }}
+
+    # block2main, which the DMRG step runs as a subprocess, links against MPI
+    - name: Install OpenMPI
+      shell: bash
+      run: |
+        if [[ "$RUNNER_OS" == "macOS" ]]; then
+          brew install open-mpi
+        else
+          sudo apt-get update
+          sudo apt-get install -y openmpi-bin libopenmpi-dev
+        fi

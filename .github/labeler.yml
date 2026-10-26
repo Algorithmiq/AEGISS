@@ -16,7 +16,13 @@ ci:
   - changed-files:
     - any-glob-to-any-file:
       - ".github/**"
+      - "justfile"
       - "prek.toml"
+
+tools:
+  - changed-files:
+    - any-glob-to-any-file:
+      - "tools/**"
 
 dependencies:
   - changed-files:

@@ -45,18 +45,24 @@ environment, MolTagger GUI). Tests in `tests/`, one `test_<module>.py` per modul
 and tutorial notebooks in `docs/`, site config in `mkdocs.yml`.
 
 `scripts/` is local developer scratch: it is gitignored and unlinted. Never edit, move or commit
-it. `docs/scripts/` is tracked and linted.
+it. The same goes for `local/` (generated cubes, plots, FCIDUMPs and test runs). `tools/` holds
+tracked repository helpers used by the hooks and CI. `docs/scripts/` is tracked and linted.
 
 ## Commands
 
-We use `uv` for environment management.
+We use `uv` for environment management and [`just`](https://just.systems) as the command
+runner; `just` with no arguments lists the recipes.
 
 ```bash
-uv sync --all-groups --all-extras
-uv run pytest -m "not slow"
-uv run prek run --all-files
-uv run mkdocs serve
+just build --all-groups --all-extras
+just test -m "not slow"
+just lint
+just fmt
 ```
+
+CI workflows call `just` recipes instead of running commands themselves, so a red CI lane can
+be reproduced locally with the same recipe; `tools/check-workflow-commands.py` (a prek hook)
+enforces it. A new command goes into the `justfile` first.
 
 ## Notes
 
