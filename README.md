@@ -32,8 +32,7 @@ uv sync --extra viz          # add --all-groups for the test, docs and notebook 
 source .venv/bin/activate
 ```
 
-`block2` is fetched from its own package index declared in `pyproject.toml` — `uv sync`
-handles it automatically. The `viz` extra is only needed for
+The `viz` extra is only needed for
 [MolTagger](docs/moltagger.md), the interactive tool for picking atoms and generating
 `ao_labels`.
 

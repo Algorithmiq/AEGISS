@@ -69,8 +69,8 @@ enforces it. A new command goes into the `justfile` first.
 
 ## Notes
 
-- `block2` comes from its own index (`[tool.uv] extra-index-url` in `pyproject.toml`) and is
-  pinned; `uv sync` handles it.
+- `block2` is pinned to an exact release from PyPI: DMRG results depend on its version, so bump
+  it deliberately.
 - DMRG runs `block2main` as a subprocess (`wavefunction/dmrg_subprocess.py`), not through the
   `block2` Python API. Its working files go under `SCRATCH_DIR` (default `./tmp`, gitignored).
 - Runtime environment variables (`OMP_NUM_THREADS`, `SCRATCH_DIR`, `MEM`, `PYSCF_MAX_MEMORY`,

@@ -53,8 +53,7 @@ prek install                        # install the git hooks
 ```
 
 A bare `uv sync` installs only the default `dev` group (ruff, ty, prek, pytest); the
-`test`, `docs`, and `interactive` groups are opt-in. `block2` is fetched from its own
-package index declared in `pyproject.toml` — `uv sync` handles it automatically.
+`test`, `docs`, and `interactive` groups are opt-in.
 
 See [docs/installation.md](docs/installation.md) for the environment variables that
 control memory and scratch space (`OMP_NUM_THREADS`, `SCRATCH_DIR`, `MEM`,

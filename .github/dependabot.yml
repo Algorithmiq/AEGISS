@@ -1,0 +1,27 @@
+version: 2
+updates:
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    ignore:
+      # ruff and ty move together with their prek hooks (update-tools.yml)
+      - dependency-name: "ruff"
+      - dependency-name: "ty"
+      # DMRG results depend on the block2 version; bump it deliberately
+      - dependency-name: "block2"
+    groups:
+      python:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "github-actions"
+    directories:
+      - "/"
+      - "/.github/actions/*"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions:
+        patterns:
+          - "*"

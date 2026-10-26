@@ -68,3 +68,14 @@ check-doc-links: docs
 coverage:
     uv run --no-sync pytest -o log_cli=false --cov --cov-branch --cov-report=xml:coverage.xml \
         --cov-report=term-missing
+
+# Build the sdist and wheel into dist/.
+dist:
+    rm -rf dist
+    uv build --out-dir dist
+
+# Move a pinned astral tool (ruff or ty) and its prek hook to VERSION together. GNU sed.
+bump-tool TOOL VERSION:
+    sed -i -E 's/"{{ TOOL }}==[0-9.]+"/"{{ TOOL }}=={{ VERSION }}"/' pyproject.toml
+    sed -i -E '/astral-sh\/{{ TOOL }}-pre-commit"/{n; s/rev = "v[0-9.]+"/rev = "v{{ VERSION }}"/}' prek.toml
+    uv lock --upgrade-package {{ TOOL }}

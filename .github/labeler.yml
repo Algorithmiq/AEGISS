@@ -19,6 +19,8 @@ ci:
       - ".github/**"
       - "justfile"
       - "prek.toml"
+      - "codecov.yml"
+      - "sonar-project.properties"
 
 tools:
   - changed-files:

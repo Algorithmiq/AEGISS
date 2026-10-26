@@ -31,6 +31,9 @@ jobs:
 
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
+    env:
+      # the upload below skips until the secret exists (and on forks, which get no secrets)
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     steps:
       - uses: actions/checkout@v7.0.1
@@ -48,13 +51,15 @@ jobs:
       - name: Run tests
         run: just test-ci "${{ matrix.runner }}-${{ matrix.python-version }}"
 
-      - name: Upload test results
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7.0.2
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() && env.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@v7.1.1
         with:
-          name: test-results-${{ matrix.runner }}-${{ matrix.python-version }}
-          path: pytest-${{ matrix.runner }}-${{ matrix.python-version }}.xml
-          retention-days: 7
+          token: ${{ env.CODECOV_TOKEN }}
+          files: pytest-${{ matrix.runner }}-${{ matrix.python-version }}.xml
+          report_type: test_results
+          disable_search: true
+          fail_ci_if_error: true
 
   # A single check for the branch ruleset to require, whatever the matrix becomes.
   tests:
