@@ -3,6 +3,7 @@ python:
     - any-glob-to-any-file:
       - "src/**"
       - "tests/**"
+      - "examples/**"
       - "*.py"
 
 documentation:

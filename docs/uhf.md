@@ -162,7 +162,7 @@ shape `(2, nao, nmo)` and screens each spin block separately. The AO overlaps
 ($\langle \text{minao}_\mu | \text{AO}_\nu \rangle$ via `intor_cross`) are
 **spin-independent**, so only the MO coefficients differ between channels.
 
-```python
+```{.python notest}
 from aegiss.active_space import select_by_ao_projection
 
 result = select_by_ao_projection(
@@ -189,7 +189,7 @@ a **different** threshold to each spin channel (each value may itself be a float
 per-label list). This is orthogonal to `restricted_space` — you can share the
 window but cut the channels at different weights:
 
-```python
+```{.python notest}
 result = select_by_ao_projection(
     mf,                       # UHF: mo_coeff.ndim == 3
     ao_labels=["C 2pz"],
@@ -207,7 +207,7 @@ with a *restricted* `mf` raises a `ValueError`.
 reference: a single `np.ndarray` for a restricted mean-field, or a split
 `{"alpha": ..., "beta": ...}` mapping for a UHF one.
 
-```python
+```{.python notest}
 from aegiss.initial_guess import build_mol, run_scf
 from aegiss.active_space import select_aegiss
 from aegiss.config_dataclasses import (
@@ -260,7 +260,7 @@ by following the RHF→UHF instability — no arbitrary density seeding.
 
 !!! warning "Experimental — not part of AEGISS"
 
-```python
+```{.python notest}
 import numpy as np
 from pyscf import gto, scf
 from pyblock2._pyscf.ao2mo import integrals as itg

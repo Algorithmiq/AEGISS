@@ -69,7 +69,7 @@ python main.py > log.out         # local — save to file
 
 **Silence AEGISS selectively (e.g. in a notebook):**
 
-```python
+```{.python continuation}
 logging.getLogger("aegiss").setLevel(logging.WARNING)
 ```
 

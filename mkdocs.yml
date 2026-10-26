@@ -3,7 +3,16 @@ site_description: Atomic Orbital and Entropy based Guided Inference for Space Se
 site_url: https://algorithmiq.github.io/AEGISS/
 repo_url: https://github.com/Algorithmiq/AEGISS
 repo_name: Algorithmiq/AEGISS
-edit_uri: ""
+edit_uri: edit/main/docs/
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
+watch:
+  - src/aegiss
 
 # Contributor-facing readme for the docs/ dir; not a site page (would clash with index.md).
 # scripts/ holds helpers that regenerate documentation assets — not site content.
@@ -42,6 +51,10 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
+          paths: [src]
+          inventories:
+            - https://docs.python.org/3/objects.inv
+            - https://numpy.org/doc/stable/objects.inv
           options:
             docstring_style: google
             show_source: true
@@ -89,6 +102,11 @@ nav:
     - "05 — Unrestricted (UHF)": tutorials/05_unrestricted.ipynb
   - UHF References: uhf.md
   - MolTagger: moltagger.md
+  - Developer Guide:
+    - Contributing: contributing.md
+    - Architecture: developer.md
+    - Testing: testing.md
+    - Documenting: documenting.md
   - API Reference:
     - Overview: api/index.md
     - Active Space: api/active_space.md

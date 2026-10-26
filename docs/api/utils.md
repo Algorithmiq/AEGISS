@@ -97,7 +97,7 @@ for example with block2's Python API, where
 $I_{ij} = \tfrac{1}{2}(S_i + S_j - S_{ij})$ with a zero diagonal, or with any other
 DMRG or CI code.
 
-```python
+```{.python notest}
 import numpy as np
 
 from aegiss.utils.dump import dump_qmi

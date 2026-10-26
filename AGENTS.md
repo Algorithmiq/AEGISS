@@ -22,6 +22,9 @@ of the molecular orbitals onto a user-chosen atomic-orbital manifold (`pyscf`).
   red PR.
 - Changes to the API or to user-facing behaviour should be reflected in `docs/` (and in the
   `mkdocs.yml` nav when you add a page) and, if relevant, in `README.md`.
+- Python blocks in `docs/` and `README.md` run as tests (`just doctest`); mark a block that cannot
+  run on its own `{.python notest}` (`python notest` in `README.md`) and one that continues the
+  previous block `{.python continuation}`. `examples/` scripts run in CI (`just example`).
 
 ## Git and PRs
 

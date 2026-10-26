@@ -44,7 +44,7 @@ control threads, memory and scratch space, and for logging setup.
 
 ## Quick start — benzene π system
 
-```python
+```python notest
 from aegiss.active_space.aegiss import select_aegiss
 from aegiss.config_dataclasses import DMRGConfig, EntropyConfig, OutputConfig, ProjectionConfig
 from aegiss.initial_guess import build_mol, run_scf
