@@ -136,7 +136,6 @@ celerybeat.pid
 
 # Environments
 .env
-.envrc
 .venv
 env/
 venv/
@@ -222,3 +221,6 @@ aegiss_output/
 
 # Written by hatch-vcs at build time
 src/aegiss/_version.py
+
+# nix-direnv state (.envrc itself is tracked: it loads the Nix dev shell)
+.direnv/
