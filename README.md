@@ -94,11 +94,13 @@ The documentation sources live in [`docs/`](docs/index.md) and are built with Mk
 ## Development
 
 ```bash
-uv sync --all-groups --all-extras
-prek install
-pytest -m "not slow"
-mkdocs serve                  # docs preview at http://127.0.0.1:8000
+just build --all-groups --all-extras   # or: uv sync --all-groups --all-extras
+uv run prek install
+just test -m "not slow"
+uv run mkdocs serve                    # docs preview at http://127.0.0.1:8000
 ```
+
+`just` with no arguments lists every recipe.
 
 Code style is enforced by **ruff** and **ty**; both run as git hooks (via
 [prek](https://github.com/j178/prek)) and in CI on every pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.

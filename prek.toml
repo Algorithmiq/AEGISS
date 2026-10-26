@@ -49,6 +49,12 @@ hooks = [{ id = "uv-lock" }]
 [[repos]]
 repo = "local"
 hooks = [
+    { id = "check-workflow-commands", name = "check workflows call recipes", language = "python", entry = "python tools/check-workflow-commands.py", files = "^\\.github/workflows/.*\\.ya?ml$", pass_filenames = true, additional_dependencies = ["PyYAML"] },
+]
+
+[[repos]]
+repo = "local"
+hooks = [
     { id = "pin-actions-exactly", name = "pin actions to exact tags (vX.Y.Z)", language = "pygrep", entry = "uses:\\s*[^\\s@]+@v[0-9]+(\\.[0-9]+)?\\s*$", files = "^\\.github/(workflows|actions)/.*\\.ya?ml$" },
 ]
 

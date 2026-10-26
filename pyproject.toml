@@ -194,6 +194,7 @@ flake8-annotations.allow-star-arg-any = true
 "mol_tagger.py" = ["INP001"]
 "main.py" = ["INP001"]
 "docs/scripts/*.py" = ["INP001"]  # standalone docs helpers, not an importable package
+"tools/**" = ["INP001", "T201"]  # standalone repository helpers
 "tests/**/test_*.py" = ["ANN", "I002"]
 "src/aegiss/**/__init__.py" = ["I002"]
 "*.ipynb" = ["I002"]
@@ -219,7 +220,7 @@ line-ending = "auto"
 python-version = "3.12"
 
 [tool.ty.src]
-include = ["src", "tests/conftest.py", "docs/scripts", "main.py", "mol_tagger.py"]
+include = ["src", "tests/conftest.py", "docs/scripts", "main.py", "mol_tagger.py", "tools"]
 
 # The MolTagger GUI goes through qtpy and pyvistaqt, whose stubs miss most of the Qt enums
 # and the pyvista Plotter API that QtInteractor inherits.
