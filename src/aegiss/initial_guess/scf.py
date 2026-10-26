@@ -142,4 +142,18 @@ def run_scf(
             )
 
     mf.kernel()
+    _log_scf_result(mf, method)
     return mf
+
+
+def _log_scf_result(mf: Any, method: str) -> None:
+    """Log the mean-field energy, or warn when the SCF stopped unconverged."""
+    if mf.converged:
+        logger.info("SCF converged: E(%s) = %.10f Eh", method, mf.e_tot)
+    else:
+        logger.warning(
+            "SCF did NOT converge after %d cycles: last E(%s) = %.10f Eh",
+            mf.max_cycle,
+            method,
+            mf.e_tot,
+        )
