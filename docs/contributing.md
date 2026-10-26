@@ -20,6 +20,10 @@ just build --all-groups --all-extras   # every dependency group and the viz extr
 uv run prek install                    # git hooks: ruff, ty and the repository checks
 ```
 
+In VS Code or GitHub Codespaces, the devcontainer in `.devcontainer/` (Ubuntu with uv,
+just and OpenMPI) runs the two commands above when it starts. The MolTagger GUI needs a
+display, so it does not run inside the container.
+
 On Nix, `nix develop` (or [direnv](https://direnv.net) with the tracked `.envrc`) gives a
 shell with uv, just, lychee and OpenMPI; run the same commands inside it.
 
