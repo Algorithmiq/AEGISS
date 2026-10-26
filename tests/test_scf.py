@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import numpy as np
 import pytest
 from pyscf.gto.basis import BasisNotFoundError
@@ -98,6 +100,20 @@ class TestRunScf:
     def test_h2_rhf_mo_occ_sum(self, h2_rhf) -> None:
         # H2 has 2 electrons
         assert abs(float(np.sum(h2_rhf.mo_occ)) - 2.0) < 1e-10
+
+    def test_logs_converged_energy(self, caplog: pytest.LogCaptureFixture) -> None:
+        mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
+        with caplog.at_level(logging.INFO, logger="aegiss.initial_guess.scf"):
+            mf = run_scf(mol, method="RHF", verbose=0)
+        assert f"SCF converged: E(RHF) = {mf.e_tot:.10f} Eh" in caplog.text
+
+    def test_warns_when_not_converged(self, caplog: pytest.LogCaptureFixture) -> None:
+        mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
+        with caplog.at_level(logging.INFO, logger="aegiss.initial_guess.scf"):
+            mf = run_scf(mol, method="RHF", verbose=0, max_cycle=1, conv_tol=1e-14)
+        assert not mf.converged
+        assert "SCF did NOT converge after 1 cycles" in caplog.text
+        assert any(r.levelno == logging.WARNING for r in caplog.records)
 
     def test_unknown_method_raises(self) -> None:
         mol = build_mol("H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0)
