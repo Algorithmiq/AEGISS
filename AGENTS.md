@@ -72,7 +72,8 @@ enforces it. A new command goes into the `justfile` first.
 - `block2` is pinned to an exact release from PyPI: DMRG results depend on its version, so bump
   it deliberately.
 - DMRG runs `block2main` as a subprocess (`wavefunction/dmrg_subprocess.py`), not through the
-  `block2` Python API. Its working files go under `SCRATCH_DIR` (default `./tmp`, gitignored).
+  `block2` Python API. Nothing imports `block2`/`pyblock2`, not the tests, docs or notebooks
+  either; validate against PySCF (e.g. FCI) instead. Its working files go under `SCRATCH_DIR` (default `./tmp`, gitignored).
 - Runtime environment variables (`OMP_NUM_THREADS`, `SCRATCH_DIR`, `MEM`, `PYSCF_MAX_MEMORY`,
   `AEGISS_ORB_BASE`) are read in `utils/env.py` and documented in `docs/installation.md`.
 - MolTagger (`utils/mol_tagger/`) needs the `viz` extra and goes through `qtpy`; never import a
