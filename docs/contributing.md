@@ -20,6 +20,9 @@ just build --all-groups --all-extras   # every dependency group and the viz extr
 uv run prek install                    # git hooks: ruff, ty and the repository checks
 ```
 
+On Nix, `nix develop` (or [direnv](https://direnv.net) with the tracked `.envrc`) gives a
+shell with uv, just, lychee and OpenMPI; run the same commands inside it.
+
 ## Day to day
 
 | Recipe | What it does |
