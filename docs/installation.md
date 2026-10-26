@@ -77,17 +77,17 @@ logging.getLogger("aegiss").setLevel(logging.WARNING)
 
 ```bash
 uv sync --all-groups --all-extras   # install every dependency group (dev, test, docs, …) + extras
-pre-commit install                  # install git hooks
+prek install                        # install git hooks
 pytest                              # run test suite
 pytest --cov=aegiss                 # run with coverage report
 ```
 
-A bare `uv sync` installs only the default `dev` group (ruff, mypy, pre-commit); the
+A bare `uv sync` installs only the default `dev` group (ruff, ty, prek, pytest); the
 `test`, `docs`, and `interactive` groups are opt-in, hence `--all-groups` above (or, more
 narrowly, `uv sync --group test` to just run the suite).
 
-Code style is enforced by **ruff** (linting + formatting) and **mypy** (strict type
-checking). Both run automatically as pre-commit hooks and in CI.
+Code style is enforced by **ruff** (linting + formatting) and **ty** (type checking).
+Both run automatically as git hooks (via [prek](https://github.com/j178/prek)) and in CI.
 
 To build and preview the documentation locally:
 

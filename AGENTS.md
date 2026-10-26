@@ -17,7 +17,7 @@ of the molecular orbitals onto a user-chosen atomic-orbital manifold (`pyscf`).
   at the boundary, never in the middle of the algorithm.
 - Tests use small molecules and minimal basis sets. Mock `block2`/DMRG unless the test is about
   DMRG; mark anything that runs for a minute or more with `@pytest.mark.slow`.
-- **Run `pre-commit run --all-files` and the relevant tests before pushing, and fix every
+- **Run `prek run --all-files` and the relevant tests before pushing, and fix every
   finding.** `lint.yml` runs the same hooks over the PR's commit range, so a skipped lint is a
   red PR.
 - Changes to the API or to user-facing behaviour should be reflected in `docs/` (and in the
@@ -54,7 +54,7 @@ We use `uv` for environment management.
 ```bash
 uv sync --all-groups --all-extras
 uv run pytest -m "not slow"
-uv run pre-commit run --all-files
+uv run prek run --all-files
 uv run mkdocs serve
 ```
 

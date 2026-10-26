@@ -125,7 +125,9 @@ class ProjectionConfig:
             ValueError: If any of the parameters are out of their expected ranges or have invalid values.
         """
         if not isinstance(self.ao_labels, list):
-            raise ValueError("ProjectionConfig: `ao_labels` must be a non-empty list.")
+            raise ValueError(  # noqa: TRY004 -- documented as ValueError
+                "ProjectionConfig: `ao_labels` must be a non-empty list."
+            )
         if len(self.ao_labels) == 0:
             raise ValueError("ProjectionConfig: `ao_labels` must be a non-empty list.")
 

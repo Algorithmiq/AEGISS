@@ -101,5 +101,5 @@ def dump_qmi(
     data: dict[str, np.ndarray] = {"minfo": minfo, "soe1": soe1}
     if soe2 is not None:
         data["soe2"] = soe2
-    np.savez(filename, **data)  # type: ignore[arg-type]
+    np.savez(filename, **data)  # ty: ignore[invalid-argument-type]
     logger.info("QMI data dumped to %s", filename)

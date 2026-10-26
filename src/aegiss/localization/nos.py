@@ -57,5 +57,7 @@ def compute_nos(wfn_obj: Any, *, split_nos: bool = False) -> np.ndarray:
     # sort descending
     idx = np.argsort(occ_mo)[::-1]
     u = u[:, idx]
-    mo_coeff = wfn_obj._scf.mo_coeff if hasattr(wfn_obj, "_scf") else wfn_obj.mo_coeff
+    # pyscf post-HF objects expose their SCF only as `_scf`
+    scf = getattr(wfn_obj, "_scf", wfn_obj)
+    mo_coeff = scf.mo_coeff
     return np.asarray(mo_coeff @ u)

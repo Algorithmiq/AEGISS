@@ -95,13 +95,13 @@ The documentation sources live in [`docs/`](docs/index.md) and are built with Mk
 
 ```bash
 uv sync --all-groups --all-extras
-pre-commit install
+prek install
 pytest -m "not slow"
 mkdocs serve                  # docs preview at http://127.0.0.1:8000
 ```
 
-Code style is enforced by **ruff** and **mypy**; both run as pre-commit hooks and in CI
-on every pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
+Code style is enforced by **ruff** and **ty**; both run as git hooks (via
+[prek](https://github.com/j178/prek)) and in CI on every pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
 
 ---
 

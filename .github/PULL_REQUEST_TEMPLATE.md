@@ -15,7 +15,7 @@
 
 - [ ] Tests added or updated to cover the changes
 - [ ] Documentation updated (docstrings, `docs/`, `mkdocs.yml` nav) if needed
-- [ ] `pre-commit run --all-files` passes (ruff, ruff-format, mypy)
+- [ ] `prek run --all-files` passes (ruff, ruff-format, ty)
 - [ ] Release notes / `CHANGELOG` updated if applicable
 
 ## AI/LLM disclosure

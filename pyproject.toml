@@ -61,9 +61,10 @@ docs = [
     "mkdocstrings[python]>=0.27",
 ]
 dev = [
-    "mypy==1.15.0",
-    "pre-commit>=3",
-    "ruff==0.15.6",
+    "prek>=0.5",
+    "ruff==0.17.1",
+    "ty==0.0.89",
+    { include-group = "test" },
 ]
 test = [
     "ase>=3",
@@ -123,6 +124,11 @@ markers = [
     "slow: mark test as slow (>=1 minute runtime)",
 ]
 required_plugins = ["pytest-cov"]
+filterwarnings = [
+    "error",
+    # pyscf suggests an optional package whenever a basis is looked up by an unknown name
+    "ignore:Basis may be available in basis-set-exchange:UserWarning:pyscf",
+]
 
 
 [tool.coverage]
@@ -149,50 +155,7 @@ line-length = 88
 exclude = ["docs/tutorials", "scripts"]
 
 [tool.ruff.lint]
-select = [
-    "F",      # pyflakes
-    "E",
-    "W",      # pycodestyle
-    "C90",    # mccabe
-    "I",      # isort
-    "N",      # pep8-naming
-    "D",      # pydocstyle
-    "UP",     # pyupgrade
-    "YTT",    # flake8-2020
-    "ANN",    # flake8-annotations
-    "S",      # flake8-bandit
-    "BLE",    # flake8-blind-except
-    "FBT",    # flake8-boolean-trap
-    "B",      # flake8-bugbear
-    "A",      # flake8-builtins
-    "C4",     # flake8-comprehensions
-    "EXE",    # flake8-executable
-    "ISC003", # flake8-implicit-str-concat: explicit-string-concatenation
-    "ICN",    # flake8-import-conventions
-    "G",      # flake8-logging-format
-    "INP",    # flake8-no-pep420
-    "PIE",    # flake8-pie
-    "T20",    # flake8-print
-    "PYI",    # flake8-pyi
-    "PT",     # flake8-pytest-style
-    "RSE",    # flake8-raise
-    "RET",    # flake8-return
-    "SLOT",   # flake8-slot
-    "SIM",    # flake8-simplify
-    "TID",    # flake8-tidy-imports
-    "TCH",    # flake8-type-checking
-    "ARG",    # flake8-unused-arguments
-    "PTH",    # flake8-use-pathlib
-    "ERA",    # eradicate
-    "PLC",    # pylint convention
-    "PLE",    # pylint error
-    "PLR",    # pylint refactor
-    "PLW",    # pylint warning
-    "FLY",    # flynt
-    "NPY",    # NumPy-specific rules
-    "PERF",   # perflint
-    "RUF",    # Ruff-specific rules
-]
+select = ["ALL"]
 ignore = [
     "D206",    # indent-with-spaces: enforced by the formatter
     "E111",    # indentation-with-invalid-multiple: enforced by the formatter
@@ -206,18 +169,25 @@ ignore = [
     "PLR2004", # pylint refactor: magic value used in comparison
     "W191",    # tab-indentation: enforced by the formatter
     "ANN401",  # Any type: needed for pyscf/block2 untyped objects
+    "COM812",  # missing-trailing-comma: conflicts with the formatter
+    "CPY001",  # missing-copyright-notice: TODO enable with the licence headers
+    "EM101",   # raw-string-in-exception: plain exception messages are fine
+    "EM102",   # f-string-in-exception: plain exception messages are fine
+    "PLR0917", # too-many-positional-arguments: positional parameters are public API
+    "TRY003",  # raise-vanilla-args: long messages outside the exception class
 ]
 unfixable = [
     "ERA",  # removes commented-out code
     "F401", # removes unused imports
     "F841", # removes unused variables
+    "T20",  # removes print statements
 ]
 isort.required-imports = ["from __future__ import annotations"]
 flake8-unused-arguments.ignore-variadic-names = true
 flake8-annotations.allow-star-arg-any = true
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "D", "C901", "INP001", "E721", "T20"]
+"tests/*" = ["S101", "D", "C901", "INP001", "E721", "T20", "SLF001"]
 "src/aegiss/cli.py" = ["T20"]  # a CLI is expected to print to stdout
 "mol_tagger.py" = ["INP001"]
 "main.py" = ["INP001"]
@@ -234,81 +204,29 @@ max-line-length = 120
 convention = "google"
 
 [tool.ruff.format]
+# keep the hand-aligned code blocks of the docs as written
+exclude = ["*.md"]
+docstring-code-format = true
 quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 
 
-[tool.mypy]
-python_version = "3.12"
-exclude = '''(?x)(
-    tests/*
-    | docs/*
-)'''
-files = ["src/aegiss/**/*.py"]
+[tool.ty.environment]
+python-version = "3.12"
 
-disallow_any_generics = false
-disallow_any_unimported = false
-disallow_subclassing_any = true
-disallow_untyped_calls = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-implicit_optional = false
-strict_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_return_any = true
-warn_unreachable = true
-show_error_context = true
-show_column_numbers = true
-hide_error_codes = false
-pretty = true
-show_traceback = true
+[tool.ty.src]
+include = ["src", "tests/conftest.py", "docs/scripts", "main.py", "mol_tagger.py"]
 
-[[tool.mypy.overrides]]
-module = [
-    "pyscf.*",
-    "block2.*",
-    "pyblock2.*",
-    "seaborn.*",
-]
-ignore_missing_imports = true
-ignore_errors = true
+# The MolTagger GUI goes through qtpy and pyvistaqt, whose stubs miss most of the Qt enums
+# and the pyvista Plotter API that QtInteractor inherits.
+[[tool.ty.overrides]]
+include = ["src/aegiss/utils/mol_tagger/_window.py", "src/aegiss/utils/mol_tagger/_renderer.py"]
 
-[[tool.mypy.overrides]]
-module = [
-    "ase.*",
-    "pyvista.*",
-    "pyvistaqt.*",
-    "qtpy.*",
-    "structlog.*",
-]
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = ["aegiss.utils.mol_tagger._window"]
-disable_error_code = ["misc"]
-
-
-[tool.pyright]
-pythonVersion = "3.12"
-include = ["src/aegiss/**/*.py", "tests/**/conftest.py"]
-exclude = ["test_*.py", "**/__pycache__"]
-typeCheckingMode = "basic"
-useLibraryCodeForTypes = true
-reportGeneralTypeIssues = "information"
-reportMissingImports = true
-reportMissingTypeStubs = "warning"
-reportImportCycles = "information"
-reportPrivateUsage = "information"
-reportPrivateImportUsage = "information"
-reportUnnecessaryIsInstance = "information"
-reportUnnecessaryCast = "information"
-reportUnnecessaryComparison = "information"
-reportUnnecessaryContains = "information"
-reportUnnecessaryTypeIgnoreComment = "information"
-reportMatchNotExhaustive = "information"
+[tool.ty.overrides.rules]
+unresolved-attribute = "ignore"
+invalid-argument-type = "ignore"
+invalid-assignment = "ignore"
+invalid-attribute-override = "ignore"
+not-subscriptable = "ignore"

@@ -43,7 +43,7 @@ def _draw_pie_subplot(
     explode = np.zeros(n_labels)
     explode[np.argmax(data)] = 0.1
 
-    _, texts, autotexts = ax.pie(  # pyright: ignore[reportAssignmentType]
+    _, texts, autotexts = ax.pie(  # ty: ignore[invalid-assignment] -- 3-tuple when autopct is set
         data,
         labels=labels_names,
         explode=explode,

@@ -49,10 +49,10 @@ git clone https://github.com/Algorithmiq/AEGISS.git
 cd AEGISS
 uv sync --all-groups --all-extras   # dev, test, docs, interactive groups + viz extra
 source .venv/bin/activate
-pre-commit install                  # install the git hooks
+prek install                        # install the git hooks
 ```
 
-A bare `uv sync` installs only the default `dev` group (ruff, mypy, pre-commit); the
+A bare `uv sync` installs only the default `dev` group (ruff, ty, prek, pytest); the
 `test`, `docs`, and `interactive` groups are opt-in. `block2` is fetched from its own
 package index declared in `pyproject.toml` — `uv sync` handles it automatically.
 
@@ -62,7 +62,7 @@ control memory and scratch space (`OMP_NUM_THREADS`, `SCRATCH_DIR`, `MEM`,
 
 ## Making changes
 
-1. **Branch off `main`.** Direct commits to `main` are blocked by a pre-commit hook.
+1. **Branch off `main`.** Direct commits to `main` are blocked by a git hook.
    Branch names may only contain letters, digits, `_`, `-`, and `/` — we use
    `<type>/<short-description>`, e.g. `feat/spin-entropy-screening`.
 2. **Write [conventional commit](https://www.conventionalcommits.org) messages** with a
@@ -77,12 +77,13 @@ control memory and scratch space (`OMP_NUM_THREADS`, `SCRATCH_DIR`, `MEM`,
 
 ### Code style
 
-Style is enforced by **ruff** (linting + formatting) and **mypy** (strict type
-checking), both configured in [pyproject.toml](pyproject.toml). They run as
-pre-commit hooks and in CI on every pull request:
+Style is enforced by **ruff** (linting + formatting) and **ty** (type checking), both
+configured in [pyproject.toml](pyproject.toml). They run as git hooks, managed by
+[prek](https://github.com/j178/prek) from [prek.toml](prek.toml), and in CI on every
+pull request:
 
 ```bash
-pre-commit run --all-files
+prek run --all-files
 ```
 
 Public functions and classes need type annotations and **Google-style** docstrings —
