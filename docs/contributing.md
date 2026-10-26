@@ -44,3 +44,16 @@ running the recipe it ran.
   `fix(projection): 🐛 normalise AO weights`.
 - Fill in the PR template. Changes to the API or to user-facing behaviour come with
   tests and with the matching documentation update.
+
+## Releases
+
+The version comes from the git tag (hatch-vcs). Publishing a GitHub release tagged
+`vX.Y.Z` runs `deploy.yml`: it builds the sdist and wheel with `just dist`, checks that
+the built version matches the tag, publishes to PyPI through trusted publishing with
+build-provenance attestations, and attaches the files to the release. The release notes
+are grouped by PR label (`.github/release.yml`).
+
+Dependabot opens weekly grouped updates for the Python dependencies and the GitHub
+Actions; ruff and ty are bumped monthly by `update-tools.yml`, together with their
+prek hooks. `block2` is never bumped automatically, since DMRG results depend on its
+version.
