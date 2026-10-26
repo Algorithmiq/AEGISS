@@ -352,12 +352,12 @@ def localize(method: str, *args: Any, **kwargs: Any) -> Any:
         Fermi-level window when built on them.
 
     Example:
-        >>> localize('pm', mol, mf, on_virtual=True)
-        >>> localize('ibos', mol, mf)
-        >>> localize('iaos', mol, mf, minao='minao')
-        >>> localize('nos', mf, correlated_method='mp2')
-        >>> localize('fnos', mf, correlated_method='mp2', frozen=[0])
-        >>> localize('boys', mol, mf, n_occ=5, on_virtual=False)
+        >>> localize("pm", mol, mf, on_virtual=True)
+        >>> localize("ibos", mol, mf)
+        >>> localize("iaos", mol, mf, minao="minao")
+        >>> localize("nos", mf, correlated_method="mp2")
+        >>> localize("fnos", mf, correlated_method="mp2", frozen=[0])
+        >>> localize("boys", mol, mf, n_occ=5, on_virtual=False)
     """
     if method not in _METHODS:
         raise ValueError(

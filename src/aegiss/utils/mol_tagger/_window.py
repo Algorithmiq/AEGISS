@@ -66,7 +66,7 @@ class _RightClickPickFilter(QObject):
             dy = int(event.y()) - self._press[1]
             self._press = None
             if dx * dx + dy * dy <= DRAG_THRESHOLD_SQ:
-                self._win._pick_at_qt(int(event.x()), int(event.y()))
+                self._win._pick_at_qt(int(event.x()), int(event.y()))  # noqa: SLF001
         return False  # let Qt and VTK handle the event normally
 
 
@@ -79,7 +79,7 @@ class _ViewportResizeFilter(QObject):
 
     def eventFilter(self, _obj: Any, event: Any) -> bool:  # noqa: N802
         if event.type() == QEvent.Resize:
-            self._win._position_view_overlay()
+            self._win._position_view_overlay()  # noqa: SLF001
         return False
 
 

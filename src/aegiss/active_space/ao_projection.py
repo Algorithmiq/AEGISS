@@ -53,7 +53,7 @@ def _compute_contribution(
     mol2 = mf.mol  # original basis
     projection_mol = mol2.copy()  # extended basis
     if secondary_basis is not None:
-        projection_mol.atom = mol2._atom
+        projection_mol.atom = mol2._atom  # noqa: SLF001 -- pyscf keeps the parsed geometry only here
         projection_mol.unit = (
             "B"  # in Bohr because `mol._atom` returns the coordinates in Bohr
         )

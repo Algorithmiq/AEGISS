@@ -33,7 +33,7 @@ class EntropyConfig:
             ValueError: If any of the parameters are out of their expected ranges or have invalid values.
         """
         if not isinstance(self.fraction, (int, float)):
-            raise ValueError(
+            raise ValueError(  # noqa: TRY004 -- documented as ValueError
                 f"EntropyConfig: `fraction` must be a number, got {type(self.fraction).__name__}."
             )
 

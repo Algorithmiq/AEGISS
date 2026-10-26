@@ -16,6 +16,7 @@ import os
 from pathlib import Path
 
 import matplotlib as mpl
+import numpy as np
 
 mpl.use("Agg")
 
@@ -90,7 +91,7 @@ def main() -> None:
             label=label,
             projected_basis="minao",
             mf=mf,
-            full_mo_coeff=mf.mo_coeff,
+            full_mo_coeff=np.asarray(mf.mo_coeff),
             space=space,
             contribution=0.0,
             contribution_type="a",
@@ -106,7 +107,7 @@ def main() -> None:
     )
 
     # --- Pie composition per MO (valence sigma framework: genuine mixtures) -----
-    pie_labels = ["C 2s", "C 2px", "C 2py", "C 2pz", "H 1s"]
+    pie_labels: list[str | list[str]] = ["C 2s", "C 2px", "C 2py", "C 2pz", "H 1s"]
     plot_pie_contribution(
         mol,
         mf,
