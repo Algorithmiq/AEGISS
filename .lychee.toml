@@ -13,4 +13,8 @@ exclude = [
   "^https://github\\.com/Algorithmiq/AEGISS",
   # canonical/og self-links point at the deployed site, not this build; internal links are checked as files
   "^https://algorithmiq\\.github\\.io/AEGISS",
+  # the notebooks link to each other relatively, which works in Jupyter and on GitHub but
+  # not on the site (mkdocs-jupyter does not rewrite them); they become absolute site URLs
+  # once the site is published (#91)
+  "^file://.*/site/tutorials/.*\\.(ipynb|md)(#.*)?$",
 ]
