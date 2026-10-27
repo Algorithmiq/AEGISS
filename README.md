@@ -136,7 +136,15 @@ If you use AEGISS in your work, please cite the paper:
 }
 ```
 
-Machine-readable metadata for both the software and the paper is in
+AEGISS builds on DMRG ([White 1992](https://doi.org/10.1103/PhysRevLett.69.2863),
+[White 1993](https://doi.org/10.1103/PhysRevB.48.10345),
+[Chan & Head-Gordon 2002](https://doi.org/10.1063/1.1449459)), run with block2
+([Zhai et al. 2023](https://doi.org/10.1063/5.0180424),
+[Zhai & Chan 2021](https://doi.org/10.1063/5.0050902)), and on AVAS
+([Sayfutyarova et al. 2017](https://doi.org/10.1021/acs.jctc.7b00128)); please cite
+them as well. [docs/citing.md](docs/citing.md) has the BibTeX for all of them.
+
+Machine-readable metadata for the software, the paper and these references is in
 [CITATION.cff](CITATION.cff) — GitHub's "Cite this repository" widget reads it
 directly.
 

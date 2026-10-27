@@ -10,6 +10,9 @@ AutoCAS), while an **AVAS-like projection** onto user-specified atomic orbitals 
 the chemically meaningful subset. An orbital enters the final space only when it is both
 strongly correlated *and* chemically aligned with the process of interest.
 
+If you use AEGISS, please cite the AEGISS paper and the DMRG, block2 and AVAS papers it
+builds on; see [Citing AEGISS](citing.md).
+
 ## The AEGISS procedure
 
 ```mermaid

@@ -61,3 +61,108 @@ preferred-citation:
     - type: other
       value: "arXiv:2508.10671"
       description: "arXiv eprint identifier; the current revision is v3"
+references:
+  - type: article
+    title: "Density matrix formulation for quantum renormalization groups"
+    authors:
+      - family-names: "White"
+        given-names: "Steven R."
+    journal: "Physical Review Letters"
+    volume: 69
+    start: 2863
+    end: 2866
+    year: 1992
+    doi: "10.1103/PhysRevLett.69.2863"
+  - type: article
+    title: "Density-matrix algorithms for quantum renormalization groups"
+    authors:
+      - family-names: "White"
+        given-names: "Steven R."
+    journal: "Physical Review B"
+    volume: 48
+    start: 10345
+    end: 10356
+    year: 1993
+    doi: "10.1103/PhysRevB.48.10345"
+  - type: article
+    title: >-
+      Highly correlated calculations with a polynomial cost algorithm: A study of
+      the density matrix renormalization group
+    authors:
+      - family-names: "Chan"
+        given-names: "Garnet Kin-Lic"
+      - family-names: "Head-Gordon"
+        given-names: "Martin"
+    journal: "The Journal of Chemical Physics"
+    volume: 116
+    start: 4462
+    end: 4476
+    year: 2002
+    doi: "10.1063/1.1449459"
+  - type: article
+    title: >-
+      Block2: A comprehensive open source framework to develop and apply
+      state-of-the-art DMRG algorithms in electronic structure and beyond
+    authors:
+      - family-names: "Zhai"
+        given-names: "Huanchen"
+      - family-names: "Larsson"
+        given-names: "Henrik R."
+      - family-names: "Lee"
+        given-names: "Seunghoon"
+      - family-names: "Cui"
+        given-names: "Zhi-Hao"
+      - family-names: "Zhu"
+        given-names: "Tianyu"
+      - family-names: "Sun"
+        given-names: "Chong"
+      - family-names: "Peng"
+        given-names: "Linqing"
+      - family-names: "Peng"
+        given-names: "Ruojing"
+      - family-names: "Liao"
+        given-names: "Ke"
+      - family-names: "Tölle"
+        given-names: "Johannes"
+      - family-names: "Yang"
+        given-names: "Junjie"
+      - family-names: "Li"
+        given-names: "Shuoxue"
+      - family-names: "Chan"
+        given-names: "Garnet Kin-Lic"
+    journal: "The Journal of Chemical Physics"
+    volume: 159
+    start: 234801
+    year: 2023
+    doi: "10.1063/5.0180424"
+  - type: article
+    title: >-
+      Low communication high performance ab initio density matrix
+      renormalization group algorithms
+    authors:
+      - family-names: "Zhai"
+        given-names: "Huanchen"
+      - family-names: "Chan"
+        given-names: "Garnet Kin-Lic"
+    journal: "The Journal of Chemical Physics"
+    volume: 154
+    start: 224116
+    year: 2021
+    doi: "10.1063/5.0050902"
+  - type: article
+    title: "Automated construction of molecular active spaces from atomic valence orbitals"
+    authors:
+      - family-names: "Sayfutyarova"
+        given-names: "Elvira R."
+      - family-names: "Sun"
+        given-names: "Qiming"
+      - family-names: "Chan"
+        given-names: "Garnet Kin-Lic"
+      - family-names: "Knizia"
+        given-names: "Gerald"
+    journal: "Journal of Chemical Theory and Computation"
+    volume: 13
+    start: 4063
+    end: 4078
+    year: 2017
+    doi: "10.1021/acs.jctc.7b00128"
