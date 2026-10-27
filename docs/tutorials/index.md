@@ -12,6 +12,12 @@ by the notebooks live alongside them in `docs/tutorials/data/`.
 | [04 — Full Pipeline](04_aegiss.ipynb) | End-to-end AEGISS pipeline with all four config objects |
 | [05 — Unrestricted (UHF)](05_unrestricted.ipynb) | What changes for a UHF reference: 3-D `mo_coeff`, `symm_type="SZ"`, `spin_soe`, split α/β selection, per-channel thresholds |
 
+!!! note "block2 must be installed separately"
+    Notebooks 02, 04 and 05 run DMRG, which needs
+    [block2](https://github.com/block-hczhai/block2-preview) installed in the same
+    environment as AEGISS (`uv pip install block2==0.5.4`). block2 is not an AEGISS
+    dependency; see [Installation](../installation.md#block2-dmrg).
+
 ---
 
 ## Algorithm overview

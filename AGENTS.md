@@ -70,8 +70,9 @@ enforces it. A new command goes into the `justfile` first.
 
 ## Notes
 
-- `block2` is pinned to an exact release from PyPI: DMRG results depend on its version, so bump
-  it deliberately.
+- `block2` is not a dependency: users install it in the same environment (docs recommend
+  `block2==0.5.4`, since DMRG results depend on its version). Never add it to `pyproject.toml`;
+  tests that need a real `block2main` skip without it, the rest mock it.
 - DMRG runs `block2main` as a subprocess (`wavefunction/dmrg_subprocess.py`), not through the
   `block2` Python API. Nothing imports `block2`/`pyblock2`, not the tests, docs or notebooks
   either; validate against PySCF (e.g. FCI) instead. Its working files go under `SCRATCH_DIR` (default `./tmp`, gitignored).

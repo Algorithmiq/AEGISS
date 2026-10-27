@@ -11,6 +11,27 @@ uv sync
 source .venv/bin/activate
 ```
 
+## block2 (DMRG)
+
+The DMRG step needs [block2](https://github.com/block-hczhai/block2-preview), which is
+**not** a dependency of AEGISS and is not installed with it. AEGISS runs block2's
+`block2main` executable as a subprocess, so install block2 into the same environment:
+
+```bash
+uv pip install block2==0.5.4   # or: pip install block2==0.5.4
+```
+
+0.5.4 is the release AEGISS is validated with; DMRG results can change between block2
+versions. block2 publishes wheels for Linux (x86_64, aarch64) and macOS (arm64) up to
+CPython 3.14, and `block2main` needs an MPI runtime (e.g. OpenMPI) on the system.
+
+`uv sync` removes packages it does not manage, so reinstall block2 after syncing, or
+sync with `uv sync --inexact`. `uv run` leaves it in place.
+
+Without block2, everything except the DMRG step works: SCF, localization, AO
+projection, MolTagger and plotting. `run_dmrg_subprocess` and `select_aegiss` raise a
+`RuntimeError` naming the missing `block2main`.
+
 ## MolTagger: interactive atom tagging
 
 An interactive 3D molecular viewer for selecting atoms and generating PySCF-compatible
@@ -74,6 +95,7 @@ logging.getLogger("aegiss").setLevel(logging.WARNING)
 
 ```bash
 uv sync --all-groups --all-extras   # install every dependency group (dev, test, docs, …) + extras
+uv pip install block2==0.5.4        # only for DMRG runs and the local DMRG integration tests
 prek install                        # install git hooks
 pytest                              # run test suite
 pytest --cov=aegiss                 # run with coverage report

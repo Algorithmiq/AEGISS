@@ -20,7 +20,8 @@ plus an AO projection) and renders the four utility plots as PNGs into
 
     python docs/scripts/generate_doc_plots.py
 
-Requires the full AEGISS stack including ``block2`` (for the DMRG entropies).
+Requires ``block2`` installed in the same environment (for the DMRG entropies); it is
+not an AEGISS dependency.
 """
 
 from __future__ import annotations

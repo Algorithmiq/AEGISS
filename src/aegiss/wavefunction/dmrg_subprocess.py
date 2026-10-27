@@ -173,7 +173,8 @@ def run_dmrg_subprocess(
         ValueError: If *symm_type* or *reorder* is not a supported value, if
             *unrestricted* is used with ``symm_type='SU2'``, or if
             *max_bond_dim* is not a positive multiple of 4.
-        RuntimeError: If the ``block2main`` executable cannot be found.
+        RuntimeError: If the ``block2main`` executable cannot be found. block2 is
+            not an AEGISS dependency; install it in the same environment.
         subprocess.CalledProcessError: If ``block2main`` exits with a non-zero
             status.
     """
@@ -260,8 +261,9 @@ def run_dmrg_subprocess(
     )
     if block2main_path is None:
         raise RuntimeError(
-            "block2main not found in PATH or venv bin directory. "
-            "Activate the project venv or add block2main to PATH."
+            "block2main not found in PATH or venv bin directory. block2 is not "
+            "installed with AEGISS: install it in the same environment "
+            "(e.g. `uv pip install block2==0.5.4`) or add block2main to PATH."
         )
 
     logger.info("Running block2main: %s %s", block2main_path, input_path)

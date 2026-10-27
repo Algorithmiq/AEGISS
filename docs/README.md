@@ -82,7 +82,8 @@ the frontier CAS(30,30), and an AO projection onto `minao`):
 python docs/scripts/generate_doc_plots.py
 ```
 
-This needs the full AEGISS stack including `block2`, takes a few minutes, and writes
+This needs block2 installed in the same environment (see
+[Installation](installation.md#block2-dmrg)), takes a few minutes, and writes
 its DMRG scratch to `tmp/_doc_plots_scratch/` (git-ignored). Files under
 `docs/scripts/` are excluded from the built site via `exclude_docs` in `mkdocs.yml`.
 

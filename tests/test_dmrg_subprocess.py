@@ -58,6 +58,11 @@ def mocked_run_dmrg_subprocess():
 
     with (
         patch("aegiss.wavefunction.dmrg_subprocess.subprocess.run") as mock_subproc,
+        # block2 is not an AEGISS dependency, so block2main may well be missing
+        patch(
+            "aegiss.wavefunction.dmrg_subprocess.shutil.which",
+            return_value="/fake/bin/block2main",
+        ),
         patch(
             "aegiss.wavefunction.dmrg_subprocess._read_outputs",
             return_value=(_FAKE_ENERGY, _FAKE_PDM1, _FAKE_NPC1),
@@ -130,6 +135,24 @@ class TestRunDmrgSubprocessBehavior:
         assert s1 is not None
         assert s1.shape == (_NCAS,)
         np.testing.assert_allclose(s1, _EXPECTED_SOE, atol=1e-12)
+
+
+class TestRunDmrgSubprocessMissingBlock2:
+    def test_missing_block2main_says_how_to_install_it(
+        self, mocked_run_dmrg_subprocess, tmp_path
+    ) -> None:
+        with (
+            patch(
+                "aegiss.wavefunction.dmrg_subprocess.shutil.which", return_value=None
+            ),
+            patch(
+                "aegiss.wavefunction.dmrg_subprocess.sys.executable",
+                str(tmp_path / "python"),
+            ),
+            pytest.raises(RuntimeError, match="install it in the same environment"),
+        ):
+            run_dmrg_subprocess(mf=None, ncas=_NCAS, nelecas=2, get_qmi=False)
+        mocked_run_dmrg_subprocess["mock_subproc"].assert_not_called()
 
 
 class TestRunDmrgSubprocessSymmTypeValidation:

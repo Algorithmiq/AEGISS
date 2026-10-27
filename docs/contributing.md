@@ -62,5 +62,5 @@ are grouped by PR label (`.github/release.yml`).
 
 Dependabot opens weekly grouped updates for the Python dependencies and the GitHub
 Actions; ruff and ty are bumped monthly by `update-tools.yml`, together with their
-prek hooks. `block2` is never bumped automatically, since DMRG results depend on its
-version.
+prek hooks. `block2` is not a dependency, so its recommended version (0.5.4, in the
+README and `docs/installation.md`) is bumped by hand, since DMRG results depend on it.

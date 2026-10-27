@@ -36,6 +36,18 @@ The `viz` extra is only needed for
 [MolTagger](docs/moltagger.md), the interactive tool for picking atoms and generating
 `ao_labels`.
 
+**block2 is required for the DMRG step but is not installed with AEGISS.** AEGISS runs
+[block2](https://github.com/block-hczhai/block2-preview)'s `block2main` executable as a
+subprocess, so install block2 into the same environment:
+
+```bash
+uv pip install block2==0.5.4   # the release AEGISS is validated with
+```
+
+`uv sync` removes packages it does not manage, so reinstall block2 after it, or sync
+with `uv sync --inexact`. The AO projection, localization and plotting tools work
+without block2.
+
 See [docs/installation.md](docs/installation.md) for the environment variables that
 control threads, memory and scratch space, and for logging setup.
 
