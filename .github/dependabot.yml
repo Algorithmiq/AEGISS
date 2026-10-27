@@ -25,3 +25,8 @@ updates:
       actions:
         patterns:
           - "*"
+
+  - package-ecosystem: "devcontainers"
+    directory: "/"
+    schedule:
+      interval: "monthly"
