@@ -22,8 +22,9 @@ If you use AEGISS in your work, please cite the AEGISS paper:
 
 ## Methods AEGISS builds on
 
-AEGISS combines a DMRG calculation, run with block2, with an AVAS-like projection onto
-atomic orbitals. Please also cite the papers behind them.
+AEGISS ranks orbitals by their single-orbital entropy from a DMRG calculation, run with
+block2, and combines that with an AVAS-like projection onto atomic orbitals. It is built
+on PySCF, and MolTagger uses ASE. Please also cite the papers behind them.
 
 **DMRG**
 
@@ -54,6 +55,36 @@ atomic orbitals. Please also cite the papers behind them.
 - E. R. Sayfutyarova, Q. Sun, G. K.-L. Chan and G. Knizia, *Automated construction of
   molecular active spaces from atomic valence orbitals*, J. Chem. Theory Comput. **13**,
   4063 (2017). [doi:10.1021/acs.jctc.7b00128](https://doi.org/10.1021/acs.jctc.7b00128)
+
+**Single-orbital entropy**, the entanglement measure AEGISS screens on
+
+- Ö. Legeza and J. Sólyom, *Optimizing the density-matrix renormalization group method
+  using quantum information entropy*, Phys. Rev. B **68**, 195116 (2003).
+  [doi:10.1103/PhysRevB.68.195116](https://doi.org/10.1103/PhysRevB.68.195116)
+- J. Rissler, R. M. Noack and S. R. White, *Measuring orbital interaction using quantum
+  information theory*, Chem. Phys. **323**, 519 (2006).
+  [doi:10.1016/j.chemphys.2005.10.018](https://doi.org/10.1016/j.chemphys.2005.10.018)
+- K. Boguslawski, P. Tecmer, Ö. Legeza and M. Reiher, *Entanglement measures for
+  single- and multireference correlation effects*, J. Phys. Chem. Lett. **3**, 3129
+  (2012). [doi:10.1021/jz301319v](https://doi.org/10.1021/jz301319v)
+- K. Boguslawski and P. Tecmer, *Orbital entanglement in quantum chemistry*,
+  Int. J. Quantum Chem. **115**, 1289 (2015).
+  [doi:10.1002/qua.24832](https://doi.org/10.1002/qua.24832)
+
+**PySCF**, for the mean field, the integrals, the localization and the AO projection
+
+- Q. Sun *et al.*, *PySCF: the Python-based simulations of chemistry framework*,
+  WIREs Comput. Mol. Sci. **8**, e1340 (2018).
+  [doi:10.1002/wcms.1340](https://doi.org/10.1002/wcms.1340)
+- Q. Sun *et al.*, *Recent developments in the PySCF program package*,
+  J. Chem. Phys. **153**, 024109 (2020).
+  [doi:10.1063/5.0006074](https://doi.org/10.1063/5.0006074)
+
+**ASE**, used by [MolTagger](moltagger.md)
+
+- A. H. Larsen *et al.*, *The atomic simulation environment—a Python library for working
+  with atoms*, J. Phys.: Condens. Matter **29**, 273002 (2017).
+  [doi:10.1088/1361-648X/aa680e](https://doi.org/10.1088/1361-648X/aa680e)
 
 ```bibtex
 @article{white1992dmrg,
@@ -114,6 +145,76 @@ atomic orbitals. Please also cite the papers behind them.
   pages={4063--4078},
   year={2017},
   doi={10.1021/acs.jctc.7b00128},
+}
+
+@article{legeza2003entropy,
+  title={Optimizing the density-matrix renormalization group method using quantum information entropy},
+  author={Legeza, Örs and Sólyom, J.},
+  journal={Phys. Rev. B},
+  volume={68},
+  pages={195116},
+  year={2003},
+  doi={10.1103/PhysRevB.68.195116},
+}
+
+@article{rissler2006orbital,
+  title={Measuring orbital interaction using quantum information theory},
+  author={Rissler, Jörg and Noack, Reinhard M. and White, Steven R.},
+  journal={Chem. Phys.},
+  volume={323},
+  pages={519--531},
+  year={2006},
+  doi={10.1016/j.chemphys.2005.10.018},
+}
+
+@article{boguslawski2012entanglement,
+  title={Entanglement Measures for Single- and Multireference Correlation Effects},
+  author={Boguslawski, Katharina and Tecmer, Paweł and Legeza, Örs and Reiher, Markus},
+  journal={J. Phys. Chem. Lett.},
+  volume={3},
+  pages={3129--3135},
+  year={2012},
+  doi={10.1021/jz301319v},
+}
+
+@article{boguslawski2015orbital,
+  title={Orbital entanglement in quantum chemistry},
+  author={Boguslawski, Katharina and Tecmer, Paweł},
+  journal={Int. J. Quantum Chem.},
+  volume={115},
+  pages={1289--1295},
+  year={2015},
+  doi={10.1002/qua.24832},
+}
+
+@article{sun2018pyscf,
+  title={PySCF: the Python-based simulations of chemistry framework},
+  author={Sun, Qiming and Berkelbach, Timothy C. and Blunt, Nick S. and Booth, George H. and Guo, Sheng and Li, Zhendong and Liu, Junzi and McClain, James D. and Sayfutyarova, Elvira R. and Sharma, Sandeep and Wouters, Sebastian and Chan, Garnet Kin-Lic},
+  journal={WIREs Comput. Mol. Sci.},
+  volume={8},
+  pages={e1340},
+  year={2018},
+  doi={10.1002/wcms.1340},
+}
+
+@article{sun2020pyscf,
+  title={Recent developments in the PySCF program package},
+  author={Sun, Qiming and Zhang, Xing and Banerjee, Samragni and Bao, Peng and Barbry, Marc and Blunt, Nick S. and Bogdanov, Nikolay A. and Booth, George H. and Chen, Jia and Cui, Zhi-Hao and Eriksen, Janus J. and Gao, Yang and Guo, Sheng and Hermann, Jan and Hermes, Matthew R. and Koh, Kevin and Koval, Peter and Lehtola, Susi and Li, Zhendong and Liu, Junzi and Mardirossian, Narbe and McClain, James D. and Motta, Mario and Mussard, Bastien and Pham, Hung Q. and Pulkin, Artem and Purwanto, Wirawan and Robinson, Paul J. and Ronca, Enrico and Sayfutyarova, Elvira R. and Scheurer, Maximilian and Schurkus, Henry F. and Smith, James E. T. and Sun, Chong and Sun, Shi-Ning and Upadhyay, Shiv and Wagner, Lucas K. and Wang, Xiao and White, Alec and Whitfield, James Daniel and Williamson, Mark J. and Wouters, Sebastian and Yang, Jun and Yu, Jason M. and Zhu, Tianyu and Berkelbach, Timothy C. and Sharma, Sandeep and Sokolov, Alexander Yu. and Chan, Garnet Kin-Lic},
+  journal={J. Chem. Phys.},
+  volume={153},
+  pages={024109},
+  year={2020},
+  doi={10.1063/5.0006074},
+}
+
+@article{larsen2017ase,
+  title={The atomic simulation environment---a Python library for working with atoms},
+  author={Hjorth Larsen, Ask and Jørgen Mortensen, Jens and Blomqvist, Jakob and Castelli, Ivano E and Christensen, Rune and Dułak, Marcin and Friis, Jesper and Groves, Michael N and Hammer, Bjørk and Hargus, Cory and Hermes, Eric D and Jennings, Paul C and Bjerre Jensen, Peter and Kermode, James and Kitchin, John R and Leonhard Kolsbjerg, Esben and Kubal, Joseph and Kaasbjerg, Kristen and Lysgaard, Steen and Bergmann Maronsson, Jón and Maxson, Tristan and Olsen, Thomas and Pastewka, Lars and Peterson, Andrew and Rostgaard, Carsten and Schiøtz, Jakob and Schütt, Ole and Strange, Mikkel and Thygesen, Kristian S and Vegge, Tejs and Vilhelmsen, Lasse and Walter, Michael and Zeng, Zhenhua and Jacobsen, Karsten W},
+  journal={J. Phys.: Condens. Matter},
+  volume={29},
+  pages={273002},
+  year={2017},
+  doi={10.1088/1361-648X/aa680e},
 }
 ```
 

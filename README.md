@@ -141,8 +141,15 @@ AEGISS builds on DMRG ([White 1992](https://doi.org/10.1103/PhysRevLett.69.2863)
 [Chan & Head-Gordon 2002](https://doi.org/10.1063/1.1449459)), run with block2
 ([Zhai et al. 2023](https://doi.org/10.1063/5.0180424),
 [Zhai & Chan 2021](https://doi.org/10.1063/5.0050902)), and on AVAS
-([Sayfutyarova et al. 2017](https://doi.org/10.1021/acs.jctc.7b00128)); please cite
-them as well. [docs/citing.md](docs/citing.md) has the BibTeX for all of them.
+([Sayfutyarova et al. 2017](https://doi.org/10.1021/acs.jctc.7b00128)). It screens on the
+single-orbital entropy ([Legeza & Sólyom 2003](https://doi.org/10.1103/PhysRevB.68.195116),
+[Rissler et al. 2006](https://doi.org/10.1016/j.chemphys.2005.10.018),
+[Boguslawski et al. 2012](https://doi.org/10.1021/jz301319v),
+[Boguslawski & Tecmer 2015](https://doi.org/10.1002/qua.24832)), is built on PySCF
+([Sun et al. 2018](https://doi.org/10.1002/wcms.1340),
+[Sun et al. 2020](https://doi.org/10.1063/5.0006074)), and MolTagger uses ASE
+([Larsen et al. 2017](https://doi.org/10.1088/1361-648X/aa680e)). Please cite them as
+well; [docs/citing.md](docs/citing.md) has the BibTeX for all of them.
 
 Machine-readable metadata for the software, the paper and these references is in
 [CITATION.cff](CITATION.cff) — GitHub's "Cite this repository" widget reads it
