@@ -87,7 +87,7 @@ sbom:
         [[ "$flavour" == viz ]] && extra=(--extra viz)
         # AEGISS itself is the SBOM's root component (from pyproject.toml), not a dependency
         UV_PROJECT_ENVIRONMENT="$scratch/$flavour" uv sync --frozen --no-default-groups \
-            --no-install-project "${extra[@]}"
+            --no-install-project ${extra[@]+"${extra[@]}"}
         # A PYTHONPATH (the Nix dev shell sets one) would add its packages to the scanned environment
         env -u PYTHONPATH uvx --from cyclonedx-bom==7.5.0 cyclonedx-py environment "$scratch/$flavour" \
             --pyproject pyproject.toml --mc-type library --output-reproducible \
