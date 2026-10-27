@@ -18,11 +18,18 @@ git clone https://github.com/Algorithmiq/AEGISS.git
 cd AEGISS
 just build --all-groups --all-extras   # every dependency group and the viz extra
 uv run prek install                    # git hooks: ruff, ty and the repository checks
+uv pip install block2==0.5.4           # optional: only to run DMRG
 ```
 
+block2 is not a dependency, so `just build` does not install it, and `uv sync` removes it
+again (reinstall it, or sync with `uv sync --inexact`). You need it only to run DMRG: the
+tutorials, `main.py` and the DMRG integration tests, which skip without it. The rest of
+the suite mocks it. See [Installation](installation.md#block2-dmrg).
+
 In VS Code or GitHub Codespaces, the devcontainer in `.devcontainer/` (Ubuntu with uv,
-just and OpenMPI) runs the two commands above when it starts. The MolTagger GUI needs a
-display, so it does not run inside the container.
+just and OpenMPI) runs the first two commands above when it starts; install block2
+yourself if you need it. The MolTagger GUI needs a display, so it does not run inside
+the container.
 
 On Nix, `nix develop` (or [direnv](https://direnv.net) with the tracked `.envrc`) gives a
 shell with uv, just, lychee and OpenMPI; run the same commands inside it.

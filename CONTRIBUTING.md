@@ -55,6 +55,16 @@ prek install                        # install the git hooks
 A bare `uv sync` installs only the default `dev` group (ruff, ty, prek, pytest); the
 `test`, `docs`, and `interactive` groups are opt-in.
 
+block2 is not a dependency, so none of the above installs it. You need it only to run
+DMRG (the tutorials, `main.py`, the DMRG integration tests); the rest of the test suite
+mocks it. Install it into the same environment:
+
+```bash
+uv pip install block2==0.5.4
+```
+
+`uv sync` removes it again, so reinstall it after syncing or use `uv sync --inexact`.
+
 See [docs/installation.md](docs/installation.md) for the environment variables that
 control memory and scratch space (`OMP_NUM_THREADS`, `SCRATCH_DIR`, `MEM`,
 `PYSCF_MAX_MEMORY`, `AEGISS_ORB_BASE`).
