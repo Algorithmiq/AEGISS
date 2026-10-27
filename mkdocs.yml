@@ -3,6 +3,9 @@ site_description: Atomic Orbital and Entropy based Guided Inference for Space Se
 site_url: https://algorithmiq.github.io/AEGISS/
 repo_url: https://github.com/Algorithmiq/AEGISS
 repo_name: Algorithmiq/AEGISS
+copyright: >-
+  Copyright &copy; 2026 Algorithmiq Ltd &middot; Released under the
+  <a href="https://github.com/Algorithmiq/AEGISS/blob/main/LICENSE">Apache License 2.0</a>
 edit_uri: edit/main/docs/
 
 validation:

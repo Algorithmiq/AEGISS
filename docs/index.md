@@ -122,3 +122,9 @@ active_indices = select_aegiss(
 | [Tutorials](tutorials/index.md) | Step-by-step notebooks from SCF to the full pipeline |
 | [MolTagger](moltagger.md) | Interactive 3D viewer for atom tagging and AO label generation |
 | [API Reference](api/index.md) | Complete function and class documentation |
+
+## License
+
+AEGISS is released under the
+[Apache License 2.0](https://github.com/Algorithmiq/AEGISS/blob/main/LICENSE).
+Copyright 2026 Algorithmiq Ltd.
