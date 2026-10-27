@@ -39,6 +39,8 @@ shell with uv, just, lychee and OpenMPI; run the same commands inside it.
 | `just docs` / `just serve-docs` | build the site strictly / preview it with live reload |
 | `just doctest` | run the Python blocks of `README.md` and `docs/` |
 | `just example` | run the scripts in `examples/` |
+| `just sbom` | write CycloneDX SBOMs of the runtime dependencies to `sbom/` |
+| `just sbom-check` | check them against the license policy in `.grant.yaml` (needs [grant](https://oss.anchore.com/docs/installation/grant/)) |
 
 The CI workflows call the same recipes, so a red CI job can be reproduced locally by
 running the recipe it ran.
@@ -51,13 +53,17 @@ running the recipe it ran.
   `fix(projection): 🐛 normalise AO weights`.
 - Fill in the PR template. Changes to the API or to user-facing behaviour come with
   tests and with the matching documentation update.
+- A new or changed runtime dependency must pass the license policy in `.grant.yaml`,
+  which the SBOM workflow checks on every PR that touches the dependencies. Record an
+  accepted exception in `ignore-packages` together with the reason it passes.
 
 ## Releases
 
 The version comes from the git tag (hatch-vcs). Publishing a GitHub release tagged
 `vX.Y.Z` runs `deploy.yml`: it builds the sdist and wheel with `just dist`, checks that
 the built version matches the tag, publishes to PyPI through trusted publishing with
-build-provenance attestations, and attaches the files to the release. The release notes
+build-provenance attestations, and attaches the files to the release. It also attaches
+CycloneDX SBOMs of the runtime dependencies (`just sbom`), never uploaded to PyPI. The release notes
 are grouped by PR label (`.github/release.yml`).
 
 Dependabot opens weekly grouped updates for the Python dependencies and the GitHub
