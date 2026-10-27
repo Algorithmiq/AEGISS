@@ -5,8 +5,8 @@
   `::: aegiss.active_space.aegiss.select_aegiss`, so a new public symbol needs a
   directive on the matching page.
 - Python code blocks in `docs/` and `README.md` run as tests (`just doctest`). A block
-  that cannot run on its own (it needs a DMRG run, a file the reader supplies, or block2's
-  Python API, which needs MKL on Linux) is marked `notest`; a block that continues the previous one is marked `continuation`.
+  that cannot run on its own (it needs a DMRG run or a file the reader supplies) is marked
+  `notest`; a block that continues the previous one is marked `continuation`.
   Use the brace form, which Material for MkDocs renders:
 
 ````markdown
