@@ -50,10 +50,6 @@ jobs:
       - name: Check the licenses against .grant.yaml
         run: just sbom-check
 
-  # Vulnerabilities are GitHub's: Dependabot alerts read uv.lock, and this gates a PR on the
-  # advisories its dependency changes bring in. It needs the dependency graph and, on this
-  # internal repository, GitHub Code Security; set the repository variable
-  # DEPENDENCY_REVIEW_ENABLED=true once both are on.
   dependency-review:
     name: Dependency review
     if: ${{ github.event_name == 'pull_request' && vars.DEPENDENCY_REVIEW_ENABLED == 'true' }}
