@@ -74,6 +74,30 @@ dist:
     rm -rf dist
     uv build --out-dir dist
 
+# Write CycloneDX SBOMs of the locked runtime dependencies, without and with the viz extra, to sbom/.
+sbom:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    rm -rf sbom
+    mkdir sbom
+    scratch="$(mktemp -d)"
+    trap 'rm -rf "$scratch"' EXIT
+    for flavour in core viz; do
+        extra=()
+        [[ "$flavour" == viz ]] && extra=(--extra viz)
+        # AEGISS itself is the SBOM's root component (from pyproject.toml), not a dependency
+        UV_PROJECT_ENVIRONMENT="$scratch/$flavour" uv sync --frozen --no-default-groups \
+            --no-install-project "${extra[@]}"
+        # A PYTHONPATH (the Nix dev shell sets one) would add its packages to the scanned environment
+        env -u PYTHONPATH uvx --from cyclonedx-bom==7.5.0 cyclonedx-py environment "$scratch/$flavour" \
+            --pyproject pyproject.toml --mc-type library --output-reproducible \
+            --output-file "sbom/aegiss-$flavour.cdx.json"
+    done
+
+# Check the SBOMs from `just sbom` against the license policy in .grant.yaml. Needs anchore/grant on PATH.
+sbom-check:
+    grant check --config .grant.yaml --disable-file-search sbom/*.cdx.json
+
 # Move a pinned astral tool (ruff or ty) and its prek hook to VERSION together. GNU sed.
 bump-tool TOOL VERSION:
     sed -i -E 's/"{{ TOOL }}==[0-9.]+"/"{{ TOOL }}=={{ VERSION }}"/' pyproject.toml

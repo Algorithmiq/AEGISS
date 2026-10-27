@@ -50,6 +50,15 @@ jobs:
           name: dist
           path: dist/*
 
+      # A separate artifact: the PyPI upload takes everything in dist/
+      - name: Generate the SBOMs
+        run: just sbom
+
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: sbom
+          path: sbom/*
+
   upload_pypi:
     name: Upload to PyPI
     needs: build
@@ -76,7 +85,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@v1.14.3
 
   upload_release_assets:
-    name: Attach the distributions to the GitHub release
+    name: Attach the distributions and SBOMs to the GitHub release
     needs: build
     if: github.event_name == 'release' && github.event.action == 'published'
     runs-on: ubuntu-26.04
@@ -89,8 +98,13 @@ jobs:
           name: dist
           path: dist
 
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          name: sbom
+          path: sbom
+
       - name: Upload to the release
-        run: gh release upload "${{ github.event.release.tag_name }}" dist/* --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/* sbom/* --clobber
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
