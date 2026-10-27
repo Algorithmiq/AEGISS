@@ -13,6 +13,7 @@ of the molecular orbitals onto a user-chosen atomic-orbital manifold (`pyscf`).
   must be accurate.
 - Use snake case for variables and functions, camel case for classes.
 - Comment invariants, contracts and non-obvious choices only. Never narrate the code.
+- Every Python file starts with the Apache licence header (`.github/license-header.txt`; prek inserts it).
 - Orbital indices are 0-based internally. User-facing indices honour `AEGISS_ORB_BASE`; convert
   at the boundary, never in the middle of the algorithm.
 - Tests use small molecules and minimal basis sets. Mock `block2`/DMRG unless the test is about
