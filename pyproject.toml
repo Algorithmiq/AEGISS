@@ -6,6 +6,8 @@ authors = [
 ]
 description = "AEGISS: Atomic Orbital and Entropy based Guided Inference for Space Selection"
 readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 # block2 publishes wheels up to CPython 3.14
 requires-python = ">=3.12,<3.15"
 classifiers = [
@@ -172,7 +174,6 @@ ignore = [
     "W191",    # tab-indentation: enforced by the formatter
     "ANN401",  # Any type: needed for pyscf/block2 untyped objects
     "COM812",  # missing-trailing-comma: conflicts with the formatter
-    "CPY001",  # missing-copyright-notice: TODO enable with the licence headers
     "EM101",   # raw-string-in-exception: plain exception messages are fine
     "EM102",   # f-string-in-exception: plain exception messages are fine
     "PLR0917", # too-many-positional-arguments: positional parameters are public API

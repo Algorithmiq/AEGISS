@@ -139,3 +139,9 @@ If you use AEGISS in your work, please cite the paper:
 Machine-readable metadata for both the software and the paper is in
 [CITATION.cff](CITATION.cff) — GitHub's "Cite this repository" widget reads it
 directly.
+
+---
+
+## License
+
+AEGISS is released under the [Apache License 2.0](LICENSE).

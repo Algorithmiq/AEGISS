@@ -55,7 +55,7 @@ jobs:
       # Needs the Algorithmiq_AEGISS project on SonarCloud; set the repository variable
       # SONAR_ENABLED=true once it exists. Secrets are not available to PRs from forks.
       - name: SonarQube Scan
-        if: ${{ vars.SONAR_ENABLED == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
         uses: SonarSource/sonarqube-scan-action@v8.3.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
