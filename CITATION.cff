@@ -22,7 +22,7 @@ authors:
   - family-names: "Stella"
     given-names: "Martina"
 license: Apache-2.0
-repository-code:"https://github.com/Algorithmiq/AEGISS"
+repository-code: "https://github.com/Algorithmiq/AEGISS"
 url: "https://algorithmiq.github.io/AEGISS/"
 keywords:
   - active space selection
