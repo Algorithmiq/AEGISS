@@ -58,6 +58,9 @@ running the recipe it ran.
   `fix(projection): 🐛 normalise AO weights`.
 - Fill in the PR template. Changes to the API or to user-facing behaviour come with
   tests and with the matching documentation update.
+- AEGISS is released under the Apache License 2.0. Every Python file starts with the
+  licence header in `.github/license-header.txt`; the `insert-license` git hook adds it
+  to new files.
 
 ## Releases
 
