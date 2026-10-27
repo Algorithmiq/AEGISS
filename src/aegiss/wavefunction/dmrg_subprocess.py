@@ -14,6 +14,12 @@
 
 """DMRG wavefunction retrieval via block2main subprocess."""
 
+# block2 is GPL-3.0-only and AEGISS is Apache-2.0. AEGISS talks to block2 only as a separate
+# program: it writes an FCIDUMP and an input file, runs `block2main`, and reads the output
+# files back. Never import `block2`/`pyblock2` or link against them, here or anywhere else:
+# that would make AEGISS and block2 one combined program under the GPL
+# (https://www.gnu.org/licenses/gpl-faq.html#MereAggregation). .grant.yaml relies on this.
+
 from __future__ import annotations
 
 import logging

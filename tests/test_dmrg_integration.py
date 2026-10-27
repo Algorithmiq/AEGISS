@@ -20,7 +20,7 @@ aufbau ``hf_occ`` warmup + ``full_fci_space`` now written by ``_write_input``
 must recover the exact CASCI ground state on cases that previously got stuck
 ~0.04-0.14 Ha too high.
 
-Skipped automatically when pyscf/pyblock2/block2main are unavailable, and on CI:
+Skipped automatically when pyscf/block2main are unavailable, and on CI:
 these spawn a real ``block2main`` subprocess, which does not run reliably in the
 CI container (OpenMPI/runtime constraints make it exit with status 2). The rest
 of the suite mocks ``block2main`` for that reason; these run locally as a
@@ -38,7 +38,6 @@ from pathlib import Path
 import pytest
 
 pytest.importorskip("pyscf")
-pytest.importorskip("pyblock2")
 
 from pyscf import gto, mcscf, scf
 
