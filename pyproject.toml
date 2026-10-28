@@ -99,7 +99,7 @@ packages = ["src/aegiss"]
 [tool.hatch.build.targets.sdist]
 exclude = [
     ".claude", ".devcontainer", ".envrc", ".github", ".lychee.toml", ".vscode", "AGENTS.md",
-    "CLAUDE.md", "cliff.toml", "codecov.yml", "cspell.json", "flake.lock", "flake.nix", "justfile", "local",
+    "CLAUDE.md", "codecov.yml", "cspell.json", "flake.lock", "flake.nix", "justfile", "local",
     "nix", "prek.toml", "scripts", "sonar-project.properties", "tools",
 ]
 
@@ -160,9 +160,7 @@ target-version = "py312"
 line-length = 88
 # `docs/tutorials` holds the tutorial notebooks; `scripts/` holds local, unversioned
 # developer scratch scripts. Both are unlinted — but `docs/scripts/` is checked.
-# `.github/scripts/` is the release helper shared by every Algorithmiq repository; it
-# stays a copy of the release guide's version rather than following our lint rules.
-exclude = ["docs/tutorials", "scripts", ".github/scripts"]
+exclude = ["docs/tutorials", "scripts"]
 
 [tool.ruff.lint]
 select = ["ALL"]

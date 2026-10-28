@@ -130,19 +130,21 @@ release bot tags the release candidates and releases, writes [CHANGELOG.md](CHAN
 and publishes to PyPI. Only the newest release is supported. The
 [contributing guide](docs/contributing.md#releases) describes the process.
 
+The release automation is shared with the other Algorithmiq repositories through
+[Algorithmiq/release-tools](https://github.com/Algorithmiq/release-tools): `release.yml`,
+`backport.yml` and `pr-checks.yml` are short stubs calling its reusable workflows,
+`deploy.yml` uses its release actions, and the changelog comes from its `cliff.toml`, all
+pinned to the same release-tools tag, which Dependabot updates.
+
 Where this repository departs from the guide:
 
-- PR titles carry a [gitmoji](https://gitmoji.dev) after the type, and `build` and
-  `style` are allowed types besides the guide's. `cliff.toml` strips the gitmoji from the
-  changelog and leaves `build` and `style` changes out of it.
-- The version comes from the git tag (hatch-vcs, so `release.yml` has no
-  `VERSION_FILES`) with the `release-branch-semver` scheme, so that untagged commits on
+- PR titles carry a [gitmoji](https://gitmoji.dev) after the type; the shared `cliff.toml`
+  strips it from the changelog.
+- The version comes from the git tag (hatch-vcs, so `release.yml` passes no
+  `version-files`) with the `release-branch-semver` scheme, so that untagged commits on
   `main` carry the next minor version instead of the last release candidate.
 - The documentation is versioned: one version per minor release, `latest` for the newest
   one and `dev` for `main`, deployed by `docs.yml` with mike.
-- To pass this repository's hooks, the actions in the shared workflows are pinned to exact
-  tags, `.github/scripts/release.py` is excluded from ruff, and the publish workflow runs
-  git-cliff through `just release-notes`.
 
 ---
 
