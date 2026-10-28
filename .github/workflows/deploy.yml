@@ -1,6 +1,6 @@
 name: Publish AEGISS to PyPI
 
-# Runs on the v* tags that release.yml pushes, as the release guide prescribes: build,
+# Runs on the v* tags that release.yml pushes, as release-tools prescribes: build,
 # draft the GitHub release with every file attached, publish to PyPI, then publish the
 # GitHub release, which makes it immutable. Never on `release: published`. The release
 # steps come from Algorithmiq/release-tools, at the version release.yml pins.
