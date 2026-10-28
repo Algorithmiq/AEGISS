@@ -47,6 +47,9 @@ running the recipe it ran.
 
 ## Pull requests
 
+- AEGISS is released under the Apache License 2.0. Every Python file starts with the
+  licence header in `.github/license-header.txt`; the `insert-license` git hook adds it
+  to new files.
 - Branch off `main` as `<type>/<short-description>`; commits to `main` are blocked.
 - Commit messages and PR titles follow
   `<type>(<optional scope>): <gitmoji> <description>`, e.g.

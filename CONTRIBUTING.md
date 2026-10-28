@@ -88,6 +88,10 @@ prek run --all-files
 Public functions and classes need type annotations and **Google-style** docstrings —
 the API reference is generated from them by `mkdocstrings`.
 
+Every Python file starts with the Apache-2.0 licence header from
+[.github/license-header.txt](.github/license-header.txt). The `insert-license` hook adds
+it to new files, so commit the file again after the hook has run.
+
 ### Tests
 
 ```bash
