@@ -118,6 +118,8 @@ bookkeeping:
    and CycloneDX SBOMs of the runtime dependencies attached, publishes to PyPI through
    trusted publishing with build-provenance attestations, and publishes the GitHub
    release, which makes it immutable. The bot then copies `CHANGELOG.md` back to `main`.
+   If the release's docs version is missing from the site, run
+   `gh workflow run docs.yml --ref vX.Y.Z`.
 4. **Patch.** After `X.Y.0`, the first backport opens the release PR for `X.Y.1`; merge
    it when the fixes should ship. Patch releases have no release candidates.
 

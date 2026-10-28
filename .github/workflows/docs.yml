@@ -51,10 +51,11 @@ jobs:
           fail: true
 
   # The site on gh-pages has one version per release plus `dev`, the unreleased docs of
-  # main (`just docs-deploy`). Release candidates get none.
+  # main (`just docs-deploy`). Release candidates get none. A manual run on a tag redeploys
+  # that release, e.g. when a newer deployment cancelled its pending one.
   deploy:
     if: >-
-      github.event_name == 'push' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (github.ref == 'refs/heads/main' ||
        (startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, 'rc')))
     needs: build
