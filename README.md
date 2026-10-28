@@ -130,20 +130,10 @@ and publishes to PyPI. Only the newest release is supported. The
 
 The release automation is shared with the other Algorithmiq repositories through
 [Algorithmiq/release-tools](https://github.com/Algorithmiq/release-tools), whose README
-describes the process in full: `release.yml`,
-`backport.yml` and `pr-checks.yml` are short stubs calling its reusable workflows,
-`deploy.yml` uses its release actions, and the changelog comes from its `cliff.toml`, all
-pinned to the same release-tools tag, which Dependabot updates.
-
-Specific to this repository:
-
-- PR titles carry a [gitmoji](https://gitmoji.dev) after the type; the shared `cliff.toml`
-  strips it from the changelog.
-- The version comes from the git tag (hatch-vcs, so `release.yml` passes no
-  `version-files`) with the `release-branch-semver` scheme, so that untagged commits on
-  `main` carry the next minor version instead of the last release candidate.
-- The documentation is versioned: one version per minor release, `latest` for the newest
-  one and `dev` for `main`, deployed by `docs.yml` with mike.
+describes the process in full: `release.yml`, `backport.yml` and `pr-checks.yml` are short
+stubs calling its reusable workflows, `deploy.yml` uses its release actions, and the
+changelog comes from its `cliff.toml`, all pinned to the same release-tools tag, which
+Dependabot updates.
 
 ---
 
