@@ -120,6 +120,23 @@ not open public issues for security problems; see [SECURITY.md](SECURITY.md).
 
 ---
 
+## Releases
+
+Work lands on `main` through squash-merged pull requests, each minor release
+is stabilised on a `release/X.Y` branch that only receives backported bug fixes, and a
+release bot tags the release candidates and releases, writes [CHANGELOG.md](CHANGELOG.md)
+and publishes to PyPI. Only the newest release is supported. The
+[contributing guide](docs/contributing.md#releases) describes the process.
+
+The release automation is shared with the other Algorithmiq repositories through
+[Algorithmiq/release-tools](https://github.com/Algorithmiq/release-tools), whose README
+describes the process in full: `release.yml`, `backport.yml` and `pr-checks.yml` are short
+stubs calling its reusable workflows, `deploy.yml` uses its release actions, and the
+changelog comes from its `cliff.toml`, all pinned to the same release-tools tag, which
+Dependabot updates.
+
+---
+
 ## Citation
 
 If you use AEGISS in your work, please cite the paper:

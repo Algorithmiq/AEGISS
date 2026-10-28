@@ -88,6 +88,14 @@ markdown_extensions:
   - pymdownx.arithmatex:
       generic: true
 
+# Versioned site on gh-pages (`just docs-deploy`): `dev` follows main, `X.Y` each release,
+# `latest` the newest release.
+extra:
+  version:
+    provider: mike
+    default: latest
+    alias: true
+
 extra_javascript:
   - javascripts/mathjax.js
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js

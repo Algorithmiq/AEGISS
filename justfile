@@ -1,6 +1,12 @@
 set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 set positional-arguments := true
 
+# The uv environments must only see their own packages: a PYTHONPATH from the shell (Nix sets
+# one) would shadow them, and would add its packages to the environments `just sbom` scans.
+unexport PYTHONPATH
+
+git_cliff := "git-cliff==2.14.2"
+
 # List the recipes.
 default:
     @just --list
@@ -56,6 +62,20 @@ example:
 docs:
     uv run --no-sync mkdocs build --strict
 
+# Build the site and push it to the gh-pages branch as VERSION (`dev` for main, `X.Y` for a release) with ALIASES.
+docs-deploy VERSION *ALIASES:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    version="$1"
+    shift
+    title="$version"
+    [[ "$version" == dev ]] && title="dev (unreleased)"
+    uv run --no-sync mike deploy --push --update-aliases --title "$title" "$version" "$@"
+    # The site root opens the newest release, or the unreleased docs until there is one
+    default=dev
+    if uv run --no-sync mike list latest > /dev/null 2>&1; then default=latest; fi
+    uv run --no-sync mike set-default --push "$default"
+
 # Serve the documentation with live reload.
 serve-docs:
     uv run --no-sync mkdocs serve
@@ -68,6 +88,16 @@ check-doc-links: docs
 coverage:
     uv run --no-sync pytest -o log_cli=false --cov --cov-branch --cov-report=xml:coverage.xml \
         --cov-report=term-missing
+
+# Preview the changelog entry of the next release, from the PR titles merged since the last one,
+# with the central cliff.toml of Algorithmiq/release-tools at the version release.yml pins.
+changelog:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ref=$(sed -nE 's|.*Algorithmiq/release-tools/.github/workflows/release.yml@([^[:space:]]+).*|\1|p' \
+        .github/workflows/release.yml)
+    uvx --from {{ git_cliff }} git-cliff --unreleased \
+        --config-url "https://raw.githubusercontent.com/Algorithmiq/release-tools/$ref/cliff.toml"
 
 # Build the sdist and wheel into dist/.
 dist:
@@ -88,8 +118,7 @@ sbom:
         # AEGISS itself is the SBOM's root component (from pyproject.toml), not a dependency
         UV_PROJECT_ENVIRONMENT="$scratch/$flavour" uv sync --frozen --no-default-groups \
             --no-install-project ${extra[@]+"${extra[@]}"}
-        # A PYTHONPATH (the Nix dev shell sets one) would add its packages to the scanned environment
-        env -u PYTHONPATH uvx --from cyclonedx-bom==7.5.0 cyclonedx-py environment "$scratch/$flavour" \
+        uvx --from cyclonedx-bom==7.5.0 cyclonedx-py environment "$scratch/$flavour" \
             --pyproject pyproject.toml --mc-type library --output-reproducible \
             --output-file "sbom/aegiss-$flavour.cdx.json"
     done

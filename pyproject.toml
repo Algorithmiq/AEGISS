@@ -42,7 +42,7 @@ Documentation = "https://algorithmiq.github.io/AEGISS/"
 Repository = "https://github.com/Algorithmiq/AEGISS"
 "Bug Tracker" = "https://github.com/Algorithmiq/AEGISS/issues"
 Discussions = "https://github.com/Algorithmiq/AEGISS/discussions"
-Changelog = "https://github.com/Algorithmiq/AEGISS/releases"
+Changelog = "https://github.com/Algorithmiq/AEGISS/blob/main/CHANGELOG.md"
 
 [project.scripts]
 aegiss = "aegiss.cli:main"
@@ -58,6 +58,7 @@ viz = [
 
 [dependency-groups]
 docs = [
+    "mike>=2.1",
     "mkdocs-material>=9",
     "mkdocs-jupyter>=0.25",
     "mkdocstrings[python]>=0.27",
@@ -85,6 +86,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.version]
 source = "vcs"
+# Untagged commits get the next minor version on main and the next patch or release
+# candidate on release/X.Y; the default scheme would put main behind its release branch.
+raw-options = { version_scheme = "release-branch-semver" }
 
 [tool.hatch.build.hooks.vcs]
 version-file = "src/aegiss/_version.py"

@@ -17,8 +17,9 @@ active = select_aegiss(mol, mf, dmrg_config, entropy_config, projection_config, 
 
   In `README.md`, write `python notest` instead, so GitHub still highlights the block.
 - `just docs` builds with `--strict` and link and anchor validation. The docs workflow
-  also checks the external links with lychee and deploys the site to GitHub Pages from
-  `main`.
+  also checks the external links with lychee and deploys the site to the `gh-pages`
+  branch with mike (`just docs-deploy`): `dev` from `main`, and `X.Y` (aliased `latest`)
+  from each release tag.
 - The tutorial notebooks in `docs/tutorials/` are rendered but not executed when the
   site is built; check them by hand when you change an API they use.
 - Links inside the notebooks are relative (`02_dmrg.ipynb`, `../uhf.md`), so they work in
