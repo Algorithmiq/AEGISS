@@ -27,7 +27,10 @@ body = '''
 {%- if migration %}
 
 {{ migration | indent(prefix="  ", first=true) }}
+{#- A blank line before the next entry only: the section adds its own after the last. #}
+{%- if not loop.last %}
 {% endif %}
+{%- endif %}
 {%- endif %}
 {%- endif %}
 {%- endfor %}
