@@ -61,18 +61,23 @@ control memory and scratch space (`OMP_NUM_THREADS`, `SCRATCH_DIR`, `MEM`,
 
 ## Making changes
 
-1. **Branch off `main`.** Direct commits to `main` are blocked by a git hook.
+1. **Branch off `main`.** Direct commits to `main` and `release/*` are blocked by a git hook.
    Branch names may only contain letters, digits, `_`, `-`, and `/` — we use
    `<type>/<short-description>`, e.g. `feat/spin-entropy-screening`.
 2. **Write [conventional commit](https://www.conventionalcommits.org) messages** with a
    [gitmoji](https://gitmoji.dev) — `<type>(<optional scope>): <gitmoji> <description>`,
-   e.g. `fix(projection): 🐛 normalise AO weights`. Types: `feat`, `fix`, `docs`,
-   `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`; add `!` for breaking
-   changes. PR titles follow the same format.
+   e.g. `fix(projection): 🐛 normalise AO weights`. Types: `feat`, `fix`, `deprecate`,
+   `perf`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`, `style`; add `!` for
+   breaking changes. PR titles follow the same format: PRs are squash-merged and the
+   title becomes the [changelog](CHANGELOG.md) entry, so write it for users.
 3. **Add or update tests** covering your change (see below).
 4. **Update the docs** — docstrings for API changes, and the relevant page under
    [docs/](docs/) for user-facing behaviour.
-5. **Open a pull request** against `main` and fill in the PR template.
+5. **Open a pull request** against `main`, bug fixes included, and fill in the PR
+   template. Breaking changes and deprecations need its **Migration** section. A bug fix
+   that should also reach the current release gets the `backport` label. See
+   [docs/contributing.md](docs/contributing.md) for the deprecation policy and the
+   release process.
 
 ### Code style
 

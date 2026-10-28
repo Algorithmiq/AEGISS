@@ -120,6 +120,32 @@ not open public issues for security problems; see [SECURITY.md](SECURITY.md).
 
 ---
 
+## Releases
+
+AEGISS follows Algorithmiq's
+[branching model and release management guide](https://app.notion.com/p/algorithmiq/Branching-Model-and-Release-Management-3e9311f67e1081d1b2d5fbe06a8363cb)
+(internal): work lands on `main` through squash-merged pull requests, each minor release
+is stabilised on a `release/X.Y` branch that only receives backported bug fixes, and a
+release bot tags the release candidates and releases, writes [CHANGELOG.md](CHANGELOG.md)
+and publishes to PyPI. Only the newest release is supported. The
+[contributing guide](docs/contributing.md#releases) describes the process.
+
+Where this repository departs from the guide:
+
+- PR titles carry a [gitmoji](https://gitmoji.dev) after the type, and `build` and
+  `style` are allowed types besides the guide's. `cliff.toml` strips the gitmoji from the
+  changelog and leaves `build` and `style` changes out of it.
+- The version comes from the git tag (hatch-vcs, so `release.yml` has no
+  `VERSION_FILES`) with the `release-branch-semver` scheme, so that untagged commits on
+  `main` carry the next minor version instead of the last release candidate.
+- The documentation is versioned: one version per minor release, `latest` for the newest
+  one and `dev` for `main`, deployed by `docs.yml` with mike.
+- To pass this repository's hooks, the actions in the shared workflows are pinned to exact
+  tags, `.github/scripts/release.py` is excluded from ruff, and the publish workflow runs
+  git-cliff through `just release-notes`.
+
+---
+
 ## Citation
 
 If you use AEGISS in your work, please cite the paper:

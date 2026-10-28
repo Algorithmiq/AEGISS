@@ -1,10 +1,13 @@
 name: Publish AEGISS to PyPI
 
+# Runs on the v* tags that release.yml pushes, as the release guide prescribes: build,
+# draft the GitHub release with every file attached, publish to PyPI, then publish the
+# GitHub release, which makes it immutable. Never on `release: published`.
 on:
   workflow_dispatch:
-  release:
-    types:
-      - published
+  push:
+    tags:
+      - "v*"
   pull_request:
     paths:
       - .github/workflows/deploy.yml
@@ -12,7 +15,11 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # a publish run must never be cut short half-way through
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
 
 env:
   FORCE_COLOR: 3
@@ -35,7 +42,7 @@ jobs:
         run: just dist
 
       - name: Check the version matches the release tag
-        if: ${{ github.event_name == 'release' }}
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           expected="${GITHUB_REF_NAME#v}"
           wheels=(dist/*.whl)
@@ -59,10 +66,49 @@ jobs:
           name: sbom
           path: sbom/*
 
+  draft_release:
+    # Immutable releases: files can only be attached while the release is a draft.
+    name: Create the draft GitHub release with the distributions and SBOMs
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0  # git-cliff needs the full history and the tags
+
+      - name: Set up the build environment
+        uses: ./.github/actions/setup
+
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          name: dist
+          path: dist
+
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          name: sbom
+          path: sbom
+
+      - name: Release notes from the changelog
+        run: just release-notes "$GITHUB_REF_NAME" > notes.md
+
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          flags=(--draft --verify-tag --title "$TAG" --notes-file notes.md)
+          if [[ "$TAG" == *rc* ]]; then flags+=(--prerelease); fi
+          gh release create "$TAG" dist/* sbom/* "${flags[@]}"
+
   upload_pypi:
     name: Upload to PyPI
-    needs: build
-    if: github.event_name == 'release' && github.event.action == 'published'
+    needs: draft_release
     runs-on: ubuntu-26.04
     environment: pypi
     permissions:
@@ -84,27 +130,18 @@ jobs:
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.14.3
 
-  upload_release_assets:
-    name: Attach the distributions and SBOMs to the GitHub release
-    needs: build
-    if: github.event_name == 'release' && github.event.action == 'published'
+  publish_release:
+    # Publishing locks the tag and the files and creates GitHub's release attestation.
+    name: Publish the GitHub release
+    needs: upload_pypi
     runs-on: ubuntu-26.04
     permissions:
       contents: write
 
     steps:
-      - uses: actions/download-artifact@v8.0.2
-        with:
-          name: dist
-          path: dist
-
-      - uses: actions/download-artifact@v8.0.2
-        with:
-          name: sbom
-          path: sbom
-
-      - name: Upload to the release
-        run: gh release upload "${{ github.event.release.tag_name }}" dist/* sbom/* --clobber
+      - name: Publish the draft release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: gh release edit "$TAG" --draft=false

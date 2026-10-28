@@ -1,4 +1,7 @@
-<!-- Use "Fixes #<issue>" to auto-close the related issue when this PR is merged. -->
+<!-- The PR title becomes the changelog entry, so write it for users:
+     `<type>(<optional scope>): <gitmoji> <description>`, `!` after the type for a breaking change.
+     Bug fixes that should also reach the current release get the `backport` label.
+     Use "Fixes #<issue>" to auto-close the related issue when this PR is merged. -->
 
 ## Summary
 
@@ -11,12 +14,17 @@
 
 -
 
+<!-- Keep this section above the Checklist: the changelog takes everything up to the next heading. -->
+## Migration
+<!-- Required for breaking changes (!) and deprecations. Delete otherwise.
+     What do users need to change? Show a before/after example if possible. -->
+
 ## Checklist
 
 - [ ] Tests added or updated to cover the changes
 - [ ] Documentation updated (docstrings, `docs/`, `mkdocs.yml` nav) if needed
 - [ ] `prek run --all-files` passes (ruff, ruff-format, ty)
-- [ ] Release notes / `CHANGELOG` updated if applicable
+- [ ] Breaking change or deprecation: the Migration section says what users must change
 
 ## AI/LLM disclosure
 

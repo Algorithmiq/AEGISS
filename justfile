@@ -1,6 +1,8 @@
 set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 set positional-arguments := true
 
+git_cliff := "git-cliff==2.14.2"
+
 # List the recipes.
 default:
     @just --list
@@ -56,6 +58,20 @@ example:
 docs:
     uv run --no-sync mkdocs build --strict
 
+# Build the site and push it to the gh-pages branch as VERSION (`dev` for main, `X.Y` for a release) with ALIASES.
+docs-deploy VERSION *ALIASES:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    version="$1"
+    shift
+    title="$version"
+    [[ "$version" == dev ]] && title="dev (unreleased)"
+    uv run --no-sync mike deploy --push --update-aliases --title "$title" "$version" "$@"
+    # The site root opens the newest release, or the unreleased docs until there is one
+    default=dev
+    if uv run --no-sync mike list latest > /dev/null 2>&1; then default=latest; fi
+    uv run --no-sync mike set-default --push "$default"
+
 # Serve the documentation with live reload.
 serve-docs:
     uv run --no-sync mkdocs serve
@@ -68,6 +84,21 @@ check-doc-links: docs
 coverage:
     uv run --no-sync pytest -o log_cli=false --cov --cov-branch --cov-report=xml:coverage.xml \
         --cov-report=term-missing
+
+# Preview the changelog entry of the next release, from the PR titles merged since the last one.
+changelog:
+    uvx --from {{ git_cliff }} git-cliff --unreleased
+
+# Release notes for the checked-out tag TAG: its changelog entry, or the changes so far for a release candidate.
+release-notes TAG:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # cliff.toml only counts final tags as versions, so a candidate's changes are still unreleased
+    if [[ "$1" == *rc* ]]; then
+        uvx --from {{ git_cliff }} git-cliff --unreleased --tag "$1" --strip header
+    else
+        uvx --from {{ git_cliff }} git-cliff --current --strip header
+    fi
 
 # Build the sdist and wheel into dist/.
 dist:
