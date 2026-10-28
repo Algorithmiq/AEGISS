@@ -1,6 +1,10 @@
 set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 set positional-arguments := true
 
+# The uv environments must only see their own packages: a PYTHONPATH from the shell (Nix sets
+# one) would shadow them, and would add its packages to the environments `just sbom` scans.
+unexport PYTHONPATH
+
 git_cliff := "git-cliff==2.14.2"
 
 # List the recipes.
@@ -119,8 +123,7 @@ sbom:
         # AEGISS itself is the SBOM's root component (from pyproject.toml), not a dependency
         UV_PROJECT_ENVIRONMENT="$scratch/$flavour" uv sync --frozen --no-default-groups \
             --no-install-project ${extra[@]+"${extra[@]}"}
-        # A PYTHONPATH (the Nix dev shell sets one) would add its packages to the scanned environment
-        env -u PYTHONPATH uvx --from cyclonedx-bom==7.5.0 cyclonedx-py environment "$scratch/$flavour" \
+        uvx --from cyclonedx-bom==7.5.0 cyclonedx-py environment "$scratch/$flavour" \
             --pyproject pyproject.toml --mc-type library --output-reproducible \
             --output-file "sbom/aegiss-$flavour.cdx.json"
     done

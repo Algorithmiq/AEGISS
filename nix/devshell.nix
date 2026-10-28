@@ -23,6 +23,10 @@ mkShell {
   ];
 
   shellHook = ''
+    # The python setup hook exports the site-packages of this shell's Python inputs; uv's virtual environments must
+    # only see their own packages.
+    unset PYTHONPATH
+
     # `[tool.uv] python-preference = "only-managed"` pulls prebuilt interpreters that expect a loader NixOS does not
     # provide; use this shell's CPython.
     export UV_PYTHON_PREFERENCE=only-system
