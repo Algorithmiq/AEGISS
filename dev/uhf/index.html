@@ -1,0 +1,2160 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Atomic Orbital and Entropy based Guided Inference for Space Selection">
+      
+      
+      
+        <link rel="canonical" href="https://algorithmiq.github.io/AEGISS/dev/uhf/">
+      
+      
+        <link rel="prev" href="../tutorials/05_unrestricted/">
+      
+      
+        <link rel="next" href="../moltagger/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>UHF References - AEGISS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#unrestricted-uhf-references" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="AEGISS" class="md-header__button md-logo" aria-label="AEGISS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AEGISS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              UHF References
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal"  aria-label="To the Dark-side"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="To the Dark-side" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Algorithmiq/AEGISS" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Algorithmiq/AEGISS
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../installation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Installation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../orbital_indexing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Orbital Index Base
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorials/" class="md-tabs__link">
+          
+  
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  UHF References
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../moltagger/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  MolTagger
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../citing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Citing AEGISS
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../contributing/" class="md-tabs__link">
+          
+  
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../api/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="AEGISS" class="md-nav__button md-logo" aria-label="AEGISS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    AEGISS
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Algorithmiq/AEGISS" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Algorithmiq/AEGISS
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../orbital_indexing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orbital Index Base
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/01_scf_and_localization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial 1 — SCF and Orbital Localization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/02_dmrg/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial 2 — DMRG and Single-Orbital Entropies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/03_ao_projection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial 3 — AO Projection and Chemical Character Screening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/04_aegiss/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial 4 — Complete AEGISS Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/05_unrestricted/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial 5 — Unrestricted (UHF) references
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UHF References
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UHF References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#workflow-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow at a glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spin-summed-vs-spin-resolved-soe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spin-summed vs. spin-resolved SOE
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Spin-summed vs. spin-resolved SOE">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spin-summed-4-state-spatial-orbital" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spin-summed (4-state spatial orbital)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spin-resolved-2-state-spin-orbital" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spin-resolved (2-state spin-orbital)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#which-to-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Which to use
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#degenerate-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Degenerate targets
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ao-projection-on-a-uhf-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AO projection on a UHF reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full pipeline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validating-the-entropies-against-an-exact-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validating the entropies against an exact reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../moltagger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MolTagger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../citing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Citing AEGISS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Developer Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documenting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Documenting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/active_space/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Active Space
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/initial_guess/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Initial Guess
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/wavefunction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Wavefunction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/localization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Localization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#workflow-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow at a glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spin-summed-vs-spin-resolved-soe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spin-summed vs. spin-resolved SOE
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Spin-summed vs. spin-resolved SOE">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spin-summed-4-state-spatial-orbital" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spin-summed (4-state spatial orbital)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spin-resolved-2-state-spin-orbital" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spin-resolved (2-state spin-orbital)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#which-to-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Which to use
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#degenerate-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Degenerate targets
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ao-projection-on-a-uhf-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AO projection on a UHF reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full pipeline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validating-the-entropies-against-an-exact-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validating the entropies against an exact reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="unrestricted-uhf-references">Unrestricted (UHF) references</h1>
+<p>AEGISS supports <strong>unrestricted (UHF)</strong> mean-fields end to end. Because the alpha
+and beta molecular orbitals of a UHF reference are <em>different</em> sets of functions,
+the pipeline runs <strong>per spin channel</strong> from the DMRG single-orbital entropies all
+the way to the final orbital indices, and returns the alpha and beta selections
+<strong>separately</strong> — they are never reconciled into one spatial index set.</p>
+<p>This page describes how the three regimes (restricted, UHF spin-summed, UHF
+spin-resolved) differ, how to configure them, and how the spin-summed and
+spin-resolved single-orbital entropies (SOE) compare.</p>
+<h2 id="workflow-at-a-glance">Workflow at a glance</h2>
+<p>The same four stages run in every regime; what is <em>shared</em> versus <em>split</em> between
+the spin channels is the only thing that changes.</p>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>RHF</th>
+<th>UHF — summed</th>
+<th>UHF — resolved</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DMRG SOE (<code>run_dmrg_subprocess</code>)</td>
+<td>one 1-D list</td>
+<td>one 1-D list (spin-summed)</td>
+<td>one <code>(2, ncas)</code> array — α and β rows</td>
+</tr>
+<tr>
+<td>Entropy screen</td>
+<td><code>select_by_entropy</code> → 1 window</td>
+<td><code>select_by_entropy</code> → 1 window</td>
+<td><code>select_by_spin_entropy</code> → <strong>2</strong> windows</td>
+</tr>
+<tr>
+<td>MO coefficients</td>
+<td>one <code>(nao, nmo)</code> matrix</td>
+<td>two blocks <code>mo_coeff[0/1]</code></td>
+<td>two blocks <code>mo_coeff[0/1]</code></td>
+</tr>
+<tr>
+<td>AO contributions</td>
+<td>one pass</td>
+<td>two passes, <strong>shared</strong> window</td>
+<td>two passes, <strong>own</strong> window each</td>
+</tr>
+<tr>
+<td>Result</td>
+<td>spatial <code>ndarray</code></td>
+<td><code>{"alpha", "beta"}</code></td>
+<td><code>{"alpha", "beta"}</code></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">The only difference between summed and resolved is the search space</p>
+<p>From the MO-coefficient split onward, UHF-summed and UHF-resolved are
+identical: two coefficient blocks → two AO-contribution lists → a split
+<code>alpha</code>/<code>beta</code> selection. They differ <em>only</em> in the entropy screening step —
+resolved gives each channel its <strong>own</strong> window, summed <strong>shares</strong> the single
+spin-summed window across both channels.</p>
+</div>
+<p>A <strong>restricted</strong> <code>mf</code> (2-D <code>mo_coeff</code>) always takes the RHF column regardless of
+configuration: there is only one coefficient set to project.</p>
+<h2 id="configuration">Configuration</h2>
+<p>Three <code>DMRGConfig</code> fields control the UHF behaviour:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">aegiss.config_dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">DMRGConfig</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">dmrg_config</span> <span class="o">=</span> <span class="n">DMRGConfig</span><span class="p">(</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">ncas</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">nelecas</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span>      <span class="c1"># (nalpha, nbeta); nalpha - nbeta must equal mol.spin</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">symm_type</span><span class="o">=</span><span class="s2">&quot;SZ&quot;</span><span class="p">,</span>       <span class="c1"># required for UHF and for spin-resolved SOE</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">unrestricted</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>    <span class="c1"># None → autodetect isinstance(mf, scf.uhf.UHF)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">spin_soe</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>      <span class="c1"># &quot;auto&quot; | &quot;summed&quot; | &quot;resolved&quot;</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">)</span>
+</code></pre></div>
+<ul>
+<li><strong><code>unrestricted</code></strong> — whether to emit an unrestricted (<code>IUHF=1</code>) FCIDUMP with
+  separate <code>aa</code>/<code>bb</code>/<code>ab</code> integral blocks. <code>None</code> (default) autodetects from the
+  mean-field type; pass <code>True</code>/<code>False</code> to override. UHF requires <code>symm_type="SZ"</code>.</li>
+<li><strong><code>symm_type</code></strong> — must be <code>"SZ"</code> for UHF (the spin-adapted <code>"SU2"</code> path cannot
+  represent an unrestricted state), and also for spin-resolved SOE (the
+  per-spin 1-PDM is only available without spin adaptation).</li>
+<li>
+<p><strong><code>spin_soe</code></strong> — selects spin-summed or spin-resolved single-orbital
+  entropies. The resolution rule (<code>DMRGConfig.spin_resolved()</code>):</p>
+<table>
+<thead>
+<tr>
+<th><code>spin_soe</code></th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>"resolved"</code></td>
+<td>spin-resolved (requires <code>symm_type="SZ"</code>)</td>
+</tr>
+<tr>
+<td><code>"summed"</code></td>
+<td>spin-summed</td>
+</tr>
+<tr>
+<td><code>"auto"</code></td>
+<td>resolved <strong>iff</strong> <code>nalpha != nbeta</code> <em>and</em> <code>symm_type="SZ"</code>, else summed</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Reference spin must match the active spin</p>
+<p>For a UHF reference a single active-orbital window only exists when the
+frozen cores of the two spin channels coincide, i.e. the reference spin
+polarisation equals the requested active spin:
+<span class="arithmatex">\(N_\alpha^{\text{ref}} - N_\beta^{\text{ref}} = n_\alpha - n_\beta\)</span>.
+<code>get_subspaces_from_cas</code> raises a <code>ValueError</code> otherwise.</p>
+</div>
+<h2 id="spin-summed-vs-spin-resolved-soe">Spin-summed vs. spin-resolved SOE</h2>
+<p>The single-orbital entropy quantifies how entangled an orbital is with the rest
+of the active space. What "an orbital" means differs between the two flavours.</p>
+<h3 id="spin-summed-4-state-spatial-orbital">Spin-summed (4-state spatial orbital)</h3>
+<p>Each <strong>spatial</strong> orbital is treated as a four-state subsystem — empty,
+alpha-only, beta-only, doubly occupied — so its entropy is</p>
+<div class="arithmatex">\[
+S_i = -\sum_{\mu \in \{d,\, \alpha,\, \beta,\, 0\}} \omega_\mu \ln \omega_\mu,
+\qquad
+\omega = \bigl\{\, d_i,\; n_i^\alpha - d_i,\; n_i^\beta - d_i,\; 1 - n_i + d_i \,\bigr\},
+\]</div>
+<p>where <span class="arithmatex">\(n_i = n_i^\alpha + n_i^\beta\)</span> is the spatial occupation and <span class="arithmatex">\(d_i\)</span> the
+double occupation (recovered from the 1-PDM and 1-NPC diagonals). This yields a
+single ranking and, downstream, a single spatial active-space window.</p>
+<h3 id="spin-resolved-2-state-spin-orbital">Spin-resolved (2-state spin-orbital)</h3>
+<p>Each <strong>spin-orbital</strong> is a two-state mode (occupied / empty), so its entropy is
+the binary entropy of the spin-orbital occupation <span class="arithmatex">\(n_i^\sigma = \text{PDM}_\sigma[i,i]\)</span>:</p>
+<div class="arithmatex">\[
+H(n_i^\sigma) = -\,n_i^\sigma \ln n_i^\sigma - (1 - n_i^\sigma)\ln(1 - n_i^\sigma),
+\qquad \sigma \in \{\alpha, \beta\}.
+\]</div>
+<p>The alpha and beta channels are then thresholded <strong>independently</strong>, so the two
+active windows can contain different orbitals — precisely the spin-polarised
+situation where an orbital carries a <em>fractional</em> occupation (and hence
+correlation) that differs between the two channels, e.g. <span class="arithmatex">\(n_i^\alpha \approx 0.9\)</span>
+while <span class="arithmatex">\(n_i^\beta \approx 0.1\)</span>. (A cleanly singly-occupied orbital,
+<span class="arithmatex">\(n_i^\alpha = 1,\ n_i^\beta = 0\)</span>, is a product state with <span class="arithmatex">\(H = 0\)</span> in <em>both</em>
+channels — and <span class="arithmatex">\(S_i = 0\)</span> spatially too — so it is not, and should not be,
+flagged by either measure.)</p>
+<div class="admonition note">
+<p class="admonition-title">What spin-resolved SOE keeps and drops</p>
+<p><span class="arithmatex">\(H(n_i^\alpha)\)</span> and <span class="arithmatex">\(H(n_i^\beta)\)</span> are the two <strong>marginals</strong> of the joint
+two-mode (spatial-orbital) state whose entropy is the spin-summed <span class="arithmatex">\(S_i\)</span>. By
+subadditivity <span class="arithmatex">\(S_i \le S_i^\alpha + S_i^\beta\)</span>, with equality only when the
+two spin modes of the orbital are uncorrelated. So spin-resolved SOE
+<strong>exposes</strong> the per-channel asymmetry that spin-summed averages over, but at
+the cost of <strong>discarding the intra-orbital <span class="arithmatex">\(\alpha\)</span>–<span class="arithmatex">\(\beta\)</span> correlation</strong>
+(the double-occupancy fluctuation <span class="arithmatex">\(d_i \neq n_i^\alpha n_i^\beta\)</span>). For
+static correlation localised <em>within a single spatial orbital</em>, the
+spin-summed <span class="arithmatex">\(S_i\)</span> is the more faithful single number.</p>
+</div>
+<h3 id="which-to-use">Which to use</h3>
+<ul>
+<li><strong>Spin-summed</strong> — closed-shell-like or weakly polarised targets, or whenever a
+  single spatial active space is the goal. This is the <code>"auto"</code> choice when
+  <span class="arithmatex">\(n_\alpha = n_\beta\)</span>.</li>
+<li><strong>Spin-resolved</strong> — strongly spin-polarised / open-shell targets where the
+  alpha and beta correlation patterns genuinely differ. This is the <code>"auto"</code>
+  choice when <span class="arithmatex">\(n_\alpha \neq n_\beta\)</span> (and <code>symm_type="SZ"</code>).</li>
+</ul>
+<h3 id="degenerate-targets">Degenerate targets</h3>
+<p>The entropies are computed in the <strong>fixed reference <span class="arithmatex">\(S_z\)</span> sector</strong> — the <code>SZ</code>
+DMRG targets <code>spin = nalpha - nbeta</code>. This is well-defined and reproducible, but
+for a <strong>spin-degenerate</strong> open-shell target (a term with <span class="arithmatex">\(S &gt; 0\)</span> has an
+<span class="arithmatex">\(M_s = -S, \dots, +S\)</span> manifold) the entropies are those of the specific <span class="arithmatex">\(M_s\)</span>
+component that <code>nalpha - nbeta</code> selects:</p>
+<ul>
+<li>This affects the <strong>spin-summed</strong> path too — it is the same <code>SZ</code> run — so it is
+  not introduced by spin resolution.</li>
+<li>At the extremal <span class="arithmatex">\(M_s\)</span>, the majority-spin closed / singly-occupied orbitals have
+  integer occupation, so <span class="arithmatex">\(H(n^\sigma) = 0\)</span> there; the per-channel <strong>split</strong>
+  reflects that sector's attribution (one channel can be frozen).</li>
+<li>What is <span class="arithmatex">\(M_s\)</span>-robust is the <em>set of spatial orbitals</em> carrying genuine
+  fractional-occupation correlation — i.e. the <span class="arithmatex">\(\alpha \cup \beta\)</span> <strong>union</strong>.
+  Since a UHF active space is ultimately a set of spatial indices, that union is
+  the physically meaningful object even though the split is kept for
+  transparency.</li>
+</ul>
+<p>A <strong>spatially</strong> degenerate target (a bare atom — e.g. the <span class="arithmatex">\(^3P\)</span> ground state of
+oxygen is also orbitally three-fold degenerate) lets DMRG pick an arbitrary
+component of the spatial manifold; this is a general active-space-selection
+caveat, unrelated to spin resolution. Molecular targets with a non-degenerate
+reference avoid it.</p>
+<h2 id="ao-projection-on-a-uhf-reference">AO projection on a UHF reference</h2>
+<p><code>select_by_ao_projection</code> detects a UHF reference from a 3-D <code>mf.mo_coeff</code> of
+shape <code>(2, nao, nmo)</code> and screens each spin block separately. The AO overlaps
+(<span class="arithmatex">\(\langle \text{minao}_\mu | \text{AO}_\nu \rangle\)</span> via <code>intor_cross</code>) are
+<strong>spin-independent</strong>, so only the MO coefficients differ between channels.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">aegiss.active_space</span><span class="w"> </span><span class="kn">import</span> <span class="n">select_by_ao_projection</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">result</span> <span class="o">=</span> <span class="n">select_by_ao_projection</span><span class="p">(</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">mf</span><span class="p">,</span>                       <span class="c1"># UHF: mo_coeff.ndim == 3</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">ao_labels</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;C 2pz&quot;</span><span class="p">],</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">contribution</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">contribution_type</span><span class="o">=</span><span class="s2">&quot;a&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">)</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># result == {&quot;alpha&quot;: np.ndarray, &quot;beta&quot;: np.ndarray}</span>
+</code></pre></div>
+<p>The <code>restricted_space</code> argument decides whether the channels share a window:</p>
+<ul>
+<li>a plain list / <code>(occ, virt)</code> tuple → <strong>shared</strong> by both channels (spin-summed);</li>
+<li>a <code>{"alpha": ..., "beta": ...}</code> dict (as produced by <code>select_by_spin_entropy</code>)
+  → each channel is restricted to its <strong>own</strong> window (spin-resolved).</li>
+</ul>
+<p>Passing a spin-resolved dict together with a <em>restricted</em> <code>mf</code> raises a
+<code>ValueError</code>.</p>
+<p>The <code>contribution</code> threshold follows the same pattern: a float or per-label list
+is <strong>shared</strong> by both channels, while a <code>{"alpha": ..., "beta": ...}</code> dict applies
+a <strong>different</strong> threshold to each spin channel (each value may itself be a float or
+per-label list). This is orthogonal to <code>restricted_space</code> — you can share the
+window but cut the channels at different weights:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">select_by_ao_projection</span><span class="p">(</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">mf</span><span class="p">,</span>                       <span class="c1"># UHF: mo_coeff.ndim == 3</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">ao_labels</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;C 2pz&quot;</span><span class="p">],</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">contribution</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span> <span class="s2">&quot;beta&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">},</span>   <span class="c1"># stricter cut on beta</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">contribution_type</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">)</span>
+</code></pre></div>
+<p>As with a spin-resolved <code>restricted_space</code>, passing a <code>contribution</code> dict together
+with a <em>restricted</em> <code>mf</code> raises a <code>ValueError</code>.</p>
+<h2 id="full-pipeline">Full pipeline</h2>
+<p><code>select_aegiss</code> wires everything together. Its return type reflects the
+reference: a single <code>np.ndarray</code> for a restricted mean-field, or a split
+<code>{"alpha": ..., "beta": ...}</code> mapping for a UHF one.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">aegiss.initial_guess</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_mol</span><span class="p">,</span> <span class="n">run_scf</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">aegiss.active_space</span><span class="w"> </span><span class="kn">import</span> <span class="n">select_aegiss</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">aegiss.config_dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">DMRGConfig</span><span class="p">,</span> <span class="n">EntropyConfig</span><span class="p">,</span> <span class="n">ProjectionConfig</span><span class="p">,</span> <span class="n">OutputConfig</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="p">)</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">mol</span> <span class="o">=</span> <span class="n">build_mol</span><span class="p">(</span><span class="s2">&quot;open_shell.xyz&quot;</span><span class="p">,</span> <span class="n">basis</span><span class="o">=</span><span class="s2">&quot;ccpvdz&quot;</span><span class="p">,</span> <span class="n">spin</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># triplet: matches nelecas=(11, 9)</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">mf</span>  <span class="o">=</span> <span class="n">run_scf</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;UHF&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="n">active</span> <span class="o">=</span> <span class="n">select_aegiss</span><span class="p">(</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="n">mol</span><span class="p">,</span> <span class="n">mf</span><span class="p">,</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="n">dmrg_config</span><span class="o">=</span><span class="n">DMRGConfig</span><span class="p">(</span><span class="n">ncas</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">nelecas</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span> <span class="n">symm_type</span><span class="o">=</span><span class="s2">&quot;SZ&quot;</span><span class="p">,</span> <span class="n">spin_soe</span><span class="o">=</span><span class="s2">&quot;resolved&quot;</span><span class="p">),</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="n">entropy_config</span><span class="o">=</span><span class="n">EntropyConfig</span><span class="p">(</span><span class="n">fraction</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">fraction_type</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">ranking</span><span class="o">=</span><span class="s2">&quot;global&quot;</span><span class="p">),</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>    <span class="n">projection_config</span><span class="o">=</span><span class="n">ProjectionConfig</span><span class="p">(</span><span class="n">ao_labels</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;C 2pz&quot;</span><span class="p">],</span> <span class="n">contribution</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>    <span class="n">output_config</span><span class="o">=</span><span class="n">OutputConfig</span><span class="p">(</span><span class="n">saving_folder</span><span class="o">=</span><span class="s2">&quot;./orbs/&quot;</span><span class="p">),</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="p">)</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="c1"># active == {&quot;alpha&quot;: np.ndarray, &quot;beta&quot;: np.ndarray}</span>
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">The alpha and beta selections are not reconciled</p>
+<p>Index <span class="arithmatex">\(k\)</span> refers to a <em>different</em> MO in each spin channel, so there is no
+common spatial active space to merge them into — the split is kept
+deliberately. When output is enabled, cube files and any per-channel plots
+are written with <code>_alpha</code> / <code>_beta</code> tags; the AO pie-contribution plot (which
+expects a single flat orbital list) is skipped for the split selection.</p>
+</div>
+<h2 id="validating-the-entropies-against-an-exact-reference">Validating the entropies against an exact reference</h2>
+<p>Both AEGISS entropy reconstructions are exact <em>only</em> because the reduced density
+matrices are diagonal under particle-number symmetry:</p>
+<ul>
+<li><code>_compute_soe</code> builds the 4-state <strong>spatial</strong> <span class="arithmatex">\(S_i\)</span> from the 1-PDM + 1-NPC
+  diagonals;</li>
+<li><code>_compute_spin_soe</code> builds the 2-state <strong>per-spin</strong> <span class="arithmatex">\(H(n_i^\sigma)\)</span> from the
+  1-PDM diagonal.</li>
+</ul>
+<p>Both can be checked against the definition directly. For a system small enough for
+full CI, the state is a list of determinants with weights <span class="arithmatex">\(|c_{\alpha\beta}|^2\)</span>, and
+the single-orbital reduced density matrix of orbital <span class="arithmatex">\(i\)</span> is diagonal in its four
+local states (empty, <span class="arithmatex">\(\alpha\)</span>, <span class="arithmatex">\(\beta\)</span>, double). Its eigenvalues are therefore just
+the summed weights of the determinants in which orbital <span class="arithmatex">\(i\)</span> is in each state, and
+summing over one spin gives the per-spin occupations. The check below computes the
+entropies this way from the CI coefficients, with no density-matrix code, and
+compares them with what AEGISS's functions return from PySCF's RDMs.</p>
+<p>The reference must be <strong>non-degenerate</strong> (see
+<a href="#degenerate-targets">Degenerate targets</a>). A stretched-H₂ <strong>broken-symmetry
+singlet</strong> fits: <span class="arithmatex">\(S = 0\)</span> is non-degenerate, yet the UHF orbitals are genuinely
+spin-polarised (<span class="arithmatex">\(\alpha\)</span> and <span class="arithmatex">\(\beta\)</span> localise on opposite atoms). It is reached
+by following the RHF→UHF instability — no arbitrary density seeding. With two
+orbitals and two electrons, PySCF's FCI is exact, so there is nothing to converge.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pyscf</span><span class="w"> </span><span class="kn">import</span> <span class="n">ao2mo</span><span class="p">,</span> <span class="n">fci</span><span class="p">,</span> <span class="n">gto</span><span class="p">,</span> <span class="n">scf</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pyscf.fci</span><span class="w"> </span><span class="kn">import</span> <span class="n">cistring</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">aegiss.wavefunction.dmrg_subprocess</span><span class="w"> </span><span class="kn">import</span> <span class="n">_compute_soe</span><span class="p">,</span> <span class="n">_compute_spin_soe</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Stretched H2/STO-3G: a closed-shell singlet with a broken-symmetry UHF</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1"># solution, reached by following the RHF-&gt;UHF instability.</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="n">mol</span> <span class="o">=</span> <span class="n">gto</span><span class="o">.</span><span class="n">M</span><span class="p">(</span><span class="n">atom</span><span class="o">=</span><span class="s2">&quot;H 0 0 0; H 0 0 2.5&quot;</span><span class="p">,</span> <span class="n">basis</span><span class="o">=</span><span class="s2">&quot;sto-3g&quot;</span><span class="p">,</span> <span class="n">spin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="n">mf</span> <span class="o">=</span> <span class="n">scf</span><span class="o">.</span><span class="n">UHF</span><span class="p">(</span><span class="n">mol</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>    <span class="n">mo</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">stability</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">mo</span><span class="p">,</span> <span class="n">mf</span><span class="o">.</span><span class="n">mo_coeff</span><span class="p">):</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>        <span class="k">break</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>    <span class="n">mf</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">mf</span><span class="o">.</span><span class="n">make_rdm1</span><span class="p">(</span><span class="n">mo</span><span class="p">,</span> <span class="n">mf</span><span class="o">.</span><span class="n">mo_occ</span><span class="p">))</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="c1"># FCI in the UHF orbitals (alpha and beta orbitals differ, as in AEGISS&#39;s UHF DMRG)</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="n">ca</span><span class="p">,</span> <span class="n">cb</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">mo_coeff</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="n">n</span><span class="p">,</span> <span class="n">nelec</span> <span class="o">=</span> <span class="n">ca</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">mol</span><span class="o">.</span><span class="n">nelec</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="n">h1</span> <span class="o">=</span> <span class="p">(</span><span class="n">ca</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">mf</span><span class="o">.</span><span class="n">get_hcore</span><span class="p">()</span> <span class="o">@</span> <span class="n">ca</span><span class="p">,</span> <span class="n">cb</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">mf</span><span class="o">.</span><span class="n">get_hcore</span><span class="p">()</span> <span class="o">@</span> <span class="n">cb</span><span class="p">)</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="n">eri</span> <span class="o">=</span> <span class="p">(</span><span class="n">ao2mo</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">ca</span><span class="p">),</span> <span class="n">ao2mo</span><span class="o">.</span><span class="n">general</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="p">(</span><span class="n">ca</span><span class="p">,</span> <span class="n">ca</span><span class="p">,</span> <span class="n">cb</span><span class="p">,</span> <span class="n">cb</span><span class="p">)),</span> <span class="n">ao2mo</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">cb</span><span class="p">))</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="n">solver</span> <span class="o">=</span> <span class="n">fci</span><span class="o">.</span><span class="n">direct_uhf</span><span class="o">.</span><span class="n">FCISolver</span><span class="p">(</span><span class="n">mol</span><span class="p">)</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="n">e_fci</span><span class="p">,</span> <span class="n">civec</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">h1</span><span class="p">,</span> <span class="n">eri</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">nelec</span><span class="p">,</span> <span class="n">ecore</span><span class="o">=</span><span class="n">mol</span><span class="o">.</span><span class="n">energy_nuc</span><span class="p">())</span>
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a><span class="c1"># --- AEGISS: entropies from the RDMs, as the DMRG path computes them ---</span>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a><span class="p">(</span><span class="n">dm1a</span><span class="p">,</span> <span class="n">dm1b</span><span class="p">),</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">dm2ab</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">make_rdm12s</span><span class="p">(</span><span class="n">civec</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">nelec</span><span class="p">)</span>
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a><span class="n">pdm1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dm1a</span><span class="p">,</span> <span class="n">dm1b</span><span class="p">])</span>                                     <span class="c1"># (2, n, n)</span>
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a><span class="n">dbl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dm2ab</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)])</span>             <span class="c1"># &lt;n_ia n_ib&gt; (double occ.)</span>
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a><span class="n">npc1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">pdm1</span><span class="p">)</span>
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a><span class="n">npc1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">dm1a</span><span class="o">.</span><span class="n">diagonal</span><span class="p">()</span> <span class="o">+</span> <span class="n">dm1b</span><span class="o">.</span><span class="n">diagonal</span><span class="p">()</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">dbl</span><span class="p">)</span>    <span class="c1"># 1-NPC diagonal &lt;N_i^2&gt;</span>
+<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a><span class="n">s_spatial</span> <span class="o">=</span> <span class="n">_compute_soe</span><span class="p">(</span><span class="n">pdm1</span><span class="p">,</span> <span class="n">npc1</span><span class="p">)</span>                              <span class="c1"># spin-summed path</span>
+<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a><span class="n">Ha</span><span class="p">,</span> <span class="n">Hb</span> <span class="o">=</span> <span class="n">_compute_spin_soe</span><span class="p">(</span><span class="n">pdm1</span><span class="p">)</span>                                  <span class="c1"># spin-resolved path</span>
+<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>
+<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a><span class="c1"># --- Reference: the definition, straight from the CI coefficients ---</span>
+<a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a><span class="k">def</span><span class="w"> </span><span class="nf">entropy</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+<a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a>    <span class="k">return</span> <span class="o">-</span><span class="nb">sum</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">p</span> <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mf">1e-14</span><span class="p">)</span>
+<a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a>
+<a id="__codelineno-4-38" name="__codelineno-4-38" href="#__codelineno-4-38"></a><span class="n">alpha</span> <span class="o">=</span> <span class="n">cistring</span><span class="o">.</span><span class="n">make_strings</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">nelec</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>                 <span class="c1"># occupation bit strings</span>
+<a id="__codelineno-4-39" name="__codelineno-4-39" href="#__codelineno-4-39"></a><span class="n">beta</span> <span class="o">=</span> <span class="n">cistring</span><span class="o">.</span><span class="n">make_strings</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">nelec</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<a id="__codelineno-4-40" name="__codelineno-4-40" href="#__codelineno-4-40"></a><span class="n">weight</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">civec</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>                                       <span class="c1"># weight[alpha, beta]</span>
+<a id="__codelineno-4-41" name="__codelineno-4-41" href="#__codelineno-4-41"></a><span class="n">s_ref</span><span class="p">,</span> <span class="n">h_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+<a id="__codelineno-4-42" name="__codelineno-4-42" href="#__codelineno-4-42"></a><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+<a id="__codelineno-4-43" name="__codelineno-4-43" href="#__codelineno-4-43"></a>    <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>                                          <span class="c1"># p[occ_alpha, occ_beta] of orbital i</span>
+<a id="__codelineno-4-44" name="__codelineno-4-44" href="#__codelineno-4-44"></a>    <span class="k">for</span> <span class="n">ia</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">alpha</span><span class="p">):</span>
+<a id="__codelineno-4-45" name="__codelineno-4-45" href="#__codelineno-4-45"></a>        <span class="k">for</span> <span class="n">ib</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">beta</span><span class="p">):</span>
+<a id="__codelineno-4-46" name="__codelineno-4-46" href="#__codelineno-4-46"></a>            <span class="n">p</span><span class="p">[(</span><span class="n">a</span> <span class="o">&gt;&gt;</span> <span class="n">i</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">b</span> <span class="o">&gt;&gt;</span> <span class="n">i</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">weight</span><span class="p">[</span><span class="n">ia</span><span class="p">,</span> <span class="n">ib</span><span class="p">]</span>
+<a id="__codelineno-4-47" name="__codelineno-4-47" href="#__codelineno-4-47"></a>    <span class="n">s_ref</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">entropy</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>                                 <span class="c1"># 4-state spatial S(1)</span>
+<a id="__codelineno-4-48" name="__codelineno-4-48" href="#__codelineno-4-48"></a>    <span class="n">h_ref</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">entropy</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)),</span> <span class="n">entropy</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>  <span class="c1"># per-spin S(1)</span>
+<a id="__codelineno-4-49" name="__codelineno-4-49" href="#__codelineno-4-49"></a>
+<a id="__codelineno-4-50" name="__codelineno-4-50" href="#__codelineno-4-50"></a><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">s_spatial</span><span class="p">,</span> <span class="n">s_ref</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">)</span>
+<a id="__codelineno-4-51" name="__codelineno-4-51" href="#__codelineno-4-51"></a><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">([</span><span class="n">Ha</span><span class="p">,</span> <span class="n">Hb</span><span class="p">],</span> <span class="n">h_ref</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">)</span>
+<a id="__codelineno-4-52" name="__codelineno-4-52" href="#__codelineno-4-52"></a>
+<a id="__codelineno-4-53" name="__codelineno-4-53" href="#__codelineno-4-53"></a><span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">suppress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">floatmode</span><span class="o">=</span><span class="s2">&quot;fixed&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-54" name="__codelineno-4-54" href="#__codelineno-4-54"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;spatial S(1)  reference     :&quot;</span><span class="p">,</span> <span class="n">s_ref</span><span class="p">)</span>
+<a id="__codelineno-4-55" name="__codelineno-4-55" href="#__codelineno-4-55"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;              _compute_soe  :&quot;</span><span class="p">,</span> <span class="n">s_spatial</span><span class="p">)</span>
+<a id="__codelineno-4-56" name="__codelineno-4-56" href="#__codelineno-4-56"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;per-spin a/b  reference     :&quot;</span><span class="p">,</span> <span class="n">h_ref</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">h_ref</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<a id="__codelineno-4-57" name="__codelineno-4-57" href="#__codelineno-4-57"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;        _compute_spin_soe   :&quot;</span><span class="p">,</span> <span class="n">Ha</span><span class="p">,</span> <span class="n">Hb</span><span class="p">)</span>
+<a id="__codelineno-4-58" name="__codelineno-4-58" href="#__codelineno-4-58"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;subadditivity |Ha-Hb| &lt;= S_spatial &lt;= Ha+Hb:&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-59" name="__codelineno-4-59" href="#__codelineno-4-59"></a>      <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">Ha</span> <span class="o">-</span> <span class="n">Hb</span><span class="p">),</span> <span class="s2">&quot;&lt;=&quot;</span><span class="p">,</span> <span class="n">s_spatial</span><span class="p">,</span> <span class="s2">&quot;&lt;=&quot;</span><span class="p">,</span> <span class="n">Ha</span> <span class="o">+</span> <span class="n">Hb</span><span class="p">)</span>
+</code></pre></div>
+<p>Output:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>spatial S(1)  reference     : [0.7439 0.7439]
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>              _compute_soe  : [0.7439 0.7439]
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>per-spin a/b  reference     : [0.6930 0.6930] [0.6930 0.6930]
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>        _compute_spin_soe   : [0.6930 0.6930] [0.6930 0.6930]
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>subadditivity |Ha-Hb| &lt;= S_spatial &lt;= Ha+Hb: [0.0000 0.0000] &lt;= [0.7439 0.7439] &lt;= [1.3860 1.3860]
+</code></pre></div>
+<p>Both AEGISS functions reproduce the definition to <span class="arithmatex">\(\sim\!10^{-15}\)</span>. The numbers also
+make the subadditivity note concrete: the spatial entropy (<span class="arithmatex">\(0.7439\)</span>) strictly
+<strong>exceeds</strong> each per-spin entropy (<span class="arithmatex">\(0.6930\)</span>) — that gap is the intra-orbital
+<span class="arithmatex">\(\alpha\)</span>–<span class="arithmatex">\(\beta\)</span> correlation the spin-resolved measure marginalises out — while
+staying below their sum (<span class="arithmatex">\(1.3860\)</span>). Here <span class="arithmatex">\(H(n^\alpha) = H(n^\beta)\)</span> because a
+singlet has <span class="arithmatex">\(n_i^\alpha = n_i^\beta\)</span>; the genuinely <em>asymmetric</em> per-channel case
+needs a spin-polarised (<span class="arithmatex">\(n_\alpha \neq n_\beta\)</span>) target, which is the
+<a href="#degenerate-targets">degenerate</a> regime.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../tutorials/05_unrestricted/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Tutorial 5 — Unrestricted (UHF) references">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Tutorial 5 — Unrestricted (UHF) references
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../moltagger/" class="md-footer__link md-footer__link--next" aria-label="Next: MolTagger">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                MolTagger
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Algorithmiq Ltd &middot; Released under the <a href="https://github.com/Algorithmiq/AEGISS/blob/main/LICENSE">Apache License 2.0</a>
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tracking", "navigation.sections", "navigation.top", "navigation.footer", "search.highlight", "content.code.copy", "content.tooltips"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  <script data-mkdocs-jupyter-mathjax="{&quot;url&quot;: &quot;https://cdn.jsdelivr.net/npm/mathjax@4.1.3/tex-mml-chtml.js&quot;, &quot;version&quot;: 4}">
+/* Shared by full pages and Material's instant navigation. */
+(() => {
+  const config = JSON.parse(document.currentScript.dataset.mkdocsJupyterMathjax);
+  if (window.mkdocsJupyterMathJax) return;
+
+  let loading;
+  let queue = Promise.resolve();
+  let previous = [];
+
+  const ready = async () => {
+    if (!loading) {
+      loading = (async () => {
+        let math = window.MathJax;
+        if (!math?.typesetPromise) {
+          const url = new URL(config.url, document.baseURI).href;
+          const existing = Array.from(document.scripts).find(script =>
+            script.src && (script.src === url || script.id === 'MathJax-script' ||
+              (/mathjax/i.test(script.src) &&
+               /\/(?:MathJax|latest|(?:tex|mml)(?:-mml)?-(?:chtml|svg))\.js(?:[?#]|$)/i.test(script.src))));
+          if (existing) {
+            if (!math?.startup?.promise) {
+              await new Promise((resolve, reject) => {
+                existing.addEventListener('load', resolve, { once: true });
+                existing.addEventListener('error', reject, { once: true });
+              });
+            }
+          } else {
+            // Keep site macros, delimiters and startup hooks when supplied.
+            const options = math || {};
+            window.MathJax = {
+              ...options,
+              loader: {
+                ...options.loader,
+                load: Array.from(new Set(['ui/safe', ...(options.loader?.load || [])]))
+              },
+              startup: { typeset: false, ...options.startup },
+              tex: {
+                tags: 'ams',
+                useLabelIds: true,
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true,
+                ...options.tex
+              }
+            };
+            await new Promise((resolve, reject) => {
+              const script = document.createElement('script');
+              script.src = config.url;
+              script.id = 'MathJax-script';
+              script.async = true;
+              script.onload = resolve;
+              script.onerror = reject;
+              document.head.appendChild(script);
+            });
+          }
+        }
+        math = window.MathJax;
+        await math.startup.promise;
+        return math;
+      })();
+    }
+    const math = await loading;
+    // A site owner can extend the v3 queue again on each navigation.
+    await math.startup.promise;
+    return math;
+  };
+
+  const unrendered = node => {
+    if (node.matches('mjx-container')) return [];
+    if (!node.querySelector('mjx-container')) return [node];
+    // In v3, scanning generated assistive MathML again produces nested output.
+    return Array.from(node.children).flatMap(unrendered);
+  };
+
+  const refresh = () => {
+    // A separate chain also serializes v3, without changing v4's startup promise.
+    queue = queue.then(async () => {
+      const notebooks = Array.from(document.querySelectorAll('.jupyter-wrapper'));
+      if (!notebooks.length && !previous.length) return;
+      if (notebooks.length === previous.length &&
+          notebooks.every((node, index) => node === previous[index])) return;
+      const math = await ready();
+      if (previous.length) {
+        math.typesetClear(previous);
+        math.texReset();
+      }
+      previous = notebooks.filter(node => node.isConnected);
+      const pending = previous.flatMap(unrendered);
+      if (pending.length) await math.typesetPromise(pending);
+    }).catch(error => console.error('mkdocs-jupyter: MathJax rendering failed', error));
+    return queue;
+  };
+
+  window.mkdocsJupyterMathJax = { refresh };
+  const start = () => {
+    if (typeof document$ !== 'undefined') document$.subscribe(refresh);
+    else refresh();
+  };
+  // Theme bundles and user-provided MathJax scripts can follow notebook content.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, { once: true });
+  } else start();
+})();
+
+</script>
+</body>
+</html>
