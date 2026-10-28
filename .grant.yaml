@@ -1,0 +1,49 @@
+# License policy for the runtime dependencies, checked by `just sbom-check` with anchore/grant
+# (https://oss.anchore.com/docs/guides/license/policies/) against the SBOMs from `just sbom`.
+#
+# AEGISS is released under Apache-2.0: allow what an Apache-2.0 library may depend on. Matching is
+# case-sensitive and `*` is a glob. A package must match on every license it declares.
+
+allow:
+  # Permissive
+  - 0BSD
+  - Apache-2.0
+  - BSD-*-Clause
+  - CC0-1.0
+  - ISC
+  - MIT
+  - MIT-CMU
+  - PSF-2.0
+  - Python-2.0
+  - Unlicense
+  - Zlib
+  # Weak copyleft: fine for unmodified dependencies installed alongside AEGISS, not for code
+  # copied into it.
+  - LGPL-2.1-only
+  - LGPL-2.1-or-later
+  - LGPL-3.0-only
+  - LGPL-3.0-or-later
+  - MPL-2.0
+  # Trove classifiers, for packages that declare no SPDX identifier
+  - "License :: OSI Approved :: Apache Software License"
+  - "License :: OSI Approved :: BSD License"
+  - "License :: OSI Approved :: MIT License"
+  - "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)"
+
+# Reviewed by hand. Every entry needs the reason it passes; drop it when the reason goes.
+ignore-packages:
+  # GPL-3.0-only. AEGISS runs `block2main` as a separate program and exchanges only files
+  # (FCIDUMP and input in, density matrices out); it never imports or links block2, so the
+  # GPL does not reach AEGISS (https://www.gnu.org/licenses/gpl-faq.html#MereAggregation).
+  # See the note at the top of src/aegiss/wavefunction/dmrg_subprocess.py. Anything that
+  # ships block2 itself (a container image, a frozen bundle) must meet the GPL for block2.
+  - block2
+  # `LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only`: we take the LGPL-3.0 option. grant
+  # checks each alternative of an OR expression, so it denies the GPL ones.
+  - PySide6_Essentials
+  - shiboken6
+  # Public domain and BSD-2-Clause. Its GPL classifier covers tools/editors/emacs/rst.el
+  # alone, which the wheel does not ship (https://docutils.sourceforge.io/COPYING.html).
+  - docutils
+
+require-license: true

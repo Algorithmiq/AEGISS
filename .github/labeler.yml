@@ -18,6 +18,7 @@ ci:
     - any-glob-to-any-file:
       - ".github/**"
       - "justfile"
+      - ".grant.yaml"
       - "prek.toml"
       - "codecov.yml"
       - "sonar-project.properties"

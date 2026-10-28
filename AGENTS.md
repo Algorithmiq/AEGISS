@@ -75,6 +75,8 @@ enforces it. A new command goes into the `justfile` first.
 - DMRG runs `block2main` as a subprocess (`wavefunction/dmrg_subprocess.py`), not through the
   `block2` Python API. Nothing imports `block2`/`pyblock2`, not the tests, docs or notebooks
   either; validate against PySCF (e.g. FCI) instead. Its working files go under `SCRATCH_DIR` (default `./tmp`, gitignored).
+- Runtime dependencies must pass the license policy in `.grant.yaml` (`just sbom sbom-check`).
+  Never add a GPL dependency; an exception goes in `ignore-packages` with its reason.
 - Runtime environment variables (`OMP_NUM_THREADS`, `SCRATCH_DIR`, `MEM`, `PYSCF_MAX_MEMORY`,
   `AEGISS_ORB_BASE`) are read in `utils/env.py` and documented in `docs/installation.md`.
 - MolTagger (`utils/mol_tagger/`) needs the `viz` extra and goes through `qtpy`; never import a

@@ -116,6 +116,21 @@ See [docs/README.md](docs/README.md) for the docs layout and how to add a page. 
 add a page or a tutorial notebook, add it to the `nav:` tree in
 [mkdocs.yml](mkdocs.yml) as well.
 
+### Dependency licenses
+
+AEGISS is released under Apache-2.0, so its runtime dependencies must be compatible with
+it.
+The SBOM workflow checks every pull request that touches the dependencies against the
+policy in [.grant.yaml](.grant.yaml). To run the same check locally you need
+[grant](https://oss.anchore.com/docs/installation/grant/) on your `PATH`:
+
+```bash
+just sbom sbom-check                # write sbom/*.cdx.json and check their licenses
+```
+
+If a new dependency fails the check, review its license; record an accepted exception in
+`ignore-packages` together with the reason it passes.
+
 ## Reporting a security issue
 
 Please do **not** open a public issue for security problems. See

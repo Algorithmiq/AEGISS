@@ -1,0 +1,63 @@
+name: SBOM and licenses
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths: &dependency-paths
+      - .github/actions/setup/**
+      - .github/workflows/sbom.yml
+      - .grant.yaml
+      - justfile
+      - pyproject.toml
+      - uv.lock
+  pull_request:
+    paths: *dependency-paths
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FORCE_COLOR: 3
+  COLUMNS: 120
+
+jobs:
+  sbom:
+    name: SBOM and license policy
+    runs-on: ubuntu-26.04
+
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Set up the build environment
+        uses: ./.github/actions/setup
+        with:
+          grant-version: "0.6.8"
+
+      - name: Generate the SBOMs
+        run: just sbom
+
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: sbom
+          path: sbom/
+
+      - name: Check the licenses against .grant.yaml
+        run: just sbom-check
+
+  dependency-review:
+    name: Dependency review
+    if: ${{ github.event_name == 'pull_request' && vars.DEPENDENCY_REVIEW_ENABLED == 'true' }}
+    runs-on: ubuntu-slim
+
+    steps:
+      - uses: actions/dependency-review-action@v5.0.0
+        with:
+          fail-on-severity: high
+          # the license policy is .grant.yaml, checked on the runtime SBOMs above
+          license-check: false

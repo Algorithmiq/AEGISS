@@ -8,6 +8,12 @@ inputs:
     description: Python version handed to setup-uv.
     required: false
     default: "3.12"
+  grant-version:
+    description: >-
+      Release of anchore/grant to install, for the license checks on the SBOMs. Linux only;
+      skipped when empty.
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -20,6 +26,27 @@ runs:
       with:
         enable-cache: true
         python-version: ${{ inputs.python-version }}
+
+    - name: Install grant
+      if: ${{ inputs.grant-version != '' }}
+      shell: bash
+      env:
+        GRANT_VERSION: ${{ inputs.grant-version }}
+      run: |
+        case "$RUNNER_OS-$RUNNER_ARCH" in
+          Linux-X64) platform=linux_amd64 ;;
+          Linux-ARM64) platform=linux_arm64 ;;
+          *) echo "::error::no grant install for $RUNNER_OS-$RUNNER_ARCH"; exit 1 ;;
+        esac
+        base="https://github.com/anchore/grant/releases/download/v${GRANT_VERSION}"
+        archive="grant_${GRANT_VERSION}_${platform}.tar.gz"
+        dir="$RUNNER_TEMP/grant"
+        mkdir -p "$dir"
+        cd "$dir"
+        curl -sSfLO "$base/$archive"
+        curl -sSfL "$base/grant_${GRANT_VERSION}_checksums.txt" | grep " ${archive}\$" | sha256sum -c -
+        tar -xzf "$archive" grant
+        echo "$dir" >> "$GITHUB_PATH"
 
     # block2main, which the DMRG step runs as a subprocess, links against MPI
     - name: Install OpenMPI

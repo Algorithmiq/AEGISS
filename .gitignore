@@ -216,6 +216,9 @@ aegiss_output/
 # Also excluded from ruff via [tool.ruff] exclude in pyproject.toml.
 /scripts/
 
+# Written by `just sbom`
+/sbom/
+
 # Local, never-pushed working files (generated cubes/plots, FCIDUMPs, test runs).
 /local/
 
