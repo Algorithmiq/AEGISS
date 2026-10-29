@@ -15,7 +15,7 @@ the agent sees neither this repository nor its `AGENTS.md`:
 ```bash
 repo="$(git rev-parse --show-toplevel)"
 scratch="$(mktemp -d)"
-cp "$repo"/tools/skill-evals/data/* "$repo"/docs/tutorials/data/benzene.xyz "$scratch"/
+cp "$repo"/docs/tutorials/data/{benzene,dobna,ferrocene_avas}.xyz "$scratch"/
 cd "$scratch"
 uv venv --python 3.12
 uv pip install "$repo"
