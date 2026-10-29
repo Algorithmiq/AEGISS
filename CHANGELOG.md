@@ -7,12 +7,12 @@ All notable changes to this project are listed here.
 ### Features
 
 - Additional localization procedure ([#46](https://github.com/Algorithmiq/AEGISS/pull/46))
-- Added format  ([#54](https://github.com/Algorithmiq/AEGISS/pull/54))
+- Added format ([#54](https://github.com/Algorithmiq/AEGISS/pull/54))
 - Added resolution space without SOE ([#55](https://github.com/Algorithmiq/AEGISS/pull/55))
 - Added beta components to `plot_ao_contributions` ([#58](https://github.com/Algorithmiq/AEGISS/pull/58))
 - Add `mo_composition` ([#59](https://github.com/Algorithmiq/AEGISS/pull/59))
 - Add `clusters` grouping to mo_ao_contributions ([#61](https://github.com/Algorithmiq/AEGISS/pull/61))
-- Simple `chemcore` core identification; ([#57](https://github.com/Algorithmiq/AEGISS/pull/57))
+- Simple `chemcore` core identification ([#57](https://github.com/Algorithmiq/AEGISS/pull/57))
 - Started UHF integration ([#62](https://github.com/Algorithmiq/AEGISS/pull/62))
 - Orbital index mutable setup ([#65](https://github.com/Algorithmiq/AEGISS/pull/65))
 
