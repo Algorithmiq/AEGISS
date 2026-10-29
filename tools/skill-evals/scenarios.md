@@ -9,7 +9,7 @@ brackets).
 
 | ID | Item |
 |---|---|
-| O1 | The final active space is one of the acceptable ones (S2, S3: when the production run is handed off, the handed-off script would produce one) |
+| O1 | The final active space is one of the acceptable ones (when the production run is handed off, the handed-off script would produce one) |
 | P1 | A projection-only probe ran before any DMRG run |
 | P2 | The margin of the high-entropy orbitals to the window edge was checked before trusting the entropies |
 | P3 | Nothing above the hand-off limit ran; above it, a `select_aegiss` script with explained parameters was handed over |
