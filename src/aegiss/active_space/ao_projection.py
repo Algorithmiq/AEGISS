@@ -234,10 +234,15 @@ def _resolve_contribution(
             contribution,
         )
         if len(contribution) != n_labels:
-            logger.info(
-                "Warning: Length of contribution list does not match number of AO labels. "
-                "Using the first contribution value for all labels."
-            )
+            # A one-element list is an explicit broadcast; any other length is likely a mistake.
+            if len(contribution) > 1:
+                logger.warning(
+                    "%d contribution values for %d AO labels; using the first value, %s, "
+                    "for every label.",
+                    len(contribution),
+                    n_labels,
+                    contribution[0],
+                )
             return [contribution[0]] * n_labels
         return contribution
     logger.info(
@@ -267,10 +272,14 @@ def _resolve_top_n(
             top_n,
         )
         if len(top_n) != n_labels:
-            logger.info(
-                "Warning: Length of top-N list does not match number of AO labels. "
-                "Using the first top-N value for all labels."
-            )
+            # A one-element list is an explicit broadcast; any other length is likely a mistake.
+            if len(top_n) > 1:
+                logger.warning(
+                    "%d top-N values for %d AO labels; using the first value, %s, for every label.",
+                    len(top_n),
+                    n_labels,
+                    top_n[0],
+                )
             return [top_n[0]] * n_labels
         return top_n
     logger.info(
