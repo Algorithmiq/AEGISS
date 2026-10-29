@@ -8,9 +8,9 @@ another: thresholds are not transferable.
 | Situation | Rule | Why |
 |---|---|---|
 | Closed-shell molecule | Start from canonical RHF orbitals. | The DMRG window is an index window around the Fermi level, so it needs energy-ordered orbitals. |
-| Open-shell molecule | Use UHF. Do not use ROHF. | AEGISS supports only UHF for open shells; the ROHF path is untested. |
+| Open-shell molecule | Use UHF. ROHF is untested in AEGISS; use UHF for open shells. | AEGISS offers only UHF for open shells. |
 | UHF reference | Check ⟨S²⟩ before the DMRG: the deviation from S(S+1) must be at most 10% of S(S+1). Beyond that, flag it to the user instead of continuing silently. | Spin contamination of the UHF orbitals carries into the entropies. |
-| Spin-summed or spin-resolved entropies | Follow [the guidance on UHF references](https://algorithmiq.github.io/AEGISS/latest/uhf/#which-to-use). Spin-resolved needs `symm_type="SZ"`. | The authors have nothing to add to that page. |
+| Spin-summed or spin-resolved entropies | Follow [the guidance on UHF references](https://algorithmiq.github.io/AEGISS/latest/uhf/#which-to-use). Spin-resolved needs `symm_type="SZ"`. | The criteria are on that page. |
 | Many low-lying virtuals of little importance (Rydberg-like or diffuse functions in a large basis) | Start from natural orbitals (NOs). | Canonical virtuals with little correlation sit just above the LUMO and fill the window; NOs carry almost no occupation there and move them down the list. |
 | Canonical window would approach about 100 orbitals | Use NOs together with `reorder="fiedler"`, with a smaller window. | NOs concentrate the correlation in fewer orbitals, so a smaller window covers the same physics and the DMRG is cheaper. |
 | Canonical RHF is known beforehand to be a poor reference | Use NOs from a correlated method (the paper uses MP2). | They adapt better to the correlation than canonical RHF orbitals. |
@@ -29,21 +29,21 @@ another: thresholds are not transferable.
 | Margin smaller than 3 | Widen the window by about 5 orbitals on the crowded side and rerun the DMRG. | The entropy ranking is only meaningful for orbitals well inside the window. |
 | Closed-shell RHF | `symm_type="SU2"`. | Cheaper at equal accuracy. |
 | UHF, spin-resolved entropies, or any open-shell case with per-spin data | `symm_type="SZ"` (the library default). | UHF and spin-resolved entropies require it. |
-| Large window, or poor convergence at a given bond dimension | Use `reorder="fiedler"`. | The authors use the Fiedler ordering in exactly these two cases. |
+| Large window, or poor convergence at a given bond dimension | Use `reorder="fiedler"`. | Authors' guideline: reordering shortens the interaction range along the DMRG chain, which helps large windows converge. |
 
 ## Bond dimension
 
 | Run | `max_bond_dim` | Why |
 |---|---|---|
 | Cheap first look | 100. Trust the set of orbitals above τ_E only if a rerun at 200 gives the same set. | The ranking can be unreliable at low bond dimension; an unchanged set at 200 shows it has converged. |
-| Production | 500, a multiple of 4. The library ramps from `max_bond_dim`/2; the paper ramps from 100 to 500. | Value used by every run of the paper. |
-| Watching convergence | Compare the entropies along the ramp and stop once the orbitals above τ_E stop changing. | Saves DMRG time when the ranking converges early. |
+| Production | 500, a multiple of 4. The library ramps from `max_bond_dim`/2; the paper ramps from 100 to 500 (Trans-Cl: fixed 500). | Value used by every run of the paper. |
+| Checking convergence | Rerun at a higher `max_bond_dim` and stop when the set above τ_E is unchanged. | The library runs the whole ramp in one DMRG call and computes the entropies only from the final wavefunction, so there are no entropies partway through the ramp. |
 
 ## Entropy screening
 
 | Situation | Rule | Why |
 |---|---|---|
-| Default | `fraction=0.1`, `fraction_type="r"` (τ_E = S(1)max/10). The paper uses 0.2 for benzene. | The AutoCAS criterion, used by the paper. |
+| Starting point | `fraction=0.1`, `fraction_type="r"` (τ_E = S(1)max/10). The paper uses 0.2 for benzene. | The AutoCAS criterion, used by the paper. |
 | Flat entropies (every orbital above the 0.1 threshold) | Raise to `fraction=0.9`, relative. | In the paper's DOBNA case with MP2 natural orbitals no orbital fell below 0.1; 0.9 isolated the strongly entropic subset. |
 | Comparing entropies across runs | `fraction_type="a"`. | An absolute threshold is the same number in every run; a relative one moves with S(1)max. |
 | S(1)max itself is small | `fraction_type="a"`. | A relative cut then keeps orbitals that are only weakly correlated. |
@@ -54,10 +54,10 @@ another: thresholds are not transferable.
 
 | Situation | Rule | Why |
 |---|---|---|
-| Localized process (d–d, π→π*, bond dissociation) | Use 2–3 clusters and put labels only on the active cluster. In ferrocene only `"Fe 3d"` is labelled; the Cp orbitals enter through the entropy step. | The entropy step brings in the correlated partners; the labels only say which process matters. |
+| Localized process (d–d, π→π*, bond dissociation) | Use 2–3 clusters and put labels only on the active cluster. In ferrocene only `"Fe 3d"` is labelled; the Cp orbitals enter through the entropy step. Select the cluster's atoms in [MolTagger](https://algorithmiq.github.io/AEGISS/latest/moltagger/) to get atom-specific `ao_labels`. | The entropy step brings in the correlated partners; the labels only say which process matters. |
 | Delocalized or charge-transfer process | Put donor and acceptor in separate clusters (Trans-Cl: Ru and the ligand). | Each channel then gets its own threshold or `top_n`. |
 | Extended ligand | One cluster per ring or fragment (TLD-1433). | Each ring or fragment then gets its own threshold or `top_n` (TLD-1433 uses 4 clusters). |
-| No idea which atomic orbitals matter | Skip the clustering. The result is then AEGISS without clusters, the AVAS-like limit (or the entropy alone, AutoCAS, with no labels). | The AO step has nothing to separate. |
+| Cannot anticipate where the relevant orbitals are localised | Skip clustering: the labels apply to every atom of that element (the AVAS-like limit). | Without clusters the labels are not tied to a region of the molecule. |
 | Refining the labels | Go from coarse to fine and refine only when the selection is unbalanced. Relabelling does not need a new DMRG run, only the AO projection step. | The DMRG is the expensive part and does not depend on the labels. |
 | Choosing the molecular plane for `2pz` labels | Orient the molecule so the π orbitals are along z, or use the matching label (`2px` if the molecule lies in the yz plane, as DOBNA does). Use [MolTagger](https://algorithmiq.github.io/AEGISS/latest/moltagger/) to check. | A label on the wrong p orbital selects nothing useful. |
 | Bad clustering | Expect a less compact space, not a lost orbital. | Clustering never removes correlated orbitals from the entropy-screened pool. |
@@ -67,14 +67,14 @@ another: thresholds are not transferable.
 | Situation | Rule | Why |
 |---|---|---|
 | Clean, well-separated target manifold (benzene π, ferrocene Fe 3d, DOBNA π) | `contribution=0.5` with `contribution_type="a"`. | The weights separate cleanly, so a threshold picks the manifold. |
-| Strongly mixed orbitals (metal–ligand hybridization, Rydberg virtuals) | `top_n` instead of `contribution`. Trans-Cl: `top_n=1` for each Ru 4d component; the ligand π group (4,4) or (6,6) occupied/virtual (TLD-1433). | A threshold takes either everything or nothing there. |
-| Balance between occupied and virtual orbitals | `top_n` with `ranking="subset"`. | This gives the (n_occ, n_virt) count. |
+| Strongly mixed orbitals (metal–ligand hybridization, Rydberg virtuals) | `top_n` instead of `contribution`. Trans-Cl: `top_n=1` per Ru 4d component and (4,4) occupied/virtual on the bipyridine π (space II: 2 per component and (6,6)); TLD-1433 uses `top_n` per cluster. | A threshold takes either everything or nothing there. |
+| Balance between occupied and virtual orbitals | `top_n` with `ranking="subset"` (`ProjectionConfig` only). | This gives the (n_occ, n_virt) count. |
 | Reading the weights | Do not treat a `contribution` value as a probability. | The weight sums the absolute AO–MO overlaps over the label's AOs (an L1 norm of non-orthogonal overlaps), so it is not bounded by 1 (open issue, [PR #10](https://github.com/Algorithmiq/AEGISS/pull/10)). |
 | Distinct correlation channels (metal and ligand) | One group per channel, each with its own threshold or `top_n`. | Each channel then gets its own selection. |
 | One manifold described by several labels (`["C 2pz", "N 2pz"]` for one π system) | A flat list or a single group. | One threshold fits one manifold. |
-| 4d/5d metal without a pseudopotential | Do not run with `basis="minao"`; use a pseudopotential. | The labels are mis-numbered and the selection comes out silently empty (open [PR #113](https://github.com/Algorithmiq/AEGISS/pull/113)). |
-| Label outside the minimal valence shell (a second d shell, Rydberg or diffuse functions) | `basis=None`. | The minimal basis has no such functions. |
-| Any run | Pass `contribution`, `contribution_type`, `top_n` and `ranking` explicitly. | The defaults differ between the config classes and the selection functions (open PRs [#112](https://github.com/Algorithmiq/AEGISS/pull/112) and [#114](https://github.com/Algorithmiq/AEGISS/pull/114)). |
+| 4d/5d metal without a pseudopotential | Do not run with `basis="minao"`. | Without a pseudopotential `minao` mis-numbers the 4d/5d labels and the selection comes out empty; open [PR #113](https://github.com/Algorithmiq/AEGISS/pull/113) makes it raise. |
+| Label outside the minimal valence shell (a second d shell, Rydberg or diffuse functions) | `ProjectionConfig(basis=None)` (`projected_basis=None` in `select_by_ao_projection`). | The minimal basis has no such functions. |
+| Any run | Pass `contribution`, `contribution_type`, `top_n` and, in `ProjectionConfig`, `ranking` explicitly. | The defaults differ between the config classes and the selection functions (open PRs [#112](https://github.com/Algorithmiq/AEGISS/pull/112) and [#114](https://github.com/Algorithmiq/AEGISS/pull/114)). |
 
 ## Typical AO labels
 
@@ -98,8 +98,8 @@ and look for a plateau in the threshold plot, AutoCAS style. The paper does not 
 
 ## Hand-off limit
 
-Run DMRG yourself (as an agent) only for a cheap, low-bond-dimension run, on any window. When both
-`ncas` ≥ 30 and `max_bond_dim` ≥ 500, do not run it: hand the user a script. For reference, block2
+You may run DMRG yourself (as an agent) unless both `ncas` ≥ 30 and `max_bond_dim` ≥ 500; then hand
+the user a script. A cheap, low-bond-dimension run is fine on any window. For reference, block2
 defaults on one node:
 
 | System | CAS | `max_bond_dim` | Threads | DMRG time |

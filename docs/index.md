@@ -107,10 +107,11 @@ orbital mixing and Rydberg-like virtuals. These are poor fits:
 
 - **Reaction paths:** not tested. Check each geometry's selection by hand.
 - **Excited states with no counterpart in the ground state:** the DMRG is run on the ground
-  state, so such orbitals are not seen.
+  state, so such orbitals are not seen. AEGISS has no remedy for this: choose those
+  orbitals by hand or with another method.
 - **No idea which atomic orbitals matter:** the AO step then has nothing to work with and
   AEGISS reduces to entropy alone (AutoCAS), or to its AVAS-like limit without clusters.
-  Use AutoCAS or AVAS directly.
+  Use an entropy-only selection (AutoCAS).
 - **Localized orbitals as input:** the DMRG window is a Fermi-level index window and
   localized orbitals have no orbital energies. Start from canonical or natural orbitals.
 - **Essentially single-reference systems** (S(1)max small, every orbital weakly correlated):
