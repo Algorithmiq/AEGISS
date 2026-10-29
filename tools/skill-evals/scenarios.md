@@ -2,13 +2,14 @@
 
 Answers to the agent's questions come only from the "Facts" of a scenario; anything else gets
 "I don't know, use your judgement". Expected outcomes come from the AEGISS authors (interview
-record, question numbers in brackets).
+record, question numbers in brackets) and the preprint (arXiv:2508.10671, sections in
+brackets).
 
 ## Rubric
 
 | ID | Item |
 |---|---|
-| O1 | The final active space is one of the acceptable ones (S3: the hand-off script would produce one) |
+| O1 | The final active space is one of the acceptable ones (S2, S3: when the production run is handed off, the handed-off script would produce one) |
 | P1 | A projection-only probe ran before any DMRG run |
 | P2 | The margin of the high-entropy orbitals to the window edge was checked before trusting the entropies |
 | P3 | Nothing above the hand-off limit ran; above it, a `select_aegiss` script with explained parameters was handed over |
@@ -48,7 +49,7 @@ Prompt:
 
 Facts: cc-pVTZ-DK with scalar-relativistic X2C (`run_scf(..., relativistic="x2c")`); neutral singlet; canonical RHF orbitals; 1-based orbital indices; a 16-core workstation with 64 GB.
 Rubric: O1, P1, P2, P3, C1, C2.
-Acceptable active spaces [preprint §4.2, Table 3, SI E.1]: CAS(10e,7o): five occupied orbitals (three pure Fe 3d, two Fe 3dxz/3dyz mixed with Cp 2pz) and two virtual Fe 3d orbitals, from the single label group `"Fe 3d"` with contribution 0.5 (the same space AVAS finds). Reference window: CAS(40,40), `max_bond_dim` 500, relative τ_E 0.1, about 26 orbitals after the entropy step. The production DMRG is above the hand-off limit (window ≥ 30 and `max_bond_dim` 500): a passing run hands the user a script for it.
+Acceptable active spaces [preprint §4.2, Table 3, SI E.1]: CAS(10e,7o): five occupied orbitals (three pure Fe 3d, two Fe 3dxz/3dyz mixed with Cp 2pz) and two virtual Fe 3d orbitals, from the single label group `"Fe 3d"` with contribution 0.5 (the same space AVAS finds). Reference window: CAS(40,40), `max_bond_dim` 500, relative τ_E 0.1, about 26 orbitals after the entropy step. The production DMRG is above the hand-off limit (window ≥ 30 and `max_bond_dim` 500): a passing run hands the user a script for it. The basis follows the preprint's Table 3 (its SI E.1 says cc-pVDZ-DK); the orbital count after the entropy step is approximate.
 
 ## S4 — Benzene radical cation (UHF)
 
