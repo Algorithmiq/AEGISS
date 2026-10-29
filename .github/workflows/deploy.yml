@@ -93,10 +93,10 @@ jobs:
 
       - name: Release notes from the changelog
         id: notes
-        uses: Algorithmiq/release-tools/actions/release-notes@v1.0.0
+        uses: Algorithmiq/release-tools/actions/release-notes@v1.1.0
 
       - name: Create the draft release
-        uses: Algorithmiq/release-tools/actions/draft-release@v1.0.0
+        uses: Algorithmiq/release-tools/actions/draft-release@v1.1.0
         with:
           notes-file: ${{ steps.notes.outputs.path }}
           files: |
@@ -137,4 +137,4 @@ jobs:
 
     steps:
       - name: Publish the draft release
-        uses: Algorithmiq/release-tools/actions/publish-release@v1.0.0
+        uses: Algorithmiq/release-tools/actions/publish-release@v1.1.0
