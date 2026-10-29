@@ -20,7 +20,8 @@ cd "$scratch"
 uv venv --python 3.12
 uv pip install "$repo"
 source .venv/bin/activate
-aegiss skill install          # with-skill runs only
+aegiss skill install          # with-skill runs only (pi, Codex, ...)
+# aegiss skill install --agent claude   # instead, for Claude Code
 ```
 
 Then start a fresh session of the agent in `$scratch` (same agent and model for the baseline
@@ -31,5 +32,5 @@ against the rubric and add one row to `results.md`; keep the transcript outside 
 ## Grading
 
 Each rubric item passes or not; an item that does not apply is `n/a`. The skill passes when
-every applicable item passes in every scenario with the skill, and the baselines show the skill
-made a difference.
+every applicable item passes in every scenario with the skill, and in at least one scenario an item that
+does not pass in the baseline passes with the skill.

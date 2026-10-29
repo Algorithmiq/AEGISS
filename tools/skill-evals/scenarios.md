@@ -46,7 +46,7 @@ Prompt:
 
 > I have a PySCF workflow that builds a molecule and a converged mean-field object `mf`. Add a function `aegiss_casscf(mol, mf, ao_labels)` that selects the active space with AEGISS and returns a PySCF CASSCF object ready to run. It should also work when `mf` is UHF, or tell me clearly why not.
 
-Facts: the workflow runs on a cluster node; jobs run in parallel.
+Facts: the workflow runs on a cluster node; jobs run in parallel; 1-based orbital indices.
 Rubric: C1, C2, B1, B2.
 
 ## S6 — Evaluation
