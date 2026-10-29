@@ -87,6 +87,10 @@ markdown_extensions:
   - md_in_html
   - pymdownx.arithmatex:
       generic: true
+  # docs/parameters.md includes the rules the agent skill ships (src/aegiss/skill/parameters.md)
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
 
 # Versioned site on gh-pages (`just docs-deploy`): `dev` follows main, `X.Y` each release,
 # `latest` the newest release.
@@ -104,6 +108,7 @@ nav:
   - Home: index.md
   - Installation: installation.md
   - Orbital Index Base: orbital_indexing.md
+  - Choosing Parameters: parameters.md
   - Tutorials:
     - Overview: tutorials/index.md
     - "01 — SCF & Localization": tutorials/01_scf_and_localization.ipynb
