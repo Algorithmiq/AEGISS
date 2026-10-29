@@ -12,16 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Command-line entry point for AEGISS configuration.
+"""Command-line entry point for AEGISS.
 
 Installed as the ``aegiss`` console script (see ``[project.scripts]`` in
-``pyproject.toml``). Its main purpose is the one-time, post-install step of
-choosing the base used when orbital indices are printed and interpreted::
+``pyproject.toml``). It chooses the base used when orbital indices are printed
+and interpreted, and installs the AEGISS agent skill::
 
     aegiss config set-base 1     # print/read orbital indices 1-based
     aegiss config set-base 0     # back to the 0-based default
     aegiss config get-base       # show the currently resolved base
     aegiss config path           # show the config-file location
+    aegiss skill install         # install the agent skill in ./.agents/skills
+    aegiss skill path            # show where the bundled skill lives
 
 The value is persisted to :func:`aegiss.utils.orb_display.config_path`. It can
 always be overridden for a single run with the ``AEGISS_ORB_BASE`` environment
@@ -33,8 +35,11 @@ from __future__ import annotations
 import argparse
 import sys
 import tomllib
+from pathlib import Path
 from typing import TYPE_CHECKING
 
+from aegiss._version import __version__
+from aegiss.utils import skill_bundle
 from aegiss.utils.orb_display import (
     ORB_BASE_ENV_VAR,
     VALID_BASES,
@@ -108,9 +113,34 @@ def _print_path() -> int:
     return 0
 
 
+def _skill_path() -> int:
+    """Print where the bundled skill lives; return exit code."""
+    print(skill_bundle.bundled_skill_dir())
+    return 0
+
+
+def _skill_install(
+    directory: Path | None, agent: str, *, user: bool, force: bool
+) -> int:
+    """Install the bundled skill; return exit code."""
+    skills_dir = directory or skill_bundle.skills_root(agent, user=user)
+    try:
+        target = skill_bundle.install_skill(skills_dir, force=force)
+    except FileExistsError as exc:
+        print(
+            f"{exc.filename} already exists; rerun with --force to replace it.",
+            file=sys.stderr,
+        )
+        return 1
+    print(f"Installed the AEGISS {__version__} skill in {target}.")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Construct the ``aegiss`` argument parser."""
-    parser = argparse.ArgumentParser(prog="aegiss", description="AEGISS configuration.")
+    parser = argparse.ArgumentParser(
+        prog="aegiss", description="AEGISS command-line tools."
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     config = sub.add_parser("config", help="Inspect or change persisted settings.")
@@ -127,6 +157,35 @@ def build_parser() -> argparse.ArgumentParser:
 
     config_sub.add_parser("get-base", help="Show the currently resolved base.")
     config_sub.add_parser("path", help="Show the config-file location.")
+
+    skill = sub.add_parser("skill", help="Install the AEGISS agent skill.")
+    skill_sub = skill.add_subparsers(dest="skill_command", required=True)
+    skill_sub.add_parser("path", help="Show where the bundled skill lives.")
+    install = skill_sub.add_parser(
+        "install",
+        help=(
+            "Copy the skill into an agent's skills folder, with docs links for "
+            "this AEGISS version."
+        ),
+    )
+    install.add_argument(
+        "directory",
+        nargs="?",
+        type=Path,
+        help="Skills folder to install into; overrides --agent and --user.",
+    )
+    install.add_argument(
+        "--agent",
+        choices=sorted(skill_bundle.AGENT_DIRS),
+        default="agents",
+        help="'agents' (.agents/skills: pi, Codex, ...) or 'claude' (.claude/skills).",
+    )
+    install.add_argument(
+        "--user", action="store_true", help="Install in the home directory."
+    )
+    install.add_argument(
+        "--force", action="store_true", help="Replace an installed copy."
+    )
     return parser
 
 
@@ -147,6 +206,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _get_base()
         if args.config_command == "path":
             return _print_path()
+    if args.command == "skill":
+        if args.skill_command == "path":
+            return _skill_path()
+        if args.skill_command == "install":
+            return _skill_install(
+                args.directory, args.agent, user=args.user, force=args.force
+            )
     return 1
 
 
