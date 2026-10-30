@@ -30,7 +30,8 @@ that does not pass sends you back, never forward.
   (it may also live in the interpreter's venv `bin`, where AEGISS finds it even if the shell does not).
 - Compare `aegiss.__version__` with `metadata.aegiss-version` in this file's frontmatter. If
   they differ, tell the user to run `aegiss skill install --force` (with the same `--agent` /
-  `--user` options as before).
+  `--user` options as before). If the field is missing (a copy installed another way), suggest
+  `aegiss skill install` for a copy that matches the installed AEGISS.
 - `MEM`, `SCRATCH_DIR` and `OMP_NUM_THREADS` must suit the machine:
   [environment variables](https://algorithmiq.github.io/AEGISS/latest/installation/#environment-variables).
 
