@@ -17,7 +17,8 @@ To try several thresholds, run DMRG once and screen its `soe1` repeatedly instea
 [API reference](https://algorithmiq.github.io/AEGISS/latest/api/). Pass every threshold
 explicitly: the config dataclasses and the selection functions do not share defaults, and
 the defaults are being changed (see the "Any run" rows of
-[parameters.md](parameters.md#entropy-screening)).
+[parameters.md](parameters.md#entropy-screening) and
+[parameters.md](parameters.md#ao-projection)).
 
 ## Return values
 
@@ -38,8 +39,8 @@ PySCF's `sort_mo` assumes 1-based indices unless given `base=0`.
 
 ## DMRG runs as a subprocess
 
-- `block2main` (installed with the pinned `block2` wheel) must be on `PATH` where AEGISS runs;
-  nothing imports `block2` in Python.
+- `block2main` (installed with the pinned `block2` wheel) must be on `PATH` or in the `bin` of the
+  venv that runs AEGISS; nothing imports `block2` in Python.
 - Each call works in its own `SCRATCH_DIR/dmrg_subprocess_<ns timestamp>` folder and leaves it
   behind: long-running or parallel pipelines should give each job its own `SCRATCH_DIR` and
   clean it up.
