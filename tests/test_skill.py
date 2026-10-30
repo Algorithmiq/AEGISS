@@ -19,6 +19,7 @@ from __future__ import annotations
 import re
 import shutil
 import subprocess
+import unicodedata
 import zipfile
 from pathlib import Path
 
@@ -31,6 +32,8 @@ SKILL_DIR = ROOT / "src" / "aegiss" / "skill"
 SKILL_FILES = ("SKILL.md", "parameters.md", "integration.md", "overview.md")
 SITE_LINK = re.compile(re.escape(DOCS_URL) + r"([^\s)>\]]*)")
 RELATIVE_LINK = re.compile(r"\]\(([\w-]+\.md)(?:#[\w-]*)?\)")
+PARAMETERS_ANCHOR = re.compile(r"\]\(parameters\.md#([\w-]+)\)")
+SITE_ANCHOR = re.compile(re.escape(DOCS_URL) + r"latest/([^\s)>\]#]*)#([\w-]+)")
 
 
 def _docs_source(page: str) -> Path | None:
@@ -55,6 +58,25 @@ def _site_links() -> list[tuple[str, str]]:
     ]
 
 
+def _slug(heading: str) -> str:
+    """Python-Markdown ``toc`` slug, as mkdocs builds heading ids."""
+    text = unicodedata.normalize("NFKD", heading).encode("ascii", "ignore").decode()
+    text = re.sub(r"[^\w\s-]", "", text).strip().lower()
+    return re.sub(r"[-\s]+", "-", text)
+
+
+def _heading_slugs(path: Path) -> set[str]:
+    """Slugs of the headings of a markdown file, skipping fenced code blocks."""
+    slugs = set()
+    fenced = False
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.lstrip().startswith(("```", "~~~")):
+            fenced = not fenced
+        elif not fenced and (match := re.match(r"#{1,6}\s+(.*?)\s*#*$", line)):
+            slugs.add(_slug(match[1]))
+    return slugs
+
+
 def test_skill_files_present():
     assert sorted(p.name for p in SKILL_DIR.glob("*.md")) == sorted(SKILL_FILES)
 
@@ -74,6 +96,28 @@ def test_relative_links_resolve():
             assert (SKILL_DIR / match[1]).is_file(), (
                 f"{path.name}: {match[1]} is missing"
             )
+
+
+def test_anchors_match_a_heading():
+    parameters = _heading_slugs(SKILL_DIR / "parameters.md")
+    for path in SKILL_DIR.glob("*.md"):
+        text = path.read_text(encoding="utf-8")
+        for match in PARAMETERS_ANCHOR.finditer(text):
+            assert match[1] in parameters, f"{path.name}: no heading for {match[0]}"
+        for match in SITE_ANCHOR.finditer(text):
+            source = _docs_source(match[1].strip("/"))
+            if source is None or source.suffix != ".md":
+                continue  # notebooks have no markdown headings to check
+            assert match[2] in _heading_slugs(source), (
+                f"{path.name}: {source.name} has no heading for #{match[2]}"
+            )
+
+
+def test_slug_follows_python_markdown():
+    assert _slug("3. Single-orbital entropy screening") == (
+        "3-single-orbital-entropy-screening"
+    )
+    assert _slug("Café  (UHF) — spin") == "cafe-uhf-spin"
 
 
 def test_frontmatter():
