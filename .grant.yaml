@@ -42,8 +42,5 @@ ignore-packages:
   # checks each alternative of an OR expression, so it denies the GPL ones.
   - PySide6_Essentials
   - shiboken6
-  # Public domain and BSD-2-Clause. Its GPL classifier covers tools/editors/emacs/rst.el
-  # alone, which the wheel does not ship (https://docutils.sourceforge.io/COPYING.html).
-  - docutils
 
 require-license: true

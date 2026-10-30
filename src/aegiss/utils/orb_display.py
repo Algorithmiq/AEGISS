@@ -42,7 +42,7 @@ import os
 import tomllib
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, get_args
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -52,7 +52,9 @@ logger = logging.getLogger(__name__)
 # Public: shared with the CLI (aegiss.cli) so the accepted bases and the
 # override variable name have a single source of truth.
 ORB_BASE_ENV_VAR = "AEGISS_ORB_BASE"
-VALID_BASES = (0, 1)
+# The CLI validates against the Literal, everything else against the tuple.
+OrbitalBase = Literal[0, 1]
+VALID_BASES: tuple[int, ...] = get_args(OrbitalBase)
 
 _CONFIG_KEY = "orbital_base"
 _DEFAULT_BASE = 0
