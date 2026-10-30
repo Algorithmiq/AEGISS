@@ -146,14 +146,18 @@ def install_skill(
     if not (source / "SKILL.md").is_file():
         raise FileNotFoundError(f"no SKILL.md in {source}")
     target = skills_dir / SKILL_NAME
-    if target.exists():
+    if target.exists() or target.is_symlink():
         if not force:
             raise FileExistsError(
                 errno.EEXIST,
                 "skill already installed; pass force=True to replace it",
                 str(target),
             )
-        shutil.rmtree(target)
+        # `npx skills add` installs a symlink; remove the link, never what it points to
+        if target.is_symlink() or target.is_file():
+            target.unlink()
+        else:
+            shutil.rmtree(target)
     target.mkdir(parents=True)
     for entry in source.iterdir():
         if not entry.name.endswith(".md"):

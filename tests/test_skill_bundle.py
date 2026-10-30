@@ -105,6 +105,35 @@ def test_install_force_replaces_the_old_copy(tmp_path, source):
     )
 
 
+def test_install_force_replaces_a_symlink_and_keeps_its_target(tmp_path, source):
+    # `npx skills add` links .claude/skills/aegiss to a copy under .agents/skills/
+    shared = tmp_path / "shared"
+    shared.mkdir()
+    (shared / "SKILL.md").write_text("old\n", encoding="utf-8")
+    skills = tmp_path / "skills"
+    skills.mkdir()
+    (skills / "aegiss").symlink_to(shared, target_is_directory=True)
+    with pytest.raises(FileExistsError, match="force"):
+        install_skill(skills, version="0.3.0", source=source)
+    target = install_skill(skills, version="0.3.0", source=source, force=True)
+    assert not target.is_symlink()
+    assert 'aegiss-version: "0.3.0"' in (target / "SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    assert (shared / "SKILL.md").read_text(encoding="utf-8") == "old\n"
+
+
+def test_install_force_replaces_a_dangling_symlink(tmp_path, source):
+    skills = tmp_path / "skills"
+    skills.mkdir()
+    (skills / "aegiss").symlink_to(tmp_path / "missing", target_is_directory=True)
+    with pytest.raises(FileExistsError, match="force"):
+        install_skill(skills, version="0.3.0", source=source)
+    target = install_skill(skills, version="0.3.0", source=source, force=True)
+    assert not target.is_symlink()
+    assert (target / "SKILL.md").is_file()
+
+
 def test_install_requires_skill_md(tmp_path, source):
     (source / "SKILL.md").unlink()
     with pytest.raises(FileNotFoundError, match=r"SKILL\.md"):
