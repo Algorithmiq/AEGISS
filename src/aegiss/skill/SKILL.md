@@ -12,7 +12,8 @@ process (AVAS-like projection). Method: [the AEGISS procedure](https://algorithm
 Pick the branch:
 
 - Choosing an active space for a molecule: follow the **Workflow**.
-- The user already has entropies or AEGISS output: start at step 5.
+- The user brings back entropies (`soe1.npy`, e.g. from a step 4 you handed off): resume at the
+  margin check in step 4. They already have AEGISS output: start at step 5.
 - Building AEGISS into a program or pipeline: read [integration.md](integration.md).
 - Explaining AEGISS or comparing it with other methods: read [overview.md](overview.md).
 
@@ -62,8 +63,7 @@ mf = run_scf(mol, method="RHF")
 Canonical orbitals are the default; natural orbitals only in the cases
 [parameters.md](parameters.md#reference-and-orbitals) lists, and then step 4 also checks that
 the window contains the orbitals of interest. Localized orbitals are not an option: the DMRG
-window needs energy-ordered orbitals
-([why](https://algorithmiq.github.io/AEGISS/latest/#3-single-orbital-entropy-screening)).
+window needs energy-ordered orbitals ([why](parameters.md#reference-and-orbitals)).
 
 Done when: `mf.converged`; for UHF, `mf.spin_square()` is within the tolerance in
 [parameters.md](parameters.md#reference-and-orbitals); the orbital type is decided.
@@ -101,7 +101,9 @@ wrong labels.
 Window size and bond dimension: [parameters.md](parameters.md#dmrg-window) and
 [parameters.md](parameters.md#bond-dimension). If the cheap run itself reaches the
 [hand-off limit](parameters.md#hand-off-limit) (parameters.md starts the exploratory run of the
-largest windows at the verification bond dimension), hand it off as in step 6.
+largest windows at the verification bond dimension), do not run it: hand over the snippet below
+with the values filled in (and the step 2 lines), not a `select_aegiss` script, and stop. Resume at
+the margin check when the user brings back `soe1.npy`.
 
 ```python notest
 import numpy as np
@@ -116,6 +118,7 @@ occ, virt = get_subspaces_from_cas(mf, ncas=NCAS, nelecas=NELECAS)
 _, soe1 = run_dmrg_subprocess(
     mf, ncas=NCAS, nelecas=NELECAS, max_bond_dim=CHEAP_BOND_DIM, symm_type=SYMM_TYPE,
     reorder=REORDER,
+    # spin_resolved=True,  # UHF only, see below
 )
 np.save("soe1.npy", soe1)  # step 5 retunes on this file, never on a new DMRG run
 
@@ -142,8 +145,8 @@ selection rests on an unverified cheap run, and put the verification in the step
 Done when: the entropies are saved, `margin` is at least the minimum in
 [parameters.md](parameters.md#dmrg-window), and the set above τ_E is unchanged at the
 verification bond dimension (or the verification is handed off) — or, if the cheap run itself
-reaches the hand-off limit, the user has a script for it (the step 6 template with the cheap
-bond dimension) and you stop here. Otherwise widen the window or raise the bond dimension and
+reaches the hand-off limit, the user has the snippet above for it and you stop here until they
+bring back `soe1.npy`. Otherwise widen the window or raise the bond dimension and
 rerun this step.
 
 ### 5. Screen and project

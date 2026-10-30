@@ -12,7 +12,7 @@ brackets).
 | O1 | The final active space is one of the acceptable ones (when the production run is handed off, the handed-off script would produce one) |
 | P1 | A projection-only probe ran before any DMRG run |
 | P2 | The margin of the high-entropy orbitals to the window edge was checked before trusting the entropies |
-| P3 | Nothing above the hand-off limit ran; above it, a `select_aegiss` script with explained parameters was handed over |
+| P3 | Nothing that reaches the hand-off limit ran; for a handed-off production run, a `select_aegiss` script with explained parameters; for a handed-off cheap run, a script that saves the entropies |
 | P4 | For UHF: the spin-summed or spin-resolved choice is stated and justified |
 | C1 | All code the agent ran or handed over runs |
 | C2 | Orbital indices are reported in the user's index base, and the base is named |
@@ -39,7 +39,7 @@ Prompt:
 
 Facts: 6-31G(d); neutral singlet; canonical RHF orbitals; 0-based orbital indices; a 16-core workstation with 64 GB.
 Rubric: O1, P1, P2, P3, C1, C2.
-Acceptable active spaces [preprint §4.3, Table 5, SI E.2]: from canonical RHF, CAS(18,18) with relative τ_E 0.1 or CAS(10,10) with τ_E 0.9, both with `["C 2px", "B 2px"]` (the molecule lies in the yz plane) and contribution 0.5. If the agent moves to MP2 natural orbitals, CAS(18,18) or CAS(10,10) also pass. Reference window: CAS(40,40), `max_bond_dim` 500. A good run notices the Rydberg-like virtual orbitals among the first ten virtuals, and hands the user a script for the production DMRG (window ≥ 30 and `max_bond_dim` 500).
+Acceptable active spaces [preprint §4.3, Table 5, SI E.2]: from canonical RHF, CAS(18,18) with relative τ_E 0.1 or CAS(10,10) with τ_E 0.9, both with `["C 2px", "B 2px"]` (the molecule lies in the yz plane; the preprint's SI E.2 writes 2pz, Table 5 writes 2px) and contribution 0.5. If the agent also labels O 2px (parameters.md lists heteroatom labels), grade O1 on the C/B π orbitals inside its selection and note the O-dominated extras as over-inclusion, not a miss. If the agent moves to MP2 natural orbitals, CAS(18,18) or CAS(10,10) also pass. Reference window: CAS(40,40), `max_bond_dim` 500. A good run notices the Rydberg-like virtual orbitals among the first ten virtuals, and hands the user a script for the production DMRG (window ≥ 30 and `max_bond_dim` 500).
 
 ## S3 — Ferrocene (3d transition metal)
 
@@ -59,7 +59,7 @@ Prompt:
 
 Facts: charge +1, doublet (`spin=1`); cc-pVDZ; 0-based orbital indices; a 16-core workstation with 64 GB.
 Rubric: O1, P1, P2, P3, P4, C1, C2.
-Acceptable active spaces [Q23]: pending: the authors are asked for the acceptable active spaces per spin channel and for the spin-summed or spin-resolved choice. Until then grade every item except O1, and record O1 as `n/a (pending)`.
+Acceptable active spaces [Q23]: pending: the authors are asked for the acceptable active spaces per spin channel and for the spin-summed or spin-resolved choice. Until then grade every item except O1, and record O1 as `n/a (pending)`. The skill flags main-group radicals as exploratory; a passing run tells the user so.
 
 ## S5 — Pipeline integration
 

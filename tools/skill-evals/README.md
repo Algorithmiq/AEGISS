@@ -20,6 +20,7 @@ cd "$scratch"
 uv venv --python 3.12
 uv pip install "$repo"
 source .venv/bin/activate
+rm -r "$(aegiss skill path)"   # baseline runs only: no skill files in site-packages
 aegiss skill install          # with-skill runs only (pi, Codex, ...)
 # aegiss skill install --agent claude   # instead, for Claude Code
 ```
