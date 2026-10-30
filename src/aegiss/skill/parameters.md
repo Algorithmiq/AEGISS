@@ -35,7 +35,7 @@ another: thresholds are not transferable.
 
 | Run | `max_bond_dim` | Why |
 |---|---|---|
-| Cheap first look | 100. Trust the set of orbitals above τ_E only if a rerun at 200 gives the same set. | The ranking can be unreliable at low bond dimension; an unchanged set at 200 shows it has converged. |
+| Cheap first look | 200. Trust the set of orbitals above τ_E only if a rerun at 500 gives the same set; If 500 is not converged, check at `800`/`1000` (based on the DMRG expected cost); With a `ncas >= 50` the suggestion is to run the exploratory run at `500` and check with `800`/`1000` | The ranking can be unreliable at low bond dimension; an unchanged set at 500 shows it has converged.
 | Production | 500, a multiple of 4. The library ramps from `max_bond_dim`/2; the paper ramps from 100 to 500 (Trans-Cl: fixed 500). | Value used by every run of the paper. |
 | Checking convergence | Rerun at a higher `max_bond_dim` and stop when the set above τ_E is unchanged. | The library runs the whole ramp in one DMRG call and computes the entropies only from the final wavefunction, so there are no entropies partway through the ramp. |
 
@@ -59,7 +59,7 @@ another: thresholds are not transferable.
 | Extended ligand | One cluster per ring or fragment (TLD-1433). | Each ring or fragment then gets its own threshold or `top_n` (TLD-1433 uses 4 clusters). |
 | Cannot anticipate where the relevant orbitals are localised | Skip clustering: the labels apply to every atom of that element (the AVAS-like limit). | Without clusters the labels are not tied to a region of the molecule. |
 | Refining the labels | Go from coarse to fine and refine only when the selection is unbalanced. Relabelling does not need a new DMRG run, only the AO projection step. | The DMRG is the expensive part and does not depend on the labels. |
-| Choosing the molecular plane for `2pz` labels | Orient the molecule so the π orbitals are along z, or use the matching label (`2px` if the molecule lies in the yz plane, as DOBNA does). Use [MolTagger](https://algorithmiq.github.io/AEGISS/latest/moltagger/) to check. | A label on the wrong p orbital selects nothing useful. |
+| Choosing the molecular plane for `2pz` labels | Orient the molecule so the π orbitals are along z, or use the matching label (`2px` if the molecule lies in the yz plane, as DOBNA does). Use [MolTagger](https://algorithmiq.github.io/AEGISS/latest/moltagger/) to check. [MolTagger](https://algorithmiq.github.io/AEGISS/latest/moltagger/) can be used to identify the plane in which the selected atoms are placed. | A label on the wrong p orbital selects nothing useful. |
 | Bad clustering | Expect a less compact space, not a lost orbital. | Clustering never removes correlated orbitals from the entropy-screened pool. |
 
 ## AO projection
@@ -91,7 +91,7 @@ another: thresholds are not transferable.
 
 ## Stability check
 
-Rerun the selection with `fraction` 0.08, 0.10 and 0.12. The final active space should be identical;
+Rerun the `fraction_type=r` selection with `fraction` 0.08, 0.10 and 0.12. The final active space should be identical;
 the entropy-screened pool may shift by an orbital or two, because the AO projection absorbs that. If
 the final space changes, an orbital sits right at the threshold: inspect it (cube file, AO composition)
 and look for a plateau in the threshold plot, AutoCAS style. The paper does not test this check.
