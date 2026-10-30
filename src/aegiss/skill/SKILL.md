@@ -99,8 +99,8 @@ wrong labels.
 
 Window size and bond dimension: [parameters.md](parameters.md#dmrg-window) and
 [parameters.md](parameters.md#bond-dimension). If the cheap run itself reaches the
-[hand-off limit](parameters.md#hand-off-limit) (a window of 50 or more orbitals starts at the
-verification bond dimension), hand it off as in step 6.
+[hand-off limit](parameters.md#hand-off-limit) (parameters.md starts the exploratory run of the
+largest windows at the verification bond dimension), hand it off as in step 6.
 
 ```python notest
 import numpy as np
@@ -140,8 +140,10 @@ selection rests on an unverified cheap run, and put the verification in the step
 
 Done when: the entropies are saved, `margin` is at least the minimum in
 [parameters.md](parameters.md#dmrg-window), and the set above τ_E is unchanged at the
-verification bond dimension (or the verification is handed off). Otherwise widen the window
-or raise the bond dimension and rerun this step.
+verification bond dimension (or the verification is handed off) — or, if the cheap run itself
+reaches the hand-off limit, the user has a script for it (the step 6 template with the cheap
+bond dimension) and you stop here. Otherwise widen the window or raise the bond dimension and
+rerun this step.
 
 ### 5. Screen and project
 
