@@ -2,6 +2,64 @@
 
 All notable changes to this project are listed here.
 
+## 0.2.0 (2026-11-04)
+
+### Breaking changes
+
+- **entropy:** Rank single-orbital entropies over the whole window by default ([#112](https://github.com/Algorithmiq/AEGISS/pull/112))
+
+  Code that builds `EntropyConfig` without `ranking` now thresholds over
+  the whole window.
+  To keep the previous selection, pass `ranking="subset"`:
+
+  ```python
+  # before (implicit subset)
+  EntropyConfig(fraction=0.1, fraction_type="r")
+  # after, same selection as before
+  EntropyConfig(fraction=0.1, fraction_type="r", ranking="subset")
+  ```
+
+- **projection:** Reject AO labels that match no projection AO ([#113](https://github.com/Algorithmiq/AEGISS/pull/113))
+
+  A label that matches no AO used to give an empty selection and now
+  raises `ValueError`.
+  Fix the label using the shells listed in the message. For a 4d/5d metal,
+  either give the
+  molecule an ECP or project onto the molecular basis:
+
+  ```python notest
+  # before: silently empty when Ru has no ECP
+  ProjectionConfig(ao_labels=["Ru 4d"])
+  # after: give Ru an ECP when building the molecule (as in the paper) ...
+  mol = gto.M(atom=..., basis={"Ru": "cc-pvdz-pp", "default": "def2-svp"}, ecp={"Ru": "cc-pvdz-pp"})
+  # ... or project onto the molecular basis
+  ProjectionConfig(ao_labels=["Ru 4d"], basis=None)
+  ```
+
+- **projection:** Default select_by_ao_projection to a contribution of 0.5 ([#114](https://github.com/Algorithmiq/AEGISS/pull/114))
+
+  Calls to `select_by_ao_projection` without `contribution` (and without
+  `top_n`) now keep
+  only orbitals with a weight of at least 0.5. To keep every orbital, as
+  before, pass
+  `contribution=0.0`:
+
+  ```python notest
+  # before (implicit 0.0: every orbital kept)
+  select_by_ao_projection(mf, ao_labels=["C 2pz"])
+  # after, same result as before
+  select_by_ao_projection(mf, ao_labels=["C 2pz"], contribution=0.0)
+  ```
+
+### Fixes
+
+- **projection:** Warn when per-label thresholds do not match the labels ([#116](https://github.com/Algorithmiq/AEGISS/pull/116))
+
+### Documentation
+
+- **parameters:** How to choose the AEGISS parameters ([#117](https://github.com/Algorithmiq/AEGISS/pull/117))
+- **uhf:** Define the UHF active space as two independent lists ([#115](https://github.com/Algorithmiq/AEGISS/pull/115))
+
 ## 0.1.0 (2026-10-28)
 
 ### Features
