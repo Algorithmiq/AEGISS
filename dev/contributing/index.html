@@ -1734,8 +1734,10 @@ patch release. Check a release and its files with <code>gh release verify vX.Y.Z
 <h2 id="dependency-updates">Dependency updates</h2>
 <p>Dependabot opens weekly grouped updates for the Python dependencies and the GitHub
 Actions; ruff and ty are bumped monthly by <code>update-tools.yml</code>, together with their
-prek hooks. <code>block2</code> is never bumped automatically, since DMRG results depend on its
-version.</p>
+prek hooks. Their pull requests link the release notes and list what changed; when a hook
+fails with the new release, the pull request is a draft whose description lists the
+failing hooks with their output and links to the log of the run. <code>block2</code> is never bumped
+automatically, since DMRG results depend on its version.</p>
 
 
 
