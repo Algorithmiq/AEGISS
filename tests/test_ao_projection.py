@@ -16,20 +16,50 @@
 
 from __future__ import annotations
 
+import inspect
 from typing import ClassVar
 from unittest.mock import patch
 
 import numpy as np
 import pytest
+from pyscf import gto
 
 from aegiss.active_space.ao_projection import (
+    _check_ao_labels,
     _compute_contribution,
     _resolve_contribution,
     _resolve_top_n,
     select_by_ao_projection,
     select_by_label,
 )
+from aegiss.config_dataclasses import ProjectionConfig
 from aegiss.utils.plotting import plot_ao_contribution
+
+
+class TestCheckAoLabels:
+    @staticmethod
+    def _ru(*, ecp: bool) -> gto.Mole:
+        kwargs = {"ecp": {"Ru": "cc-pvdz-pp"}} if ecp else {}
+        return gto.M(atom="Ru 0 0 0", basis={"Ru": "cc-pvdz-pp"}, verbose=0, **kwargs)
+
+    def test_ru_4d_without_ecp_raises_with_available_shells(self) -> None:
+        # Without an ECP, PySCF numbers the valence-only minao shells of Ru from 1s.
+        with pytest.raises(ValueError, match=r"'Ru 4d'.*Ru 3d.*ECP"):
+            _check_ao_labels(self._ru(ecp=False), ["Ru 4d"], "minao")
+
+    def test_ru_4d_with_ecp_passes(self) -> None:
+        _check_ao_labels(self._ru(ecp=True), ["Ru 4d"], "minao")
+
+    def test_molecular_basis_passes(self) -> None:
+        _check_ao_labels(self._ru(ecp=False), ["Ru 4d"], None)
+
+    def test_group_with_one_match_warns(self, h2_rhf, caplog) -> None:
+        _check_ao_labels(h2_rhf.mol, [["H 1s", "H 3d"]], "minao")
+        assert "'H 3d'" in caplog.text
+
+    def test_select_by_ao_projection_raises(self, h2_rhf) -> None:
+        with pytest.raises(ValueError, match="matches no AO"):
+            select_by_ao_projection(h2_rhf, ao_labels=["H 2pz"])
 
 
 class TestComputeContributionValues:
@@ -265,6 +295,16 @@ class TestResolveContribution:
     def test_zero_threshold_broadcast(self) -> None:
         assert _resolve_contribution(0.0, 2) == [0.0, 0.0]
 
+    def test_list_wrong_length_warns(self, caplog) -> None:
+        _resolve_contribution([0.3, 0.6], 4)
+        assert [
+            r.levelname for r in caplog.records if "contribution values" in r.message
+        ] == ["WARNING"]
+
+    def test_single_value_list_broadcasts_without_warning(self, caplog) -> None:
+        assert _resolve_contribution([0.3], 3) == [0.3, 0.3, 0.3]
+        assert not [r for r in caplog.records if r.levelname == "WARNING"]
+
     def test_output_length_matches_n_labels(self) -> None:
         for n in (1, 2, 5):
             assert len(_resolve_contribution(0.5, n)) == n
@@ -300,6 +340,16 @@ class TestResolveTopN:
             assert len(_resolve_top_n(1, n)) == n
             assert len(_resolve_top_n([1, 2], n)) == n
 
+    def test_list_wrong_length_warns(self, caplog) -> None:
+        _resolve_top_n([3, 7], 4)
+        assert [r.levelname for r in caplog.records if "top-N values" in r.message] == [
+            "WARNING"
+        ]
+
+    def test_single_value_list_broadcasts_without_warning(self, caplog) -> None:
+        assert _resolve_top_n([2], 3) == [2, 2, 2]
+        assert not [r for r in caplog.records if r.levelname == "WARNING"]
+
     def test_output_values_are_ints(self) -> None:
         for v in _resolve_top_n(4, 3):
             assert isinstance(v, int)
@@ -309,6 +359,13 @@ class TestResolveTopN:
 
 
 class TestSelectByAoProjection:
+    def test_defaults_match_projection_config(self) -> None:
+        params = inspect.signature(select_by_ao_projection).parameters
+        config = ProjectionConfig(ao_labels=["C 2pz"])
+        assert params["contribution"].default == config.contribution
+        assert params["contribution_type"].default == config.contribution_type
+        assert params["projected_basis"].default == config.basis
+
     def test_returns_ndarray(self, h2_rhf) -> None:
         result = select_by_ao_projection(
             mf=h2_rhf,

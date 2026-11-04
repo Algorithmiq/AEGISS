@@ -53,7 +53,9 @@ class DMRGConfig:
         spin_soe ({'auto', 'summed', 'resolved'}, default 'auto'):
             Whether single-orbital entropies (and the selection built on them) are
             spin-summed or spin-resolved. ``'summed'`` uses the 4-state spatial
-            entropy and yields a single spatial active space. ``'resolved'`` uses the
+            entropy, so both spin channels share one entropy window; for a UHF
+            reference the AO projection still returns a split ``{'alpha', 'beta'}``
+            active space. ``'resolved'`` uses the
             per-spin-orbital entropies ``H(n_alpha)`` / ``H(n_beta)`` and screens the
             alpha and beta channels independently, yielding a split
             ``{'alpha', 'beta'}`` active space. ``'auto'`` picks ``'resolved'`` when
