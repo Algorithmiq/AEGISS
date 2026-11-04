@@ -84,6 +84,9 @@ The documentation sources live in [`docs/`](docs/index.md) and are built with Mk
   localization, DMRG and entropies, AO projection, the full pipeline, and UHF references.
 - [Orbital index base](docs/orbital_indexing.md) — printing and passing orbital indices
   0- or 1-based (`aegiss config set-base`, `AEGISS_ORB_BASE`).
+- [Coding agents](docs/installation.md#using-aegiss-with-coding-agents) — the AEGISS agent
+  skill (`aegiss skill install`).
+- [Choosing parameters](src/aegiss/skill/parameters.md) — how to choose the window, thresholds and labels.
 - [Unrestricted (UHF) references](docs/uhf.md) — spin-summed vs. spin-resolved entropies.
 - [MolTagger](docs/moltagger.md) — interactive atom tagging.
 - [API reference](docs/api/index.md) — generated from the docstrings.
