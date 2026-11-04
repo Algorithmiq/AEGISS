@@ -30,7 +30,7 @@ hooks = [
 
 [[repos]]
 repo = "https://github.com/astral-sh/ruff-pre-commit"
-rev = "v0.17.1"
+rev = "v0.17.3"
 hooks = [
     # Only the tutorial notebooks are exempt; docs/scripts/ is linted like any source.
     { id = "ruff-check", exclude = "^docs/tutorials/" },
