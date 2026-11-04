@@ -2347,8 +2347,10 @@ print({k: v.tolist() for k, v in active.items()})</div>
 <li>Selection functions return a split <code>{"alpha", "beta"}</code> dict instead of one
 array, and per-channel <code>contribution</code> / <code>restricted_space</code> dicts are available.</li>
 </ol>
-<p>The α and β spaces are returned unreconciled; how you combine them (union,
-intersection, or keep separate) is left to you. For the entropy theory and a
+<p>The α and β spaces are two independent index lists, never merged: an
+unrestricted CAS needs as many α as β orbitals, so check the two lengths
+before building it (see <a href="../uhf.md#the-uhf-active-space">The UHF active space</a>).
+For the entropy theory and a
 numerical validation against block2, see the <a href="../uhf.md">UHF reference page</a>.</p>
 </div>
 </div>
