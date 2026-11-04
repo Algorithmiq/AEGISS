@@ -153,7 +153,7 @@ class TestEntropyConfig:
         cfg = EntropyConfig()
         assert cfg.fraction == 0.1
         assert cfg.fraction_type == "r"
-        assert cfg.ranking == "subset"
+        assert cfg.ranking == "global"
 
     def test_relative_fraction_above_one_raises(self) -> None:
         with pytest.raises(ValueError, match="fraction"):
@@ -191,9 +191,9 @@ class TestEntropyConfig:
         with pytest.raises(ValueError, match="ranking"):
             EntropyConfig(ranking="")  # type: ignore[arg-type]
 
-    def test_global_ranking_valid(self) -> None:
-        cfg = EntropyConfig(ranking="global")
-        assert cfg.ranking == "global"
+    def test_subset_ranking_valid(self) -> None:
+        cfg = EntropyConfig(ranking="subset")
+        assert cfg.ranking == "subset"
 
 
 class TestProjectionConfig:

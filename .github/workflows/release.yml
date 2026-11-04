@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   release:
-    uses: Algorithmiq/release-tools/.github/workflows/release.yml@v1.1.0
+    uses: Algorithmiq/release-tools/.github/workflows/release.yml@v1.3.0
     with:
       client-id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
       bump: ${{ inputs.bump }}
