@@ -1670,6 +1670,9 @@ running the recipe it ran.</p>
 </li>
 <li>A bug fix that should also reach the current release gets the <code>backport</code> label, before
   or after merging. Features wait for the next minor release.</li>
+<li>PRs into <code>main</code> land through a merge queue: once approved and green, choose <em>Merge when
+  ready</em> (or <code>gh pr merge --squash --auto</code>). The queue tests each PR on top of <code>main</code> and
+  the PRs ahead of it, so there is no need to update the branch from <code>main</code> by hand.</li>
 <li>Fill in the PR template. Changes to the API or to user-facing behaviour come with
   tests and with the matching documentation update.</li>
 <li>A new or changed runtime dependency must pass the license policy in <code>.grant.yaml</code>,
