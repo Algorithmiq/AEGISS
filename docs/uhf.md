@@ -123,9 +123,9 @@ flagged by either measure.)
 
 ### Which to use
 
-- **Spin-summed** — closed-shell-like or weakly polarised targets, or whenever a
-  single spatial active space is the goal. This is the `"auto"` choice when
-  $n_\alpha = n_\beta$.
+- **Spin-summed** — closed-shell-like or weakly polarised targets, or whenever
+  both channels should be screened on one shared entropy window. This is the
+  `"auto"` choice when $n_\alpha = n_\beta$.
 - **Spin-resolved** — strongly spin-polarised / open-shell targets where the
   alpha and beta correlation patterns genuinely differ. This is the `"auto"`
   choice when $n_\alpha \neq n_\beta$ (and `symm_type="SZ"`).
@@ -143,11 +143,10 @@ component that `nalpha - nbeta` selects:
 - At the extremal $M_s$, the majority-spin closed / singly-occupied orbitals have
   integer occupation, so $H(n^\sigma) = 0$ there; the per-channel **split**
   reflects that sector's attribution (one channel can be frozen).
-- What is $M_s$-robust is the *set of spatial orbitals* carrying genuine
-  fractional-occupation correlation — i.e. the $\alpha \cup \beta$ **union**.
-  Since a UHF active space is ultimately a set of spatial indices, that union is
-  the physically meaningful object even though the split is kept for
-  transparency.
+- The alpha and beta selections are therefore specific to that $M_s$ sector.
+  They are not merged into a union: index $k$ is a different MO in each
+  channel, so the two lists stay independent (see
+  [The UHF active space](#the-uhf-active-space)).
 
 A **spatially** degenerate target (a bare atom — e.g. the $^3P$ ground state of
 oxygen is also orbitally three-fold degenerate) lets DMRG pick an arbitrary
@@ -233,6 +232,46 @@ active = select_aegiss(
     deliberately. When output is enabled, cube files and any per-channel plots
     are written with `_alpha` / `_beta` tags; the AO pie-contribution plot (which
     expects a single flat orbital list) is skipped for the split selection.
+
+## The UHF active space
+
+For a UHF reference the active space is **two independent lists** of MO
+indices, one per spin channel: `active["alpha"]` indexes the columns of
+`mf.mo_coeff[0]` and `active["beta"]` those of `mf.mo_coeff[1]`. The two lists
+are never merged into a union or an intersection, since the same index denotes
+different orbitals in the two channels.
+
+The lists must satisfy one condition: **the same number of alpha and beta
+orbitals**. An unrestricted CAS has a single number of active orbitals,
+`ncas`, shared by both channels. AEGISS selects each channel independently and
+does not enforce this, so check the two lengths and adjust the selection
+before building the CAS.
+
+The active electrons of each channel are the occupied orbitals in its list; the
+remaining occupied orbitals of that channel are its core. With equal lengths,
+the two lists define an unrestricted CAS in PySCF (indices are 0-based, hence
+`base=0`):
+
+```{.python notest}
+from pyscf import mcscf
+
+alpha, beta = active["alpha"], active["beta"]
+assert len(alpha) == len(beta), "an unrestricted CAS needs as many alpha as beta orbitals"
+
+nelecas = (int(mf.mo_occ[0][alpha].sum()), int(mf.mo_occ[1][beta].sum()))
+mc = mcscf.UCASCI(mf, len(alpha), nelecas)
+mo = mc.sort_mo((list(alpha), list(beta)), base=0)
+mc.kernel(mo)
+print(mc.fcisolver.spin_square(mc.ci, mc.ncas, mc.nelecas))  # (<S^2>, 2S+1)
+```
+
+Two consequences of different alpha and beta spaces:
+
+- The CAS wavefunction is in general not an eigenfunction of $S^2$; check
+  $\langle S^2 \rangle$ of the solution, as in the last line above.
+- The CAS needs unrestricted solvers: `UCASCI` / `UCASSCF` in PySCF, or an
+  unrestricted (`IUHF=1`) FCIDUMP for DMRG. PySCF's NEVPT2 does not accept an
+  unrestricted CAS.
 
 ## Validating the entropies against an exact reference
 
