@@ -30,15 +30,17 @@ class EntropyConfig:
         fraction_type ({'r', 'a'}, default 'r'):
             ``'r'``: keep orbitals whose S(1) >= ``fraction x max(S(1))``;
             ``'a'``: keep orbitals whose S(1) ≥ ``fraction`` (absolute).
-        ranking ({'subset', 'global'}, default 'subset'):
+        ranking ({'global', 'subset'}, default 'global'):
             How to rank orbitals for entropy screening.
-            ``'subset'`` applies the threshold independently to occupied and virtual subspaces;
-            ``'global'`` ranks all active orbitals together.
+            ``'global'`` ranks all active orbitals together, so a relative threshold is a
+            fraction of the largest S(1) in the whole window, as in the AEGISS paper;
+            ``'subset'`` applies the threshold independently to the occupied and virtual
+            subspaces, each normalised by its own maximum.
     """
 
     fraction: float = 0.1
     fraction_type: Literal["r", "a"] = "r"
-    ranking: Literal["subset", "global"] = "subset"
+    ranking: Literal["global", "subset"] = "global"
 
     def __post_init__(self) -> None:
         """Validate the configuration parameters.

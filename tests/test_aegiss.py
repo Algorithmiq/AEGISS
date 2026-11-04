@@ -41,6 +41,13 @@ _SPIN_SCREENED = {
 }
 
 
+@pytest.fixture(autouse=True)
+def _skip_label_check():
+    """The mocked ``mf`` has no real basis to check labels against."""
+    with patch(f"{_MODULE}._check_ao_labels"):
+        yield
+
+
 @pytest.fixture
 def mf_mock() -> MagicMock:
     mf = MagicMock()
@@ -584,6 +591,48 @@ class TestEntropyScreeningEarlyReturn:
         assert list(result) == [2]
 
 
+class TestDefaultEntropyRanking:
+    """The default relative threshold is a fraction of the largest S(1) in the window."""
+
+    def test_weak_virtual_dropped_by_default(
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        dmrg_config: DMRGConfig,
+        projection_config_subset: ProjectionConfig,
+    ) -> None:
+        # The virtual is at 5% of the window maximum: below the default 10% cut
+        # globally, but at 100% of its own subspace maximum.
+        with (
+            patch(
+                f"{_MODULE}.get_subspaces_from_cas",
+                return_value=(np.array([2, 3]), np.array([5])),
+            ),
+            patch(
+                "aegiss.active_space.aegiss.run_dmrg_subprocess",
+                return_value=(-75.0, np.array([1.0, 0.5, 0.05])),
+            ),
+            patch(
+                f"{_MODULE}.select_by_ao_projection",
+                return_value=np.array([2, 3]),
+            ) as mock_proj,
+            patch(f"{_MODULE}.save_orbitals"),
+            patch(f"{_MODULE}.save_orbitals_from_entropies"),
+        ):
+            result = select_aegiss(
+                mol_mock,
+                mf_mock,
+                dmrg_config=dmrg_config,
+                entropy_config=EntropyConfig(),
+                projection_config=projection_config_subset,
+                output_config=OutputConfig(save_orb=False),
+            )
+
+        mock_proj.assert_called_once()
+        assert mock_proj.call_args.kwargs["restricted_space"] == [(2, 1.0), (3, 0.5)]
+        assert list(result) == [2, 3]
+
+
 class TestSpinResolvedPipeline:
     """UHF + ``spin_soe='resolved'``: split alpha/beta pipeline, no reconciliation."""
 
@@ -669,3 +718,27 @@ class TestParameterValidation:
     def test_invalid_projection_ranking_raises(self) -> None:
         with pytest.raises(ValueError, match="ranking"):
             ProjectionConfig(ao_labels=["C 2pz"], ranking="bad")  # type: ignore[arg-type]
+
+    def test_unmatched_ao_label_raises_before_dmrg(
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        dmrg_config: DMRGConfig,
+        projection_config_subset: ProjectionConfig,
+    ) -> None:
+        with (
+            patch(
+                f"{_MODULE}._check_ao_labels", side_effect=ValueError("matches no AO")
+            ),
+            patch(f"{_MODULE}.run_dmrg_subprocess") as mock_dmrg,
+            pytest.raises(ValueError, match="matches no AO"),
+        ):
+            select_aegiss(
+                mol_mock,
+                mf_mock,
+                dmrg_config=dmrg_config,
+                entropy_config=EntropyConfig(),
+                projection_config=projection_config_subset,
+                output_config=OutputConfig(save_orb=False),
+            )
+        mock_dmrg.assert_not_called()
