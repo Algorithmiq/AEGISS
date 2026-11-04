@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import inspect
 from typing import ClassVar
 from unittest.mock import patch
 
@@ -31,6 +32,7 @@ from aegiss.active_space.ao_projection import (
     select_by_ao_projection,
     select_by_label,
 )
+from aegiss.config_dataclasses import ProjectionConfig
 from aegiss.utils.plotting import plot_ao_contribution
 
 
@@ -337,6 +339,13 @@ class TestResolveTopN:
 
 
 class TestSelectByAoProjection:
+    def test_defaults_match_projection_config(self) -> None:
+        params = inspect.signature(select_by_ao_projection).parameters
+        config = ProjectionConfig(ao_labels=["C 2pz"])
+        assert params["contribution"].default == config.contribution
+        assert params["contribution_type"].default == config.contribution_type
+        assert params["projected_basis"].default == config.basis
+
     def test_returns_ndarray(self, h2_rhf) -> None:
         result = select_by_ao_projection(
             mf=h2_rhf,

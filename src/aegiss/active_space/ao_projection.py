@@ -493,7 +493,7 @@ def select_by_ao_projection(
     ao_labels: list[str | list[str]],
     projected_basis: str | None = "minao",
     contribution_type: Literal["r", "a"] = "a",
-    contribution: float | list[float] | dict[str, float | list[float]] = 0.0,
+    contribution: float | list[float] | dict[str, float | list[float]] = 0.5,
     top_n: int | list[int] | None = None,
     restricted_space: _RestrictedSpace = None,
     save_path: str | None = None,
@@ -508,7 +508,7 @@ def select_by_ao_projection(
     ao_labels: list[str | list[str]],
     projected_basis: str | None = "minao",
     contribution_type: Literal["r", "a"] = "a",
-    contribution: float | list[float] | dict[str, float | list[float]] = 0.0,
+    contribution: float | list[float] | dict[str, float | list[float]] = 0.5,
     top_n: int | list[int] | None = None,
     restricted_space: _RestrictedSpace = None,
     save_path: str | None = None,
@@ -525,7 +525,7 @@ def select_by_ao_projection(
     ao_labels: list[str | list[str]],
     projected_basis: str | None = "minao",
     contribution_type: Literal["r", "a"] = "a",
-    contribution: float | list[float] | dict[str, float | list[float]] = 0.0,
+    contribution: float | list[float] | dict[str, float | list[float]] = 0.5,
     top_n: int | list[int] | None = None,
     restricted_space: _RestrictedSpace = None,
     save_path: str | None = None,
@@ -552,7 +552,7 @@ def select_by_ao_projection(
             chemically relevant orbitals and reduces noise from diffuse functions.
         contribution_type ({'r', 'a'}, default 'a'): Relative (``'r'``, each group's weights divided
             by their maximum over the search space) or absolute (``'a'``) contribution.
-        contribution (float, list of float, or dict, default 0.0): Threshold for
+        contribution (float, list of float, or dict, default 0.5): Threshold for
             selecting orbitals based on their contribution.
             A single float applies to all AO groups; a list specifies per-group
             thresholds and should match the length of *ao_labels*; on a length
