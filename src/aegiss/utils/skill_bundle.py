@@ -27,7 +27,7 @@ import re
 import shutil
 from importlib import resources
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from aegiss._version import __version__
 
@@ -36,9 +36,11 @@ if TYPE_CHECKING:
 
 SKILL_NAME = "aegiss"
 DOCS_URL = "https://algorithmiq.github.io/AEGISS/"
-# Project-relative skills folder per agent family: pi, Codex and other agents read the
+# Agent families with their own skills folder: pi, Codex and other agents read the
 # cross-agent `.agents/skills`; Claude Code reads only its own folder.
-AGENT_DIRS: dict[str, Path] = {
+Agent = Literal["agents", "claude"]
+# Project-relative skills folder per agent family.
+AGENT_DIRS: dict[Agent, Path] = {
     "agents": Path(".agents") / "skills",
     "claude": Path(".claude") / "skills",
 }
@@ -101,12 +103,12 @@ def stamp_version(skill_md: str, version: str) -> str:
 
 
 def skills_root(
-    agent: str = "agents", *, user: bool = False, cwd: Path | None = None
+    agent: Agent = "agents", *, user: bool = False, cwd: Path | None = None
 ) -> Path:
     """Return the skills folder an agent family reads.
 
     Args:
-        agent: Key of ``AGENT_DIRS``.
+        agent: Agent family, a key of ``AGENT_DIRS``.
         user: Use the folder in the home directory instead of the project one.
         cwd: Project directory; the current directory when ``None``.
 

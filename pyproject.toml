@@ -30,6 +30,7 @@ classifiers = [
 ]
 dependencies = [
     "block2==0.5.4",
+    "cyclopts>=5",
     "matplotlib>=3.9",
     "pyscf>=2.12.1",
     "seaborn>=0.13",

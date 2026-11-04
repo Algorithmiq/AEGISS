@@ -32,17 +32,18 @@ variable, which takes precedence over the file.
 
 from __future__ import annotations
 
-import argparse
 import sys
 import tomllib
-from pathlib import Path
+from pathlib import Path  # noqa: TC003 (cyclopts resolves the annotations at runtime)
 from typing import TYPE_CHECKING
+
+from cyclopts import App
 
 from aegiss._version import __version__
 from aegiss.utils import skill_bundle
 from aegiss.utils.orb_display import (
     ORB_BASE_ENV_VAR,
-    VALID_BASES,
+    OrbitalBase,
     config_path,
     orbital_base,
     reset_cache,
@@ -50,6 +51,12 @@ from aegiss.utils.orb_display import (
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+app = App(name="aegiss", help="AEGISS command-line tools.")
+config_app = App(name="config", help="Inspect or change persisted settings.")
+app.command(config_app)
+skill_app = App(name="skill", help="Install the AEGISS agent skill.")
+app.command(skill_app)
 
 
 def _load_config() -> dict[str, object]:
@@ -90,39 +97,67 @@ def _write_config(data: dict[str, object]) -> None:
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def _set_base(base: int) -> int:
-    """Persist the orbital display *base*; return a process exit code."""
+@config_app.command(
+    name="set-base",
+    help=(
+        "Persist the base used when orbital indices are printed and "
+        f"interpreted. Overridable per run via ${ORB_BASE_ENV_VAR}."
+    ),
+)
+def _set_base(base: OrbitalBase, /) -> None:
+    """Persist the orbital display base.
+
+    Args:
+        base: Index of the first orbital.
+    """
     config = _load_config()
     config["orbital_base"] = base
     _write_config(config)
     reset_cache()
     print(f"Set orbital display base to {base} in {config_path()}.")
-    return 0
 
 
-def _get_base() -> int:
-    """Print the currently resolved orbital display base; return exit code."""
+@config_app.command(name="get-base")
+def _get_base() -> None:
+    """Show the currently resolved base."""
     reset_cache()
     print(orbital_base())
-    return 0
 
 
-def _print_path() -> int:
-    """Print the config-file path; return exit code."""
+@config_app.command(name="path")
+def _print_path() -> None:
+    """Show the config-file location."""
     print(config_path())
-    return 0
 
 
-def _skill_path() -> int:
-    """Print where the bundled skill lives; return exit code."""
+# The skill functions are called through the module so tests can swap the bundled skill.
+@skill_app.command(name="path")
+def _skill_path() -> None:
+    """Show where the bundled skill lives."""
     print(skill_bundle.bundled_skill_dir())
-    return 0
 
 
+@skill_app.command(name="install")
 def _skill_install(
-    directory: Path | None, agent: str, *, user: bool, force: bool
+    directory: Path | None = None,
+    /,
+    *,
+    agent: skill_bundle.Agent = "agents",
+    user: bool = False,
+    force: bool = False,
 ) -> int:
-    """Install the bundled skill; return exit code."""
+    """Copy the skill into an agent's skills folder, with docs links for this AEGISS version.
+
+    Args:
+        directory: Skills folder to install into; overrides ``--agent`` and ``--user``.
+        agent: Agent family: ``agents`` (.agents/skills: pi, Codex, ...) or ``claude``
+            (.claude/skills).
+        user: Install in the home directory instead of the current project.
+        force: Replace an installed copy.
+
+    Returns:
+        Process exit code: 1 when the skill is already installed and ``--force`` is not set.
+    """
     skills_dir = directory or skill_bundle.skills_root(agent, user=user)
     try:
         target = skill_bundle.install_skill(skills_dir, force=force)
@@ -136,84 +171,18 @@ def _skill_install(
     return 0
 
 
-def build_parser() -> argparse.ArgumentParser:
-    """Construct the ``aegiss`` argument parser."""
-    parser = argparse.ArgumentParser(
-        prog="aegiss", description="AEGISS command-line tools."
-    )
-    sub = parser.add_subparsers(dest="command", required=True)
-
-    config = sub.add_parser("config", help="Inspect or change persisted settings.")
-    config_sub = config.add_subparsers(dest="config_command", required=True)
-
-    set_base = config_sub.add_parser(
-        "set-base",
-        help=(
-            "Persist the base used when orbital indices are printed and "
-            f"interpreted. Overridable per run via ${ORB_BASE_ENV_VAR}."
-        ),
-    )
-    set_base.add_argument("base", type=int, choices=VALID_BASES)
-
-    config_sub.add_parser("get-base", help="Show the currently resolved base.")
-    config_sub.add_parser("path", help="Show the config-file location.")
-
-    skill = sub.add_parser("skill", help="Install the AEGISS agent skill.")
-    skill_sub = skill.add_subparsers(dest="skill_command", required=True)
-    skill_sub.add_parser("path", help="Show where the bundled skill lives.")
-    install = skill_sub.add_parser(
-        "install",
-        help=(
-            "Copy the skill into an agent's skills folder, with docs links for "
-            "this AEGISS version."
-        ),
-    )
-    install.add_argument(
-        "directory",
-        nargs="?",
-        type=Path,
-        help="Skills folder to install into; overrides --agent and --user.",
-    )
-    install.add_argument(
-        "--agent",
-        choices=sorted(skill_bundle.AGENT_DIRS),
-        default="agents",
-        help="'agents' (.agents/skills: pi, Codex, ...) or 'claude' (.claude/skills).",
-    )
-    install.add_argument(
-        "--user", action="store_true", help="Install in the home directory."
-    )
-    install.add_argument(
-        "--force", action="store_true", help="Replace an installed copy."
-    )
-    return parser
-
-
 def main(argv: Sequence[str] | None = None) -> int:
     """Entry point for the ``aegiss`` console script.
 
+    Invalid arguments print an error and raise ``SystemExit``.
+
     Args:
-        argv (Sequence[str] or None): Argument vector; defaults to ``sys.argv``.
+        argv: Argument vector; defaults to ``sys.argv[1:]``.
 
     Returns:
-        int: Process exit code.
+        Process exit code.
     """
-    args = build_parser().parse_args(argv)
-    if args.command == "config":
-        if args.config_command == "set-base":
-            return _set_base(args.base)
-        if args.config_command == "get-base":
-            return _get_base()
-        if args.config_command == "path":
-            return _print_path()
-    if args.command == "skill":
-        if args.skill_command == "path":
-            return _skill_path()
-        if args.skill_command == "install":
-            return _skill_install(
-                args.directory, args.agent, user=args.user, force=args.force
-            )
-    return 1
+    return app(argv, result_action="return_int_as_exit_code_else_zero")
 
 
 if __name__ == "__main__":
