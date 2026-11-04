@@ -1704,6 +1704,30 @@ When no orbital passes the entropy screening, an empty flat
     </table>
 
 
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError">ValueError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If an entry of <code>projection_config.ao_labels</code> matches no AO
+of the projection basis. This is checked before the DMRG run.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/aegiss/active_space/aegiss.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-355">355</a></span>
@@ -1797,7 +1821,12 @@ When no orbital passes the entropy screening, an empty flat
 <span class="normal"><a href="#__codelineno-0-443">443</a></span>
 <span class="normal"><a href="#__codelineno-0-444">444</a></span>
 <span class="normal"><a href="#__codelineno-0-445">445</a></span>
-<span class="normal"><a href="#__codelineno-0-446">446</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-355" name="__codelineno-0-355"></a><span class="k">def</span><span class="w"> </span><span class="nf">select_aegiss</span><span class="p">(</span>
+<span class="normal"><a href="#__codelineno-0-446">446</a></span>
+<span class="normal"><a href="#__codelineno-0-447">447</a></span>
+<span class="normal"><a href="#__codelineno-0-448">448</a></span>
+<span class="normal"><a href="#__codelineno-0-449">449</a></span>
+<span class="normal"><a href="#__codelineno-0-450">450</a></span>
+<span class="normal"><a href="#__codelineno-0-451">451</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-355" name="__codelineno-0-355"></a><span class="k">def</span><span class="w"> </span><span class="nf">select_aegiss</span><span class="p">(</span>
 <a id="__codelineno-0-356" name="__codelineno-0-356"></a>    <span class="n">mol</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <a id="__codelineno-0-357" name="__codelineno-0-357"></a>    <span class="n">mf</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <a id="__codelineno-0-358" name="__codelineno-0-358"></a>    <span class="n">dmrg_config</span><span class="p">:</span> <span class="n">DMRGConfig</span><span class="p">,</span>
@@ -1836,59 +1865,64 @@ When no orbital passes the entropy screening, an empty flat
 <a id="__codelineno-0-391" name="__codelineno-0-391"></a><span class="sd">            mapping (kept separate, not reconciled) for an unrestricted one.</span>
 <a id="__codelineno-0-392" name="__codelineno-0-392"></a><span class="sd">            When no orbital passes the entropy screening, an empty flat</span>
 <a id="__codelineno-0-393" name="__codelineno-0-393"></a><span class="sd">            ``np.ndarray`` is returned, also for an unrestricted reference.</span>
-<a id="__codelineno-0-394" name="__codelineno-0-394"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-395" name="__codelineno-0-395"></a>    <span class="n">active_orbs</span><span class="p">,</span> <span class="n">virt_orbs</span> <span class="o">=</span> <span class="n">get_subspaces_from_cas</span><span class="p">(</span>
-<a id="__codelineno-0-396" name="__codelineno-0-396"></a>        <span class="n">mf</span><span class="p">,</span> <span class="n">ncas</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">ncas</span><span class="p">,</span> <span class="n">nelecas</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">nelecas</span>
-<a id="__codelineno-0-397" name="__codelineno-0-397"></a>    <span class="p">)</span>
-<a id="__codelineno-0-398" name="__codelineno-0-398"></a>    <span class="n">spin_resolved</span> <span class="o">=</span> <span class="n">dmrg_config</span><span class="o">.</span><span class="n">spin_resolved</span><span class="p">()</span>
-<a id="__codelineno-0-399" name="__codelineno-0-399"></a>    <span class="n">_energy</span><span class="p">,</span> <span class="n">soe1</span> <span class="o">=</span> <span class="n">run_dmrg_subprocess</span><span class="p">(</span>
-<a id="__codelineno-0-400" name="__codelineno-0-400"></a>        <span class="n">mf</span><span class="p">,</span>
-<a id="__codelineno-0-401" name="__codelineno-0-401"></a>        <span class="n">ncas</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">ncas</span><span class="p">,</span>
-<a id="__codelineno-0-402" name="__codelineno-0-402"></a>        <span class="n">nelecas</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">nelecas</span><span class="p">,</span>
-<a id="__codelineno-0-403" name="__codelineno-0-403"></a>        <span class="n">symm_type</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">symm_type</span><span class="p">,</span>
-<a id="__codelineno-0-404" name="__codelineno-0-404"></a>        <span class="n">max_bond_dim</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">max_bond_dim</span><span class="p">,</span>
-<a id="__codelineno-0-405" name="__codelineno-0-405"></a>        <span class="n">verbosity</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">verbosity</span><span class="p">,</span>
-<a id="__codelineno-0-406" name="__codelineno-0-406"></a>        <span class="n">unrestricted</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">unrestricted</span><span class="p">,</span>
-<a id="__codelineno-0-407" name="__codelineno-0-407"></a>        <span class="n">reorder</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">reorder</span><span class="p">,</span>
-<a id="__codelineno-0-408" name="__codelineno-0-408"></a>        <span class="n">spin_resolved</span><span class="o">=</span><span class="n">spin_resolved</span><span class="p">,</span>
-<a id="__codelineno-0-409" name="__codelineno-0-409"></a>    <span class="p">)</span>
-<a id="__codelineno-0-410" name="__codelineno-0-410"></a>    <span class="n">_maybe_plot_soe</span><span class="p">(</span><span class="n">output_config</span><span class="p">,</span> <span class="n">active_orbs</span><span class="p">,</span> <span class="n">virt_orbs</span><span class="p">,</span> <span class="n">soe1</span><span class="p">)</span>
-<a id="__codelineno-0-411" name="__codelineno-0-411"></a>
-<a id="__codelineno-0-412" name="__codelineno-0-412"></a>    <span class="n">screened</span> <span class="o">=</span> <span class="n">_screen_by_entropy</span><span class="p">(</span>
-<a id="__codelineno-0-413" name="__codelineno-0-413"></a>        <span class="n">entropy_config</span><span class="p">,</span>
-<a id="__codelineno-0-414" name="__codelineno-0-414"></a>        <span class="n">active_orbs</span><span class="p">,</span>
-<a id="__codelineno-0-415" name="__codelineno-0-415"></a>        <span class="n">virt_orbs</span><span class="p">,</span>
-<a id="__codelineno-0-416" name="__codelineno-0-416"></a>        <span class="n">soe1</span><span class="p">,</span>
-<a id="__codelineno-0-417" name="__codelineno-0-417"></a>        <span class="n">spin_resolved</span><span class="o">=</span><span class="n">spin_resolved</span><span class="p">,</span>
-<a id="__codelineno-0-418" name="__codelineno-0-418"></a>    <span class="p">)</span>
-<a id="__codelineno-0-419" name="__codelineno-0-419"></a>    <span class="k">if</span> <span class="n">_screening_empty</span><span class="p">(</span><span class="n">screened</span><span class="p">):</span>
-<a id="__codelineno-0-420" name="__codelineno-0-420"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-<a id="__codelineno-0-421" name="__codelineno-0-421"></a>            <span class="s2">&quot;No orbitals passed the entropy screening step. Consider adjusting the &quot;</span>
-<a id="__codelineno-0-422" name="__codelineno-0-422"></a>            <span class="s2">&quot;EntropyConfig.fraction or using &#39;global&#39; ranking for a more inclusive selection.&quot;</span>
-<a id="__codelineno-0-423" name="__codelineno-0-423"></a>        <span class="p">)</span>
-<a id="__codelineno-0-424" name="__codelineno-0-424"></a>        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-<a id="__codelineno-0-425" name="__codelineno-0-425"></a>
-<a id="__codelineno-0-426" name="__codelineno-0-426"></a>    <span class="k">if</span> <span class="n">output_config</span><span class="o">.</span><span class="n">save_orb</span><span class="p">:</span>
-<a id="__codelineno-0-427" name="__codelineno-0-427"></a>        <span class="n">_save_entropy_orbitals</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">mf</span><span class="p">,</span> <span class="n">screened</span><span class="p">,</span> <span class="n">output_config</span><span class="p">)</span>
-<a id="__codelineno-0-428" name="__codelineno-0-428"></a>
-<a id="__codelineno-0-429" name="__codelineno-0-429"></a>    <span class="n">base_path</span> <span class="o">=</span> <span class="p">(</span>
-<a id="__codelineno-0-430" name="__codelineno-0-430"></a>        <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">output_config</span><span class="o">.</span><span class="n">saving_folder</span><span class="p">)</span> <span class="o">/</span> <span class="n">output_config</span><span class="o">.</span><span class="n">saving_prefix</span><span class="p">)</span>
-<a id="__codelineno-0-431" name="__codelineno-0-431"></a>        <span class="k">if</span> <span class="n">output_config</span><span class="o">.</span><span class="n">save_plots</span>
-<a id="__codelineno-0-432" name="__codelineno-0-432"></a>        <span class="k">else</span> <span class="kc">None</span>
-<a id="__codelineno-0-433" name="__codelineno-0-433"></a>    <span class="p">)</span>
-<a id="__codelineno-0-434" name="__codelineno-0-434"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-<a id="__codelineno-0-435" name="__codelineno-0-435"></a>        <span class="s2">&quot;Ranking orbitals for AO projection based on </span><span class="si">%s</span><span class="s2"> contribution.&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-436" name="__codelineno-0-436"></a>        <span class="n">projection_config</span><span class="o">.</span><span class="n">ranking</span><span class="p">,</span>
-<a id="__codelineno-0-437" name="__codelineno-0-437"></a>    <span class="p">)</span>
-<a id="__codelineno-0-438" name="__codelineno-0-438"></a>    <span class="n">passes</span> <span class="o">=</span> <span class="n">_ao_projection_passes</span><span class="p">(</span><span class="n">screened</span><span class="p">,</span> <span class="n">projection_config</span><span class="o">.</span><span class="n">ranking</span><span class="p">)</span>
-<a id="__codelineno-0-439" name="__codelineno-0-439"></a>    <span class="n">active_indices</span> <span class="o">=</span> <span class="n">_collect_active_indices</span><span class="p">(</span><span class="n">mf</span><span class="p">,</span> <span class="n">projection_config</span><span class="p">,</span> <span class="n">passes</span><span class="p">,</span> <span class="n">base_path</span><span class="p">)</span>
-<a id="__codelineno-0-440" name="__codelineno-0-440"></a>
-<a id="__codelineno-0-441" name="__codelineno-0-441"></a>    <span class="k">if</span> <span class="n">output_config</span><span class="o">.</span><span class="n">save_orb</span><span class="p">:</span>
-<a id="__codelineno-0-442" name="__codelineno-0-442"></a>        <span class="n">_save_active_orbitals</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">mf</span><span class="p">,</span> <span class="n">active_indices</span><span class="p">,</span> <span class="n">output_config</span><span class="p">)</span>
-<a id="__codelineno-0-443" name="__codelineno-0-443"></a>    <span class="k">if</span> <span class="n">output_config</span><span class="o">.</span><span class="n">save_plots</span><span class="p">:</span>
-<a id="__codelineno-0-444" name="__codelineno-0-444"></a>        <span class="n">_plot_active</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">mf</span><span class="p">,</span> <span class="n">active_indices</span><span class="p">,</span> <span class="n">projection_config</span><span class="p">,</span> <span class="n">output_config</span><span class="p">)</span>
+<a id="__codelineno-0-394" name="__codelineno-0-394"></a>
+<a id="__codelineno-0-395" name="__codelineno-0-395"></a><span class="sd">    Raises:</span>
+<a id="__codelineno-0-396" name="__codelineno-0-396"></a><span class="sd">        ValueError: If an entry of ``projection_config.ao_labels`` matches no AO</span>
+<a id="__codelineno-0-397" name="__codelineno-0-397"></a><span class="sd">            of the projection basis. This is checked before the DMRG run.</span>
+<a id="__codelineno-0-398" name="__codelineno-0-398"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-399" name="__codelineno-0-399"></a>    <span class="n">_check_ao_labels</span><span class="p">(</span><span class="n">mf</span><span class="o">.</span><span class="n">mol</span><span class="p">,</span> <span class="n">projection_config</span><span class="o">.</span><span class="n">ao_labels</span><span class="p">,</span> <span class="n">projection_config</span><span class="o">.</span><span class="n">basis</span><span class="p">)</span>
+<a id="__codelineno-0-400" name="__codelineno-0-400"></a>    <span class="n">active_orbs</span><span class="p">,</span> <span class="n">virt_orbs</span> <span class="o">=</span> <span class="n">get_subspaces_from_cas</span><span class="p">(</span>
+<a id="__codelineno-0-401" name="__codelineno-0-401"></a>        <span class="n">mf</span><span class="p">,</span> <span class="n">ncas</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">ncas</span><span class="p">,</span> <span class="n">nelecas</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">nelecas</span>
+<a id="__codelineno-0-402" name="__codelineno-0-402"></a>    <span class="p">)</span>
+<a id="__codelineno-0-403" name="__codelineno-0-403"></a>    <span class="n">spin_resolved</span> <span class="o">=</span> <span class="n">dmrg_config</span><span class="o">.</span><span class="n">spin_resolved</span><span class="p">()</span>
+<a id="__codelineno-0-404" name="__codelineno-0-404"></a>    <span class="n">_energy</span><span class="p">,</span> <span class="n">soe1</span> <span class="o">=</span> <span class="n">run_dmrg_subprocess</span><span class="p">(</span>
+<a id="__codelineno-0-405" name="__codelineno-0-405"></a>        <span class="n">mf</span><span class="p">,</span>
+<a id="__codelineno-0-406" name="__codelineno-0-406"></a>        <span class="n">ncas</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">ncas</span><span class="p">,</span>
+<a id="__codelineno-0-407" name="__codelineno-0-407"></a>        <span class="n">nelecas</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">nelecas</span><span class="p">,</span>
+<a id="__codelineno-0-408" name="__codelineno-0-408"></a>        <span class="n">symm_type</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">symm_type</span><span class="p">,</span>
+<a id="__codelineno-0-409" name="__codelineno-0-409"></a>        <span class="n">max_bond_dim</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">max_bond_dim</span><span class="p">,</span>
+<a id="__codelineno-0-410" name="__codelineno-0-410"></a>        <span class="n">verbosity</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">verbosity</span><span class="p">,</span>
+<a id="__codelineno-0-411" name="__codelineno-0-411"></a>        <span class="n">unrestricted</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">unrestricted</span><span class="p">,</span>
+<a id="__codelineno-0-412" name="__codelineno-0-412"></a>        <span class="n">reorder</span><span class="o">=</span><span class="n">dmrg_config</span><span class="o">.</span><span class="n">reorder</span><span class="p">,</span>
+<a id="__codelineno-0-413" name="__codelineno-0-413"></a>        <span class="n">spin_resolved</span><span class="o">=</span><span class="n">spin_resolved</span><span class="p">,</span>
+<a id="__codelineno-0-414" name="__codelineno-0-414"></a>    <span class="p">)</span>
+<a id="__codelineno-0-415" name="__codelineno-0-415"></a>    <span class="n">_maybe_plot_soe</span><span class="p">(</span><span class="n">output_config</span><span class="p">,</span> <span class="n">active_orbs</span><span class="p">,</span> <span class="n">virt_orbs</span><span class="p">,</span> <span class="n">soe1</span><span class="p">)</span>
+<a id="__codelineno-0-416" name="__codelineno-0-416"></a>
+<a id="__codelineno-0-417" name="__codelineno-0-417"></a>    <span class="n">screened</span> <span class="o">=</span> <span class="n">_screen_by_entropy</span><span class="p">(</span>
+<a id="__codelineno-0-418" name="__codelineno-0-418"></a>        <span class="n">entropy_config</span><span class="p">,</span>
+<a id="__codelineno-0-419" name="__codelineno-0-419"></a>        <span class="n">active_orbs</span><span class="p">,</span>
+<a id="__codelineno-0-420" name="__codelineno-0-420"></a>        <span class="n">virt_orbs</span><span class="p">,</span>
+<a id="__codelineno-0-421" name="__codelineno-0-421"></a>        <span class="n">soe1</span><span class="p">,</span>
+<a id="__codelineno-0-422" name="__codelineno-0-422"></a>        <span class="n">spin_resolved</span><span class="o">=</span><span class="n">spin_resolved</span><span class="p">,</span>
+<a id="__codelineno-0-423" name="__codelineno-0-423"></a>    <span class="p">)</span>
+<a id="__codelineno-0-424" name="__codelineno-0-424"></a>    <span class="k">if</span> <span class="n">_screening_empty</span><span class="p">(</span><span class="n">screened</span><span class="p">):</span>
+<a id="__codelineno-0-425" name="__codelineno-0-425"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+<a id="__codelineno-0-426" name="__codelineno-0-426"></a>            <span class="s2">&quot;No orbitals passed the entropy screening step. Consider adjusting the &quot;</span>
+<a id="__codelineno-0-427" name="__codelineno-0-427"></a>            <span class="s2">&quot;EntropyConfig.fraction or using &#39;global&#39; ranking for a more inclusive selection.&quot;</span>
+<a id="__codelineno-0-428" name="__codelineno-0-428"></a>        <span class="p">)</span>
+<a id="__codelineno-0-429" name="__codelineno-0-429"></a>        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+<a id="__codelineno-0-430" name="__codelineno-0-430"></a>
+<a id="__codelineno-0-431" name="__codelineno-0-431"></a>    <span class="k">if</span> <span class="n">output_config</span><span class="o">.</span><span class="n">save_orb</span><span class="p">:</span>
+<a id="__codelineno-0-432" name="__codelineno-0-432"></a>        <span class="n">_save_entropy_orbitals</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">mf</span><span class="p">,</span> <span class="n">screened</span><span class="p">,</span> <span class="n">output_config</span><span class="p">)</span>
+<a id="__codelineno-0-433" name="__codelineno-0-433"></a>
+<a id="__codelineno-0-434" name="__codelineno-0-434"></a>    <span class="n">base_path</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-0-435" name="__codelineno-0-435"></a>        <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">output_config</span><span class="o">.</span><span class="n">saving_folder</span><span class="p">)</span> <span class="o">/</span> <span class="n">output_config</span><span class="o">.</span><span class="n">saving_prefix</span><span class="p">)</span>
+<a id="__codelineno-0-436" name="__codelineno-0-436"></a>        <span class="k">if</span> <span class="n">output_config</span><span class="o">.</span><span class="n">save_plots</span>
+<a id="__codelineno-0-437" name="__codelineno-0-437"></a>        <span class="k">else</span> <span class="kc">None</span>
+<a id="__codelineno-0-438" name="__codelineno-0-438"></a>    <span class="p">)</span>
+<a id="__codelineno-0-439" name="__codelineno-0-439"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+<a id="__codelineno-0-440" name="__codelineno-0-440"></a>        <span class="s2">&quot;Ranking orbitals for AO projection based on </span><span class="si">%s</span><span class="s2"> contribution.&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-441" name="__codelineno-0-441"></a>        <span class="n">projection_config</span><span class="o">.</span><span class="n">ranking</span><span class="p">,</span>
+<a id="__codelineno-0-442" name="__codelineno-0-442"></a>    <span class="p">)</span>
+<a id="__codelineno-0-443" name="__codelineno-0-443"></a>    <span class="n">passes</span> <span class="o">=</span> <span class="n">_ao_projection_passes</span><span class="p">(</span><span class="n">screened</span><span class="p">,</span> <span class="n">projection_config</span><span class="o">.</span><span class="n">ranking</span><span class="p">)</span>
+<a id="__codelineno-0-444" name="__codelineno-0-444"></a>    <span class="n">active_indices</span> <span class="o">=</span> <span class="n">_collect_active_indices</span><span class="p">(</span><span class="n">mf</span><span class="p">,</span> <span class="n">projection_config</span><span class="p">,</span> <span class="n">passes</span><span class="p">,</span> <span class="n">base_path</span><span class="p">)</span>
 <a id="__codelineno-0-445" name="__codelineno-0-445"></a>
-<a id="__codelineno-0-446" name="__codelineno-0-446"></a>    <span class="k">return</span> <span class="n">active_indices</span>
+<a id="__codelineno-0-446" name="__codelineno-0-446"></a>    <span class="k">if</span> <span class="n">output_config</span><span class="o">.</span><span class="n">save_orb</span><span class="p">:</span>
+<a id="__codelineno-0-447" name="__codelineno-0-447"></a>        <span class="n">_save_active_orbitals</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">mf</span><span class="p">,</span> <span class="n">active_indices</span><span class="p">,</span> <span class="n">output_config</span><span class="p">)</span>
+<a id="__codelineno-0-448" name="__codelineno-0-448"></a>    <span class="k">if</span> <span class="n">output_config</span><span class="o">.</span><span class="n">save_plots</span><span class="p">:</span>
+<a id="__codelineno-0-449" name="__codelineno-0-449"></a>        <span class="n">_plot_active</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">mf</span><span class="p">,</span> <span class="n">active_indices</span><span class="p">,</span> <span class="n">projection_config</span><span class="p">,</span> <span class="n">output_config</span><span class="p">)</span>
+<a id="__codelineno-0-450" name="__codelineno-0-450"></a>
+<a id="__codelineno-0-451" name="__codelineno-0-451"></a>    <span class="k">return</span> <span class="n">active_indices</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2843,7 +2877,8 @@ this is a <code>{"alpha": ..., "beta": ...}</code> mapping of such dicts.</p>
             <td>
               <div class="doc-md-description">
                 <p>If <em>restricted_space</em> or <em>contribution</em> is a spin-resolved
-<code>{"alpha", "beta"}</code> dict but <em>mf</em> is restricted.</p>
+<code>{"alpha", "beta"}</code> dict but <em>mf</em> is restricted, or if an entry of
+<em>ao_labels</em> matches no AO of the projection basis.</p>
               </div>
             </td>
           </tr>
@@ -2853,78 +2888,7 @@ this is a <code>{"alpha": ..., "beta": ...}</code> mapping of such dicts.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/aegiss/active_space/ao_projection.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-452">452</a></span>
-<span class="normal"><a href="#__codelineno-0-453">453</a></span>
-<span class="normal"><a href="#__codelineno-0-454">454</a></span>
-<span class="normal"><a href="#__codelineno-0-455">455</a></span>
-<span class="normal"><a href="#__codelineno-0-456">456</a></span>
-<span class="normal"><a href="#__codelineno-0-457">457</a></span>
-<span class="normal"><a href="#__codelineno-0-458">458</a></span>
-<span class="normal"><a href="#__codelineno-0-459">459</a></span>
-<span class="normal"><a href="#__codelineno-0-460">460</a></span>
-<span class="normal"><a href="#__codelineno-0-461">461</a></span>
-<span class="normal"><a href="#__codelineno-0-462">462</a></span>
-<span class="normal"><a href="#__codelineno-0-463">463</a></span>
-<span class="normal"><a href="#__codelineno-0-464">464</a></span>
-<span class="normal"><a href="#__codelineno-0-465">465</a></span>
-<span class="normal"><a href="#__codelineno-0-466">466</a></span>
-<span class="normal"><a href="#__codelineno-0-467">467</a></span>
-<span class="normal"><a href="#__codelineno-0-468">468</a></span>
-<span class="normal"><a href="#__codelineno-0-469">469</a></span>
-<span class="normal"><a href="#__codelineno-0-470">470</a></span>
-<span class="normal"><a href="#__codelineno-0-471">471</a></span>
-<span class="normal"><a href="#__codelineno-0-472">472</a></span>
-<span class="normal"><a href="#__codelineno-0-473">473</a></span>
-<span class="normal"><a href="#__codelineno-0-474">474</a></span>
-<span class="normal"><a href="#__codelineno-0-475">475</a></span>
-<span class="normal"><a href="#__codelineno-0-476">476</a></span>
-<span class="normal"><a href="#__codelineno-0-477">477</a></span>
-<span class="normal"><a href="#__codelineno-0-478">478</a></span>
-<span class="normal"><a href="#__codelineno-0-479">479</a></span>
-<span class="normal"><a href="#__codelineno-0-480">480</a></span>
-<span class="normal"><a href="#__codelineno-0-481">481</a></span>
-<span class="normal"><a href="#__codelineno-0-482">482</a></span>
-<span class="normal"><a href="#__codelineno-0-483">483</a></span>
-<span class="normal"><a href="#__codelineno-0-484">484</a></span>
-<span class="normal"><a href="#__codelineno-0-485">485</a></span>
-<span class="normal"><a href="#__codelineno-0-486">486</a></span>
-<span class="normal"><a href="#__codelineno-0-487">487</a></span>
-<span class="normal"><a href="#__codelineno-0-488">488</a></span>
-<span class="normal"><a href="#__codelineno-0-489">489</a></span>
-<span class="normal"><a href="#__codelineno-0-490">490</a></span>
-<span class="normal"><a href="#__codelineno-0-491">491</a></span>
-<span class="normal"><a href="#__codelineno-0-492">492</a></span>
-<span class="normal"><a href="#__codelineno-0-493">493</a></span>
-<span class="normal"><a href="#__codelineno-0-494">494</a></span>
-<span class="normal"><a href="#__codelineno-0-495">495</a></span>
-<span class="normal"><a href="#__codelineno-0-496">496</a></span>
-<span class="normal"><a href="#__codelineno-0-497">497</a></span>
-<span class="normal"><a href="#__codelineno-0-498">498</a></span>
-<span class="normal"><a href="#__codelineno-0-499">499</a></span>
-<span class="normal"><a href="#__codelineno-0-500">500</a></span>
-<span class="normal"><a href="#__codelineno-0-501">501</a></span>
-<span class="normal"><a href="#__codelineno-0-502">502</a></span>
-<span class="normal"><a href="#__codelineno-0-503">503</a></span>
-<span class="normal"><a href="#__codelineno-0-504">504</a></span>
-<span class="normal"><a href="#__codelineno-0-505">505</a></span>
-<span class="normal"><a href="#__codelineno-0-506">506</a></span>
-<span class="normal"><a href="#__codelineno-0-507">507</a></span>
-<span class="normal"><a href="#__codelineno-0-508">508</a></span>
-<span class="normal"><a href="#__codelineno-0-509">509</a></span>
-<span class="normal"><a href="#__codelineno-0-510">510</a></span>
-<span class="normal"><a href="#__codelineno-0-511">511</a></span>
-<span class="normal"><a href="#__codelineno-0-512">512</a></span>
-<span class="normal"><a href="#__codelineno-0-513">513</a></span>
-<span class="normal"><a href="#__codelineno-0-514">514</a></span>
-<span class="normal"><a href="#__codelineno-0-515">515</a></span>
-<span class="normal"><a href="#__codelineno-0-516">516</a></span>
-<span class="normal"><a href="#__codelineno-0-517">517</a></span>
-<span class="normal"><a href="#__codelineno-0-518">518</a></span>
-<span class="normal"><a href="#__codelineno-0-519">519</a></span>
-<span class="normal"><a href="#__codelineno-0-520">520</a></span>
-<span class="normal"><a href="#__codelineno-0-521">521</a></span>
-<span class="normal"><a href="#__codelineno-0-522">522</a></span>
-<span class="normal"><a href="#__codelineno-0-523">523</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-523">523</a></span>
 <span class="normal"><a href="#__codelineno-0-524">524</a></span>
 <span class="normal"><a href="#__codelineno-0-525">525</a></span>
 <span class="normal"><a href="#__codelineno-0-526">526</a></span>
@@ -3023,177 +2987,252 @@ this is a <code>{"alpha": ..., "beta": ...}</code> mapping of such dicts.</p>
 <span class="normal"><a href="#__codelineno-0-619">619</a></span>
 <span class="normal"><a href="#__codelineno-0-620">620</a></span>
 <span class="normal"><a href="#__codelineno-0-621">621</a></span>
-<span class="normal"><a href="#__codelineno-0-622">622</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-452" name="__codelineno-0-452"></a><span class="k">def</span><span class="w"> </span><span class="nf">select_by_ao_projection</span><span class="p">(</span>
-<a id="__codelineno-0-453" name="__codelineno-0-453"></a>    <span class="n">mf</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-454" name="__codelineno-0-454"></a>    <span class="n">ao_labels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
-<a id="__codelineno-0-455" name="__codelineno-0-455"></a>    <span class="n">projected_basis</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;minao&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-456" name="__codelineno-0-456"></a>    <span class="n">contribution_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-457" name="__codelineno-0-457"></a>    <span class="n">contribution</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-<a id="__codelineno-0-458" name="__codelineno-0-458"></a>    <span class="n">top_n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-459" name="__codelineno-0-459"></a>    <span class="n">restricted_space</span><span class="p">:</span> <span class="n">_RestrictedSpace</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-460" name="__codelineno-0-460"></a>    <span class="n">save_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-461" name="__codelineno-0-461"></a>    <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-462" name="__codelineno-0-462"></a>    <span class="n">return_contributions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-0-463" name="__codelineno-0-463"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">(</span>
-<a id="__codelineno-0-464" name="__codelineno-0-464"></a>    <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-<a id="__codelineno-0-465" name="__codelineno-0-465"></a>    <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
-<a id="__codelineno-0-466" name="__codelineno-0-466"></a>    <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">_AoContributions</span><span class="p">]</span>
-<a id="__codelineno-0-467" name="__codelineno-0-467"></a>    <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_AoContributions</span><span class="p">]]</span>
-<a id="__codelineno-0-468" name="__codelineno-0-468"></a><span class="p">):</span>
-<a id="__codelineno-0-469" name="__codelineno-0-469"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Select active orbitals by their projection onto a set of target AOs.</span>
-<a id="__codelineno-0-470" name="__codelineno-0-470"></a>
-<a id="__codelineno-0-471" name="__codelineno-0-471"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-472" name="__codelineno-0-472"></a><span class="sd">        mf (pyscf.scf.hf.SCF or pyscf.dft.rks.KohnShamDFT):</span>
-<a id="__codelineno-0-473" name="__codelineno-0-473"></a><span class="sd">            Mean-field object containing the molecular orbitals and occupation numbers.</span>
-<a id="__codelineno-0-474" name="__codelineno-0-474"></a><span class="sd">        ao_labels (list[str | list[str]]): List of AO label entries. Each entry is either a single label string</span>
-<a id="__codelineno-0-475" name="__codelineno-0-475"></a><span class="sd">            (e.g. ``&quot;Fe 3d&quot;``) or a list of strings treated as one group</span>
-<a id="__codelineno-0-476" name="__codelineno-0-476"></a><span class="sd">            (e.g. ``[&quot;Fe 3d&quot;, &quot;Fe 4d&quot;]``). Entries can be freely mixed, e.g.</span>
-<a id="__codelineno-0-477" name="__codelineno-0-477"></a><span class="sd">            ``[&quot;C 2pz&quot;, &quot;Fe 3d&quot;, [&quot;Fe 3d&quot;, &quot;Fe 4d&quot;]]``.</span>
-<a id="__codelineno-0-478" name="__codelineno-0-478"></a><span class="sd">        projected_basis (str or None, default &#39;minao&#39;):</span>
-<a id="__codelineno-0-479" name="__codelineno-0-479"></a><span class="sd">            Basis set to use for the projection. ``None`` uses the original basis.</span>
-<a id="__codelineno-0-480" name="__codelineno-0-480"></a><span class="sd">            A minimal basis (e.g. ``&#39;minao&#39;``) helps focus the selection on</span>
-<a id="__codelineno-0-481" name="__codelineno-0-481"></a><span class="sd">            chemically relevant orbitals and reduces noise from diffuse functions.</span>
-<a id="__codelineno-0-482" name="__codelineno-0-482"></a><span class="sd">        contribution_type ({&#39;r&#39;, &#39;a&#39;}, default &#39;a&#39;): Relative (``&#39;r&#39;``, each group&#39;s weights divided</span>
-<a id="__codelineno-0-483" name="__codelineno-0-483"></a><span class="sd">            by their maximum over the search space) or absolute (``&#39;a&#39;``) contribution.</span>
-<a id="__codelineno-0-484" name="__codelineno-0-484"></a><span class="sd">        contribution (float, list of float, or dict, default 0.0): Threshold for</span>
-<a id="__codelineno-0-485" name="__codelineno-0-485"></a><span class="sd">            selecting orbitals based on their contribution.</span>
-<a id="__codelineno-0-486" name="__codelineno-0-486"></a><span class="sd">            A single float applies to all AO groups; a list specifies per-group</span>
-<a id="__codelineno-0-487" name="__codelineno-0-487"></a><span class="sd">            thresholds and should match the length of *ao_labels*; on a length</span>
-<a id="__codelineno-0-488" name="__codelineno-0-488"></a><span class="sd">            mismatch a warning is logged and the first value is used for every</span>
-<a id="__codelineno-0-489" name="__codelineno-0-489"></a><span class="sd">            group. Ignored when *top_n* is given.</span>
-<a id="__codelineno-0-490" name="__codelineno-0-490"></a><span class="sd">            For an unrestricted mean-field it may also be a spin-resolved</span>
-<a id="__codelineno-0-491" name="__codelineno-0-491"></a><span class="sd">            ``{&quot;alpha&quot;: ..., &quot;beta&quot;: ...}`` mapping (each value itself a float or</span>
-<a id="__codelineno-0-492" name="__codelineno-0-492"></a><span class="sd">            per-group list), applying a different threshold to each spin channel.</span>
-<a id="__codelineno-0-493" name="__codelineno-0-493"></a><span class="sd">            A non-dict value is shared by both channels. A dict is rejected for a</span>
-<a id="__codelineno-0-494" name="__codelineno-0-494"></a><span class="sd">            restricted mean-field.</span>
-<a id="__codelineno-0-495" name="__codelineno-0-495"></a><span class="sd">        top_n (int or list of int, optional): Alternative to *contribution* thresholding. Selects the top N orbitals</span>
-<a id="__codelineno-0-496" name="__codelineno-0-496"></a><span class="sd">            per AO group. A list specifies per-group counts; on a length</span>
-<a id="__codelineno-0-497" name="__codelineno-0-497"></a><span class="sd">            mismatch with *ao_labels* a warning is logged and the first value is</span>
-<a id="__codelineno-0-498" name="__codelineno-0-498"></a><span class="sd">            used for every group.</span>
-<a id="__codelineno-0-499" name="__codelineno-0-499"></a><span class="sd">        restricted_space (list of int, list of tuple, tuple of lists, dict, optional):</span>
-<a id="__codelineno-0-500" name="__codelineno-0-500"></a><span class="sd">            Orbital indices to restrict selection to. Can be a plain list of</span>
-<a id="__codelineno-0-501" name="__codelineno-0-501"></a><span class="sd">            integers (e.g. ``list(range(34, 131))``), a list of ``(index, entropy)``</span>
-<a id="__codelineno-0-502" name="__codelineno-0-502"></a><span class="sd">            pairs, or a ``(occ_list, virt_list)`` tuple from ``select_by_entropy``.</span>
-<a id="__codelineno-0-503" name="__codelineno-0-503"></a><span class="sd">            For an unrestricted mean-field it may also be a spin-resolved</span>
-<a id="__codelineno-0-504" name="__codelineno-0-504"></a><span class="sd">            ``{&quot;alpha&quot;: ..., &quot;beta&quot;: ...}`` mapping (as produced by</span>
-<a id="__codelineno-0-505" name="__codelineno-0-505"></a><span class="sd">            ``select_by_spin_entropy``), in which case each spin channel is</span>
-<a id="__codelineno-0-506" name="__codelineno-0-506"></a><span class="sd">            restricted to its own space. A non-dict value is shared by both</span>
-<a id="__codelineno-0-507" name="__codelineno-0-507"></a><span class="sd">            channels. ``None`` considers all orbitals.</span>
-<a id="__codelineno-0-508" name="__codelineno-0-508"></a><span class="sd">        save_path (str or None, optional):</span>
-<a id="__codelineno-0-509" name="__codelineno-0-509"></a><span class="sd">            If provided, saves a heatmap of AO contributions to the specified path.</span>
-<a id="__codelineno-0-510" name="__codelineno-0-510"></a><span class="sd">            For an unrestricted mean-field the alpha/beta channels are written to</span>
-<a id="__codelineno-0-511" name="__codelineno-0-511"></a><span class="sd">            separate ``*_alpha`` / ``*_beta`` files.</span>
-<a id="__codelineno-0-512" name="__codelineno-0-512"></a><span class="sd">        return_contributions (bool, default False): If ``True``, also return the</span>
-<a id="__codelineno-0-513" name="__codelineno-0-513"></a><span class="sd">            per-group AO contributions so they can be passed straight to</span>
-<a id="__codelineno-0-514" name="__codelineno-0-514"></a><span class="sd">            :func:`~aegiss.utils.plotting.plot_ao_contribution` for custom plots.</span>
-<a id="__codelineno-0-515" name="__codelineno-0-515"></a>
-<a id="__codelineno-0-516" name="__codelineno-0-516"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-517" name="__codelineno-0-517"></a><span class="sd">        active_indices (np.ndarray of int, or dict[str, np.ndarray]):</span>
-<a id="__codelineno-0-518" name="__codelineno-0-518"></a><span class="sd">            Selected orbital indices. For a restricted mean-field a single array</span>
-<a id="__codelineno-0-519" name="__codelineno-0-519"></a><span class="sd">            is returned. For an unrestricted (UHF) mean-field -- detected from a</span>
-<a id="__codelineno-0-520" name="__codelineno-0-520"></a><span class="sd">            3D ``mf.mo_coeff`` of shape ``(2, nao, nmo)`` -- the selection is</span>
-<a id="__codelineno-0-521" name="__codelineno-0-521"></a><span class="sd">            always done per spin (the AO overlaps are spin-independent, only the</span>
-<a id="__codelineno-0-522" name="__codelineno-0-522"></a><span class="sd">            MO coefficients differ) and the result is a split</span>
-<a id="__codelineno-0-523" name="__codelineno-0-523"></a><span class="sd">            ``{&quot;alpha&quot;: ..., &quot;beta&quot;: ...}`` mapping. Whether the two channels</span>
-<a id="__codelineno-0-524" name="__codelineno-0-524"></a><span class="sd">            share one search space (spin-summed *restricted_space*) or use their</span>
-<a id="__codelineno-0-525" name="__codelineno-0-525"></a><span class="sd">            own (spin-resolved dict *restricted_space*), the alpha and beta</span>
-<a id="__codelineno-0-526" name="__codelineno-0-526"></a><span class="sd">            selections are kept separate here: they are deliberately *not*</span>
-<a id="__codelineno-0-527" name="__codelineno-0-527"></a><span class="sd">            reconciled into a common set of spatial orbitals, since an orbital</span>
-<a id="__codelineno-0-528" name="__codelineno-0-528"></a><span class="sd">            index refers to a different MO in each spin channel.</span>
-<a id="__codelineno-0-529" name="__codelineno-0-529"></a><span class="sd">        ao_contributions (dict, only if *return_contributions* is ``True``):</span>
-<a id="__codelineno-0-530" name="__codelineno-0-530"></a><span class="sd">            Group index (position in *ao_labels*) to ``(orbital_index, weight)``</span>
-<a id="__codelineno-0-531" name="__codelineno-0-531"></a><span class="sd">            pairs over the whole search space. For an unrestricted mean-field</span>
-<a id="__codelineno-0-532" name="__codelineno-0-532"></a><span class="sd">            this is a ``{&quot;alpha&quot;: ..., &quot;beta&quot;: ...}`` mapping of such dicts.</span>
-<a id="__codelineno-0-533" name="__codelineno-0-533"></a>
-<a id="__codelineno-0-534" name="__codelineno-0-534"></a><span class="sd">    Raises:</span>
-<a id="__codelineno-0-535" name="__codelineno-0-535"></a><span class="sd">        ValueError: If *restricted_space* or *contribution* is a spin-resolved</span>
-<a id="__codelineno-0-536" name="__codelineno-0-536"></a><span class="sd">            ``{&quot;alpha&quot;, &quot;beta&quot;}`` dict but *mf* is restricted.</span>
-<a id="__codelineno-0-537" name="__codelineno-0-537"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-538" name="__codelineno-0-538"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;----------------AO Projection Screening for AEGISS----------------</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-539" name="__codelineno-0-539"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;AO labels for projection: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">ao_labels</span><span class="p">)</span>
-<a id="__codelineno-0-540" name="__codelineno-0-540"></a>
-<a id="__codelineno-0-541" name="__codelineno-0-541"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Contribution threshold: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">contribution</span><span class="p">)</span>
-<a id="__codelineno-0-542" name="__codelineno-0-542"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Contribution type: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">contribution_type</span><span class="p">)</span>
-<a id="__codelineno-0-543" name="__codelineno-0-543"></a>
-<a id="__codelineno-0-544" name="__codelineno-0-544"></a>    <span class="k">if</span> <span class="n">top_n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-545" name="__codelineno-0-545"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Top N orbitals to select: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">top_n</span><span class="p">)</span>
-<a id="__codelineno-0-546" name="__codelineno-0-546"></a>
-<a id="__codelineno-0-547" name="__codelineno-0-547"></a>    <span class="k">if</span> <span class="n">projected_basis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-548" name="__codelineno-0-548"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Using projected basis for AO projection: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">projected_basis</span><span class="p">)</span>
-<a id="__codelineno-0-549" name="__codelineno-0-549"></a>    <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-550" name="__codelineno-0-550"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Using molecule for AO projection&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-551" name="__codelineno-0-551"></a>
-<a id="__codelineno-0-552" name="__codelineno-0-552"></a>    <span class="n">labels_idx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">ao_labels</span><span class="p">))</span>
-<a id="__codelineno-0-553" name="__codelineno-0-553"></a>    <span class="n">mo_coeff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mf</span><span class="o">.</span><span class="n">mo_coeff</span><span class="p">)</span>
-<a id="__codelineno-0-554" name="__codelineno-0-554"></a>
-<a id="__codelineno-0-555" name="__codelineno-0-555"></a>    <span class="k">if</span> <span class="n">mo_coeff</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
-<a id="__codelineno-0-556" name="__codelineno-0-556"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">restricted_space</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-<a id="__codelineno-0-557" name="__codelineno-0-557"></a>            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-<a id="__codelineno-0-558" name="__codelineno-0-558"></a>                <span class="s2">&quot;A spin-resolved restricted_space ({&#39;alpha&#39;, &#39;beta&#39;} dict) requires &quot;</span>
-<a id="__codelineno-0-559" name="__codelineno-0-559"></a>                <span class="s2">&quot;an unrestricted mean-field with a 3D mo_coeff; got a restricted one.&quot;</span>
-<a id="__codelineno-0-560" name="__codelineno-0-560"></a>            <span class="p">)</span>
-<a id="__codelineno-0-561" name="__codelineno-0-561"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-<a id="__codelineno-0-562" name="__codelineno-0-562"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">contribution</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-<a id="__codelineno-0-563" name="__codelineno-0-563"></a>            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-<a id="__codelineno-0-564" name="__codelineno-0-564"></a>                <span class="s2">&quot;A spin-resolved contribution ({&#39;alpha&#39;, &#39;beta&#39;} dict) requires an &quot;</span>
-<a id="__codelineno-0-565" name="__codelineno-0-565"></a>                <span class="s2">&quot;unrestricted mean-field with a 3D mo_coeff; got a restricted one.&quot;</span>
-<a id="__codelineno-0-566" name="__codelineno-0-566"></a>            <span class="p">)</span>
-<a id="__codelineno-0-567" name="__codelineno-0-567"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-<a id="__codelineno-0-568" name="__codelineno-0-568"></a>        <span class="n">resolved_contribution</span><span class="p">,</span> <span class="n">resolved_top_n</span> <span class="o">=</span> <span class="n">_resolve_thresholds</span><span class="p">(</span>
-<a id="__codelineno-0-569" name="__codelineno-0-569"></a>            <span class="n">contribution</span><span class="p">,</span> <span class="n">top_n</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ao_labels</span><span class="p">)</span>
-<a id="__codelineno-0-570" name="__codelineno-0-570"></a>        <span class="p">)</span>
-<a id="__codelineno-0-571" name="__codelineno-0-571"></a>        <span class="n">indices</span><span class="p">,</span> <span class="n">contributions</span> <span class="o">=</span> <span class="n">_run_ao_selection</span><span class="p">(</span>
-<a id="__codelineno-0-572" name="__codelineno-0-572"></a>            <span class="n">mf</span><span class="o">=</span><span class="n">mf</span><span class="p">,</span>
-<a id="__codelineno-0-573" name="__codelineno-0-573"></a>            <span class="n">ao_labels</span><span class="o">=</span><span class="n">ao_labels</span><span class="p">,</span>
-<a id="__codelineno-0-574" name="__codelineno-0-574"></a>            <span class="n">full_mo_coeff</span><span class="o">=</span><span class="n">mo_coeff</span><span class="p">,</span>
-<a id="__codelineno-0-575" name="__codelineno-0-575"></a>            <span class="n">space</span><span class="o">=</span><span class="n">_resolve_space</span><span class="p">(</span><span class="n">mf</span><span class="p">,</span> <span class="n">restricted_space</span><span class="p">),</span>
-<a id="__codelineno-0-576" name="__codelineno-0-576"></a>            <span class="n">resolved_contribution</span><span class="o">=</span><span class="n">resolved_contribution</span><span class="p">,</span>
-<a id="__codelineno-0-577" name="__codelineno-0-577"></a>            <span class="n">resolved_top_n</span><span class="o">=</span><span class="n">resolved_top_n</span><span class="p">,</span>
-<a id="__codelineno-0-578" name="__codelineno-0-578"></a>            <span class="n">contribution_type</span><span class="o">=</span><span class="n">contribution_type</span><span class="p">,</span>
-<a id="__codelineno-0-579" name="__codelineno-0-579"></a>            <span class="n">projected_basis</span><span class="o">=</span><span class="n">projected_basis</span><span class="p">,</span>
-<a id="__codelineno-0-580" name="__codelineno-0-580"></a>            <span class="n">save_path</span><span class="o">=</span><span class="n">save_path</span><span class="p">,</span>
-<a id="__codelineno-0-581" name="__codelineno-0-581"></a>            <span class="n">labels_idx</span><span class="o">=</span><span class="n">labels_idx</span><span class="p">,</span>
-<a id="__codelineno-0-582" name="__codelineno-0-582"></a>        <span class="p">)</span>
-<a id="__codelineno-0-583" name="__codelineno-0-583"></a>        <span class="k">return</span> <span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">contributions</span><span class="p">)</span> <span class="k">if</span> <span class="n">return_contributions</span> <span class="k">else</span> <span class="n">indices</span>
-<a id="__codelineno-0-584" name="__codelineno-0-584"></a>
-<a id="__codelineno-0-585" name="__codelineno-0-585"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-<a id="__codelineno-0-586" name="__codelineno-0-586"></a>        <span class="s2">&quot;Unrestricted mean-field detected (mo_coeff shape </span><span class="si">%s</span><span class="s2">); screening the &quot;</span>
-<a id="__codelineno-0-587" name="__codelineno-0-587"></a>        <span class="s2">&quot;alpha and beta channels per spin (</span><span class="si">%s</span><span class="s2"> search space).&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-588" name="__codelineno-0-588"></a>        <span class="n">mo_coeff</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
-<a id="__codelineno-0-589" name="__codelineno-0-589"></a>        <span class="s2">&quot;per-channel&quot;</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">restricted_space</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;shared&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-590" name="__codelineno-0-590"></a>    <span class="p">)</span>
-<a id="__codelineno-0-591" name="__codelineno-0-591"></a>    <span class="n">selection</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-592" name="__codelineno-0-592"></a>    <span class="n">channel_contributions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_AoContributions</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-593" name="__codelineno-0-593"></a>    <span class="k">for</span> <span class="n">spin</span><span class="p">,</span> <span class="n">channel</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">((</span><span class="s2">&quot;alpha&quot;</span><span class="p">,</span> <span class="s2">&quot;beta&quot;</span><span class="p">)):</span>
-<a id="__codelineno-0-594" name="__codelineno-0-594"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;=============== </span><span class="si">%s</span><span class="s2"> channel ===============&quot;</span><span class="p">,</span> <span class="n">channel</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
-<a id="__codelineno-0-595" name="__codelineno-0-595"></a>        <span class="c1"># A dict restricted_space carries its own window per spin channel</span>
-<a id="__codelineno-0-596" name="__codelineno-0-596"></a>        <span class="c1"># (spin-resolved entropy screening); anything else is shared by both.</span>
-<a id="__codelineno-0-597" name="__codelineno-0-597"></a>        <span class="n">channel_space</span> <span class="o">=</span> <span class="p">(</span>
-<a id="__codelineno-0-598" name="__codelineno-0-598"></a>            <span class="n">restricted_space</span><span class="p">[</span><span class="n">channel</span><span class="p">]</span>
-<a id="__codelineno-0-599" name="__codelineno-0-599"></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">restricted_space</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
-<a id="__codelineno-0-600" name="__codelineno-0-600"></a>            <span class="k">else</span> <span class="n">restricted_space</span>
-<a id="__codelineno-0-601" name="__codelineno-0-601"></a>        <span class="p">)</span>
-<a id="__codelineno-0-602" name="__codelineno-0-602"></a>        <span class="c1"># A dict contribution carries its own threshold(s) per spin channel;</span>
-<a id="__codelineno-0-603" name="__codelineno-0-603"></a>        <span class="c1"># anything else is shared by both.</span>
-<a id="__codelineno-0-604" name="__codelineno-0-604"></a>        <span class="n">channel_contribution</span> <span class="o">=</span> <span class="p">(</span>
-<a id="__codelineno-0-605" name="__codelineno-0-605"></a>            <span class="n">contribution</span><span class="p">[</span><span class="n">channel</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">contribution</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">contribution</span>
-<a id="__codelineno-0-606" name="__codelineno-0-606"></a>        <span class="p">)</span>
-<a id="__codelineno-0-607" name="__codelineno-0-607"></a>        <span class="n">resolved_contribution</span><span class="p">,</span> <span class="n">resolved_top_n</span> <span class="o">=</span> <span class="n">_resolve_thresholds</span><span class="p">(</span>
-<a id="__codelineno-0-608" name="__codelineno-0-608"></a>            <span class="n">channel_contribution</span><span class="p">,</span> <span class="n">top_n</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ao_labels</span><span class="p">)</span>
-<a id="__codelineno-0-609" name="__codelineno-0-609"></a>        <span class="p">)</span>
-<a id="__codelineno-0-610" name="__codelineno-0-610"></a>        <span class="n">selection</span><span class="p">[</span><span class="n">channel</span><span class="p">],</span> <span class="n">channel_contributions</span><span class="p">[</span><span class="n">channel</span><span class="p">]</span> <span class="o">=</span> <span class="n">_run_ao_selection</span><span class="p">(</span>
-<a id="__codelineno-0-611" name="__codelineno-0-611"></a>            <span class="n">mf</span><span class="o">=</span><span class="n">mf</span><span class="p">,</span>
-<a id="__codelineno-0-612" name="__codelineno-0-612"></a>            <span class="n">ao_labels</span><span class="o">=</span><span class="n">ao_labels</span><span class="p">,</span>
-<a id="__codelineno-0-613" name="__codelineno-0-613"></a>            <span class="n">full_mo_coeff</span><span class="o">=</span><span class="n">mo_coeff</span><span class="p">[</span><span class="n">spin</span><span class="p">],</span>
-<a id="__codelineno-0-614" name="__codelineno-0-614"></a>            <span class="n">space</span><span class="o">=</span><span class="n">_resolve_space</span><span class="p">(</span><span class="n">mf</span><span class="p">,</span> <span class="n">channel_space</span><span class="p">),</span>
-<a id="__codelineno-0-615" name="__codelineno-0-615"></a>            <span class="n">resolved_contribution</span><span class="o">=</span><span class="n">resolved_contribution</span><span class="p">,</span>
-<a id="__codelineno-0-616" name="__codelineno-0-616"></a>            <span class="n">resolved_top_n</span><span class="o">=</span><span class="n">resolved_top_n</span><span class="p">,</span>
-<a id="__codelineno-0-617" name="__codelineno-0-617"></a>            <span class="n">contribution_type</span><span class="o">=</span><span class="n">contribution_type</span><span class="p">,</span>
-<a id="__codelineno-0-618" name="__codelineno-0-618"></a>            <span class="n">projected_basis</span><span class="o">=</span><span class="n">projected_basis</span><span class="p">,</span>
-<a id="__codelineno-0-619" name="__codelineno-0-619"></a>            <span class="n">save_path</span><span class="o">=</span><span class="n">_channel_save_path</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="n">channel</span><span class="p">),</span>
-<a id="__codelineno-0-620" name="__codelineno-0-620"></a>            <span class="n">labels_idx</span><span class="o">=</span><span class="n">labels_idx</span><span class="p">,</span>
-<a id="__codelineno-0-621" name="__codelineno-0-621"></a>        <span class="p">)</span>
-<a id="__codelineno-0-622" name="__codelineno-0-622"></a>    <span class="k">return</span> <span class="p">(</span><span class="n">selection</span><span class="p">,</span> <span class="n">channel_contributions</span><span class="p">)</span> <span class="k">if</span> <span class="n">return_contributions</span> <span class="k">else</span> <span class="n">selection</span>
+<span class="normal"><a href="#__codelineno-0-622">622</a></span>
+<span class="normal"><a href="#__codelineno-0-623">623</a></span>
+<span class="normal"><a href="#__codelineno-0-624">624</a></span>
+<span class="normal"><a href="#__codelineno-0-625">625</a></span>
+<span class="normal"><a href="#__codelineno-0-626">626</a></span>
+<span class="normal"><a href="#__codelineno-0-627">627</a></span>
+<span class="normal"><a href="#__codelineno-0-628">628</a></span>
+<span class="normal"><a href="#__codelineno-0-629">629</a></span>
+<span class="normal"><a href="#__codelineno-0-630">630</a></span>
+<span class="normal"><a href="#__codelineno-0-631">631</a></span>
+<span class="normal"><a href="#__codelineno-0-632">632</a></span>
+<span class="normal"><a href="#__codelineno-0-633">633</a></span>
+<span class="normal"><a href="#__codelineno-0-634">634</a></span>
+<span class="normal"><a href="#__codelineno-0-635">635</a></span>
+<span class="normal"><a href="#__codelineno-0-636">636</a></span>
+<span class="normal"><a href="#__codelineno-0-637">637</a></span>
+<span class="normal"><a href="#__codelineno-0-638">638</a></span>
+<span class="normal"><a href="#__codelineno-0-639">639</a></span>
+<span class="normal"><a href="#__codelineno-0-640">640</a></span>
+<span class="normal"><a href="#__codelineno-0-641">641</a></span>
+<span class="normal"><a href="#__codelineno-0-642">642</a></span>
+<span class="normal"><a href="#__codelineno-0-643">643</a></span>
+<span class="normal"><a href="#__codelineno-0-644">644</a></span>
+<span class="normal"><a href="#__codelineno-0-645">645</a></span>
+<span class="normal"><a href="#__codelineno-0-646">646</a></span>
+<span class="normal"><a href="#__codelineno-0-647">647</a></span>
+<span class="normal"><a href="#__codelineno-0-648">648</a></span>
+<span class="normal"><a href="#__codelineno-0-649">649</a></span>
+<span class="normal"><a href="#__codelineno-0-650">650</a></span>
+<span class="normal"><a href="#__codelineno-0-651">651</a></span>
+<span class="normal"><a href="#__codelineno-0-652">652</a></span>
+<span class="normal"><a href="#__codelineno-0-653">653</a></span>
+<span class="normal"><a href="#__codelineno-0-654">654</a></span>
+<span class="normal"><a href="#__codelineno-0-655">655</a></span>
+<span class="normal"><a href="#__codelineno-0-656">656</a></span>
+<span class="normal"><a href="#__codelineno-0-657">657</a></span>
+<span class="normal"><a href="#__codelineno-0-658">658</a></span>
+<span class="normal"><a href="#__codelineno-0-659">659</a></span>
+<span class="normal"><a href="#__codelineno-0-660">660</a></span>
+<span class="normal"><a href="#__codelineno-0-661">661</a></span>
+<span class="normal"><a href="#__codelineno-0-662">662</a></span>
+<span class="normal"><a href="#__codelineno-0-663">663</a></span>
+<span class="normal"><a href="#__codelineno-0-664">664</a></span>
+<span class="normal"><a href="#__codelineno-0-665">665</a></span>
+<span class="normal"><a href="#__codelineno-0-666">666</a></span>
+<span class="normal"><a href="#__codelineno-0-667">667</a></span>
+<span class="normal"><a href="#__codelineno-0-668">668</a></span>
+<span class="normal"><a href="#__codelineno-0-669">669</a></span>
+<span class="normal"><a href="#__codelineno-0-670">670</a></span>
+<span class="normal"><a href="#__codelineno-0-671">671</a></span>
+<span class="normal"><a href="#__codelineno-0-672">672</a></span>
+<span class="normal"><a href="#__codelineno-0-673">673</a></span>
+<span class="normal"><a href="#__codelineno-0-674">674</a></span>
+<span class="normal"><a href="#__codelineno-0-675">675</a></span>
+<span class="normal"><a href="#__codelineno-0-676">676</a></span>
+<span class="normal"><a href="#__codelineno-0-677">677</a></span>
+<span class="normal"><a href="#__codelineno-0-678">678</a></span>
+<span class="normal"><a href="#__codelineno-0-679">679</a></span>
+<span class="normal"><a href="#__codelineno-0-680">680</a></span>
+<span class="normal"><a href="#__codelineno-0-681">681</a></span>
+<span class="normal"><a href="#__codelineno-0-682">682</a></span>
+<span class="normal"><a href="#__codelineno-0-683">683</a></span>
+<span class="normal"><a href="#__codelineno-0-684">684</a></span>
+<span class="normal"><a href="#__codelineno-0-685">685</a></span>
+<span class="normal"><a href="#__codelineno-0-686">686</a></span>
+<span class="normal"><a href="#__codelineno-0-687">687</a></span>
+<span class="normal"><a href="#__codelineno-0-688">688</a></span>
+<span class="normal"><a href="#__codelineno-0-689">689</a></span>
+<span class="normal"><a href="#__codelineno-0-690">690</a></span>
+<span class="normal"><a href="#__codelineno-0-691">691</a></span>
+<span class="normal"><a href="#__codelineno-0-692">692</a></span>
+<span class="normal"><a href="#__codelineno-0-693">693</a></span>
+<span class="normal"><a href="#__codelineno-0-694">694</a></span>
+<span class="normal"><a href="#__codelineno-0-695">695</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-523" name="__codelineno-0-523"></a><span class="k">def</span><span class="w"> </span><span class="nf">select_by_ao_projection</span><span class="p">(</span>
+<a id="__codelineno-0-524" name="__codelineno-0-524"></a>    <span class="n">mf</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<a id="__codelineno-0-525" name="__codelineno-0-525"></a>    <span class="n">ao_labels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+<a id="__codelineno-0-526" name="__codelineno-0-526"></a>    <span class="n">projected_basis</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;minao&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-527" name="__codelineno-0-527"></a>    <span class="n">contribution_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-528" name="__codelineno-0-528"></a>    <span class="n">contribution</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+<a id="__codelineno-0-529" name="__codelineno-0-529"></a>    <span class="n">top_n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-530" name="__codelineno-0-530"></a>    <span class="n">restricted_space</span><span class="p">:</span> <span class="n">_RestrictedSpace</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-531" name="__codelineno-0-531"></a>    <span class="n">save_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-532" name="__codelineno-0-532"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-533" name="__codelineno-0-533"></a>    <span class="n">return_contributions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<a id="__codelineno-0-534" name="__codelineno-0-534"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">(</span>
+<a id="__codelineno-0-535" name="__codelineno-0-535"></a>    <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<a id="__codelineno-0-536" name="__codelineno-0-536"></a>    <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+<a id="__codelineno-0-537" name="__codelineno-0-537"></a>    <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">_AoContributions</span><span class="p">]</span>
+<a id="__codelineno-0-538" name="__codelineno-0-538"></a>    <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_AoContributions</span><span class="p">]]</span>
+<a id="__codelineno-0-539" name="__codelineno-0-539"></a><span class="p">):</span>
+<a id="__codelineno-0-540" name="__codelineno-0-540"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Select active orbitals by their projection onto a set of target AOs.</span>
+<a id="__codelineno-0-541" name="__codelineno-0-541"></a>
+<a id="__codelineno-0-542" name="__codelineno-0-542"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-543" name="__codelineno-0-543"></a><span class="sd">        mf (pyscf.scf.hf.SCF or pyscf.dft.rks.KohnShamDFT):</span>
+<a id="__codelineno-0-544" name="__codelineno-0-544"></a><span class="sd">            Mean-field object containing the molecular orbitals and occupation numbers.</span>
+<a id="__codelineno-0-545" name="__codelineno-0-545"></a><span class="sd">        ao_labels (list[str | list[str]]): List of AO label entries. Each entry is either a single label string</span>
+<a id="__codelineno-0-546" name="__codelineno-0-546"></a><span class="sd">            (e.g. ``&quot;Fe 3d&quot;``) or a list of strings treated as one group</span>
+<a id="__codelineno-0-547" name="__codelineno-0-547"></a><span class="sd">            (e.g. ``[&quot;Fe 3d&quot;, &quot;Fe 4d&quot;]``). Entries can be freely mixed, e.g.</span>
+<a id="__codelineno-0-548" name="__codelineno-0-548"></a><span class="sd">            ``[&quot;C 2pz&quot;, &quot;Fe 3d&quot;, [&quot;Fe 3d&quot;, &quot;Fe 4d&quot;]]``.</span>
+<a id="__codelineno-0-549" name="__codelineno-0-549"></a><span class="sd">        projected_basis (str or None, default &#39;minao&#39;):</span>
+<a id="__codelineno-0-550" name="__codelineno-0-550"></a><span class="sd">            Basis set to use for the projection. ``None`` uses the original basis.</span>
+<a id="__codelineno-0-551" name="__codelineno-0-551"></a><span class="sd">            A minimal basis (e.g. ``&#39;minao&#39;``) helps focus the selection on</span>
+<a id="__codelineno-0-552" name="__codelineno-0-552"></a><span class="sd">            chemically relevant orbitals and reduces noise from diffuse functions.</span>
+<a id="__codelineno-0-553" name="__codelineno-0-553"></a><span class="sd">        contribution_type ({&#39;r&#39;, &#39;a&#39;}, default &#39;a&#39;): Relative (``&#39;r&#39;``, each group&#39;s weights divided</span>
+<a id="__codelineno-0-554" name="__codelineno-0-554"></a><span class="sd">            by their maximum over the search space) or absolute (``&#39;a&#39;``) contribution.</span>
+<a id="__codelineno-0-555" name="__codelineno-0-555"></a><span class="sd">        contribution (float, list of float, or dict, default 0.0): Threshold for</span>
+<a id="__codelineno-0-556" name="__codelineno-0-556"></a><span class="sd">            selecting orbitals based on their contribution.</span>
+<a id="__codelineno-0-557" name="__codelineno-0-557"></a><span class="sd">            A single float applies to all AO groups; a list specifies per-group</span>
+<a id="__codelineno-0-558" name="__codelineno-0-558"></a><span class="sd">            thresholds and should match the length of *ao_labels*; on a length</span>
+<a id="__codelineno-0-559" name="__codelineno-0-559"></a><span class="sd">            mismatch a warning is logged and the first value is used for every</span>
+<a id="__codelineno-0-560" name="__codelineno-0-560"></a><span class="sd">            group. Ignored when *top_n* is given.</span>
+<a id="__codelineno-0-561" name="__codelineno-0-561"></a><span class="sd">            For an unrestricted mean-field it may also be a spin-resolved</span>
+<a id="__codelineno-0-562" name="__codelineno-0-562"></a><span class="sd">            ``{&quot;alpha&quot;: ..., &quot;beta&quot;: ...}`` mapping (each value itself a float or</span>
+<a id="__codelineno-0-563" name="__codelineno-0-563"></a><span class="sd">            per-group list), applying a different threshold to each spin channel.</span>
+<a id="__codelineno-0-564" name="__codelineno-0-564"></a><span class="sd">            A non-dict value is shared by both channels. A dict is rejected for a</span>
+<a id="__codelineno-0-565" name="__codelineno-0-565"></a><span class="sd">            restricted mean-field.</span>
+<a id="__codelineno-0-566" name="__codelineno-0-566"></a><span class="sd">        top_n (int or list of int, optional): Alternative to *contribution* thresholding. Selects the top N orbitals</span>
+<a id="__codelineno-0-567" name="__codelineno-0-567"></a><span class="sd">            per AO group. A list specifies per-group counts; on a length</span>
+<a id="__codelineno-0-568" name="__codelineno-0-568"></a><span class="sd">            mismatch with *ao_labels* a warning is logged and the first value is</span>
+<a id="__codelineno-0-569" name="__codelineno-0-569"></a><span class="sd">            used for every group.</span>
+<a id="__codelineno-0-570" name="__codelineno-0-570"></a><span class="sd">        restricted_space (list of int, list of tuple, tuple of lists, dict, optional):</span>
+<a id="__codelineno-0-571" name="__codelineno-0-571"></a><span class="sd">            Orbital indices to restrict selection to. Can be a plain list of</span>
+<a id="__codelineno-0-572" name="__codelineno-0-572"></a><span class="sd">            integers (e.g. ``list(range(34, 131))``), a list of ``(index, entropy)``</span>
+<a id="__codelineno-0-573" name="__codelineno-0-573"></a><span class="sd">            pairs, or a ``(occ_list, virt_list)`` tuple from ``select_by_entropy``.</span>
+<a id="__codelineno-0-574" name="__codelineno-0-574"></a><span class="sd">            For an unrestricted mean-field it may also be a spin-resolved</span>
+<a id="__codelineno-0-575" name="__codelineno-0-575"></a><span class="sd">            ``{&quot;alpha&quot;: ..., &quot;beta&quot;: ...}`` mapping (as produced by</span>
+<a id="__codelineno-0-576" name="__codelineno-0-576"></a><span class="sd">            ``select_by_spin_entropy``), in which case each spin channel is</span>
+<a id="__codelineno-0-577" name="__codelineno-0-577"></a><span class="sd">            restricted to its own space. A non-dict value is shared by both</span>
+<a id="__codelineno-0-578" name="__codelineno-0-578"></a><span class="sd">            channels. ``None`` considers all orbitals.</span>
+<a id="__codelineno-0-579" name="__codelineno-0-579"></a><span class="sd">        save_path (str or None, optional):</span>
+<a id="__codelineno-0-580" name="__codelineno-0-580"></a><span class="sd">            If provided, saves a heatmap of AO contributions to the specified path.</span>
+<a id="__codelineno-0-581" name="__codelineno-0-581"></a><span class="sd">            For an unrestricted mean-field the alpha/beta channels are written to</span>
+<a id="__codelineno-0-582" name="__codelineno-0-582"></a><span class="sd">            separate ``*_alpha`` / ``*_beta`` files.</span>
+<a id="__codelineno-0-583" name="__codelineno-0-583"></a><span class="sd">        return_contributions (bool, default False): If ``True``, also return the</span>
+<a id="__codelineno-0-584" name="__codelineno-0-584"></a><span class="sd">            per-group AO contributions so they can be passed straight to</span>
+<a id="__codelineno-0-585" name="__codelineno-0-585"></a><span class="sd">            :func:`~aegiss.utils.plotting.plot_ao_contribution` for custom plots.</span>
+<a id="__codelineno-0-586" name="__codelineno-0-586"></a>
+<a id="__codelineno-0-587" name="__codelineno-0-587"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-588" name="__codelineno-0-588"></a><span class="sd">        active_indices (np.ndarray of int, or dict[str, np.ndarray]):</span>
+<a id="__codelineno-0-589" name="__codelineno-0-589"></a><span class="sd">            Selected orbital indices. For a restricted mean-field a single array</span>
+<a id="__codelineno-0-590" name="__codelineno-0-590"></a><span class="sd">            is returned. For an unrestricted (UHF) mean-field -- detected from a</span>
+<a id="__codelineno-0-591" name="__codelineno-0-591"></a><span class="sd">            3D ``mf.mo_coeff`` of shape ``(2, nao, nmo)`` -- the selection is</span>
+<a id="__codelineno-0-592" name="__codelineno-0-592"></a><span class="sd">            always done per spin (the AO overlaps are spin-independent, only the</span>
+<a id="__codelineno-0-593" name="__codelineno-0-593"></a><span class="sd">            MO coefficients differ) and the result is a split</span>
+<a id="__codelineno-0-594" name="__codelineno-0-594"></a><span class="sd">            ``{&quot;alpha&quot;: ..., &quot;beta&quot;: ...}`` mapping. Whether the two channels</span>
+<a id="__codelineno-0-595" name="__codelineno-0-595"></a><span class="sd">            share one search space (spin-summed *restricted_space*) or use their</span>
+<a id="__codelineno-0-596" name="__codelineno-0-596"></a><span class="sd">            own (spin-resolved dict *restricted_space*), the alpha and beta</span>
+<a id="__codelineno-0-597" name="__codelineno-0-597"></a><span class="sd">            selections are kept separate here: they are deliberately *not*</span>
+<a id="__codelineno-0-598" name="__codelineno-0-598"></a><span class="sd">            reconciled into a common set of spatial orbitals, since an orbital</span>
+<a id="__codelineno-0-599" name="__codelineno-0-599"></a><span class="sd">            index refers to a different MO in each spin channel.</span>
+<a id="__codelineno-0-600" name="__codelineno-0-600"></a><span class="sd">        ao_contributions (dict, only if *return_contributions* is ``True``):</span>
+<a id="__codelineno-0-601" name="__codelineno-0-601"></a><span class="sd">            Group index (position in *ao_labels*) to ``(orbital_index, weight)``</span>
+<a id="__codelineno-0-602" name="__codelineno-0-602"></a><span class="sd">            pairs over the whole search space. For an unrestricted mean-field</span>
+<a id="__codelineno-0-603" name="__codelineno-0-603"></a><span class="sd">            this is a ``{&quot;alpha&quot;: ..., &quot;beta&quot;: ...}`` mapping of such dicts.</span>
+<a id="__codelineno-0-604" name="__codelineno-0-604"></a>
+<a id="__codelineno-0-605" name="__codelineno-0-605"></a><span class="sd">    Raises:</span>
+<a id="__codelineno-0-606" name="__codelineno-0-606"></a><span class="sd">        ValueError: If *restricted_space* or *contribution* is a spin-resolved</span>
+<a id="__codelineno-0-607" name="__codelineno-0-607"></a><span class="sd">            ``{&quot;alpha&quot;, &quot;beta&quot;}`` dict but *mf* is restricted, or if an entry of</span>
+<a id="__codelineno-0-608" name="__codelineno-0-608"></a><span class="sd">            *ao_labels* matches no AO of the projection basis.</span>
+<a id="__codelineno-0-609" name="__codelineno-0-609"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-610" name="__codelineno-0-610"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;----------------AO Projection Screening for AEGISS----------------</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-611" name="__codelineno-0-611"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;AO labels for projection: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">ao_labels</span><span class="p">)</span>
+<a id="__codelineno-0-612" name="__codelineno-0-612"></a>
+<a id="__codelineno-0-613" name="__codelineno-0-613"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Contribution threshold: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">contribution</span><span class="p">)</span>
+<a id="__codelineno-0-614" name="__codelineno-0-614"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Contribution type: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">contribution_type</span><span class="p">)</span>
+<a id="__codelineno-0-615" name="__codelineno-0-615"></a>
+<a id="__codelineno-0-616" name="__codelineno-0-616"></a>    <span class="k">if</span> <span class="n">top_n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-617" name="__codelineno-0-617"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Top N orbitals to select: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">top_n</span><span class="p">)</span>
+<a id="__codelineno-0-618" name="__codelineno-0-618"></a>
+<a id="__codelineno-0-619" name="__codelineno-0-619"></a>    <span class="k">if</span> <span class="n">projected_basis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-620" name="__codelineno-0-620"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Using projected basis for AO projection: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">projected_basis</span><span class="p">)</span>
+<a id="__codelineno-0-621" name="__codelineno-0-621"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-622" name="__codelineno-0-622"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Using molecule for AO projection&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-623" name="__codelineno-0-623"></a>
+<a id="__codelineno-0-624" name="__codelineno-0-624"></a>    <span class="n">_check_ao_labels</span><span class="p">(</span><span class="n">mf</span><span class="o">.</span><span class="n">mol</span><span class="p">,</span> <span class="n">ao_labels</span><span class="p">,</span> <span class="n">projected_basis</span><span class="p">)</span>
+<a id="__codelineno-0-625" name="__codelineno-0-625"></a>    <span class="n">labels_idx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">ao_labels</span><span class="p">))</span>
+<a id="__codelineno-0-626" name="__codelineno-0-626"></a>    <span class="n">mo_coeff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mf</span><span class="o">.</span><span class="n">mo_coeff</span><span class="p">)</span>
+<a id="__codelineno-0-627" name="__codelineno-0-627"></a>
+<a id="__codelineno-0-628" name="__codelineno-0-628"></a>    <span class="k">if</span> <span class="n">mo_coeff</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+<a id="__codelineno-0-629" name="__codelineno-0-629"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">restricted_space</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+<a id="__codelineno-0-630" name="__codelineno-0-630"></a>            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-0-631" name="__codelineno-0-631"></a>                <span class="s2">&quot;A spin-resolved restricted_space ({&#39;alpha&#39;, &#39;beta&#39;} dict) requires &quot;</span>
+<a id="__codelineno-0-632" name="__codelineno-0-632"></a>                <span class="s2">&quot;an unrestricted mean-field with a 3D mo_coeff; got a restricted one.&quot;</span>
+<a id="__codelineno-0-633" name="__codelineno-0-633"></a>            <span class="p">)</span>
+<a id="__codelineno-0-634" name="__codelineno-0-634"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+<a id="__codelineno-0-635" name="__codelineno-0-635"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">contribution</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+<a id="__codelineno-0-636" name="__codelineno-0-636"></a>            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-0-637" name="__codelineno-0-637"></a>                <span class="s2">&quot;A spin-resolved contribution ({&#39;alpha&#39;, &#39;beta&#39;} dict) requires an &quot;</span>
+<a id="__codelineno-0-638" name="__codelineno-0-638"></a>                <span class="s2">&quot;unrestricted mean-field with a 3D mo_coeff; got a restricted one.&quot;</span>
+<a id="__codelineno-0-639" name="__codelineno-0-639"></a>            <span class="p">)</span>
+<a id="__codelineno-0-640" name="__codelineno-0-640"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+<a id="__codelineno-0-641" name="__codelineno-0-641"></a>        <span class="n">resolved_contribution</span><span class="p">,</span> <span class="n">resolved_top_n</span> <span class="o">=</span> <span class="n">_resolve_thresholds</span><span class="p">(</span>
+<a id="__codelineno-0-642" name="__codelineno-0-642"></a>            <span class="n">contribution</span><span class="p">,</span> <span class="n">top_n</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ao_labels</span><span class="p">)</span>
+<a id="__codelineno-0-643" name="__codelineno-0-643"></a>        <span class="p">)</span>
+<a id="__codelineno-0-644" name="__codelineno-0-644"></a>        <span class="n">indices</span><span class="p">,</span> <span class="n">contributions</span> <span class="o">=</span> <span class="n">_run_ao_selection</span><span class="p">(</span>
+<a id="__codelineno-0-645" name="__codelineno-0-645"></a>            <span class="n">mf</span><span class="o">=</span><span class="n">mf</span><span class="p">,</span>
+<a id="__codelineno-0-646" name="__codelineno-0-646"></a>            <span class="n">ao_labels</span><span class="o">=</span><span class="n">ao_labels</span><span class="p">,</span>
+<a id="__codelineno-0-647" name="__codelineno-0-647"></a>            <span class="n">full_mo_coeff</span><span class="o">=</span><span class="n">mo_coeff</span><span class="p">,</span>
+<a id="__codelineno-0-648" name="__codelineno-0-648"></a>            <span class="n">space</span><span class="o">=</span><span class="n">_resolve_space</span><span class="p">(</span><span class="n">mf</span><span class="p">,</span> <span class="n">restricted_space</span><span class="p">),</span>
+<a id="__codelineno-0-649" name="__codelineno-0-649"></a>            <span class="n">resolved_contribution</span><span class="o">=</span><span class="n">resolved_contribution</span><span class="p">,</span>
+<a id="__codelineno-0-650" name="__codelineno-0-650"></a>            <span class="n">resolved_top_n</span><span class="o">=</span><span class="n">resolved_top_n</span><span class="p">,</span>
+<a id="__codelineno-0-651" name="__codelineno-0-651"></a>            <span class="n">contribution_type</span><span class="o">=</span><span class="n">contribution_type</span><span class="p">,</span>
+<a id="__codelineno-0-652" name="__codelineno-0-652"></a>            <span class="n">projected_basis</span><span class="o">=</span><span class="n">projected_basis</span><span class="p">,</span>
+<a id="__codelineno-0-653" name="__codelineno-0-653"></a>            <span class="n">save_path</span><span class="o">=</span><span class="n">save_path</span><span class="p">,</span>
+<a id="__codelineno-0-654" name="__codelineno-0-654"></a>            <span class="n">labels_idx</span><span class="o">=</span><span class="n">labels_idx</span><span class="p">,</span>
+<a id="__codelineno-0-655" name="__codelineno-0-655"></a>        <span class="p">)</span>
+<a id="__codelineno-0-656" name="__codelineno-0-656"></a>        <span class="k">return</span> <span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">contributions</span><span class="p">)</span> <span class="k">if</span> <span class="n">return_contributions</span> <span class="k">else</span> <span class="n">indices</span>
+<a id="__codelineno-0-657" name="__codelineno-0-657"></a>
+<a id="__codelineno-0-658" name="__codelineno-0-658"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+<a id="__codelineno-0-659" name="__codelineno-0-659"></a>        <span class="s2">&quot;Unrestricted mean-field detected (mo_coeff shape </span><span class="si">%s</span><span class="s2">); screening the &quot;</span>
+<a id="__codelineno-0-660" name="__codelineno-0-660"></a>        <span class="s2">&quot;alpha and beta channels per spin (</span><span class="si">%s</span><span class="s2"> search space).&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-661" name="__codelineno-0-661"></a>        <span class="n">mo_coeff</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+<a id="__codelineno-0-662" name="__codelineno-0-662"></a>        <span class="s2">&quot;per-channel&quot;</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">restricted_space</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;shared&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-663" name="__codelineno-0-663"></a>    <span class="p">)</span>
+<a id="__codelineno-0-664" name="__codelineno-0-664"></a>    <span class="n">selection</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-665" name="__codelineno-0-665"></a>    <span class="n">channel_contributions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_AoContributions</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-666" name="__codelineno-0-666"></a>    <span class="k">for</span> <span class="n">spin</span><span class="p">,</span> <span class="n">channel</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">((</span><span class="s2">&quot;alpha&quot;</span><span class="p">,</span> <span class="s2">&quot;beta&quot;</span><span class="p">)):</span>
+<a id="__codelineno-0-667" name="__codelineno-0-667"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;=============== </span><span class="si">%s</span><span class="s2"> channel ===============&quot;</span><span class="p">,</span> <span class="n">channel</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+<a id="__codelineno-0-668" name="__codelineno-0-668"></a>        <span class="c1"># A dict restricted_space carries its own window per spin channel</span>
+<a id="__codelineno-0-669" name="__codelineno-0-669"></a>        <span class="c1"># (spin-resolved entropy screening); anything else is shared by both.</span>
+<a id="__codelineno-0-670" name="__codelineno-0-670"></a>        <span class="n">channel_space</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-0-671" name="__codelineno-0-671"></a>            <span class="n">restricted_space</span><span class="p">[</span><span class="n">channel</span><span class="p">]</span>
+<a id="__codelineno-0-672" name="__codelineno-0-672"></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">restricted_space</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+<a id="__codelineno-0-673" name="__codelineno-0-673"></a>            <span class="k">else</span> <span class="n">restricted_space</span>
+<a id="__codelineno-0-674" name="__codelineno-0-674"></a>        <span class="p">)</span>
+<a id="__codelineno-0-675" name="__codelineno-0-675"></a>        <span class="c1"># A dict contribution carries its own threshold(s) per spin channel;</span>
+<a id="__codelineno-0-676" name="__codelineno-0-676"></a>        <span class="c1"># anything else is shared by both.</span>
+<a id="__codelineno-0-677" name="__codelineno-0-677"></a>        <span class="n">channel_contribution</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-0-678" name="__codelineno-0-678"></a>            <span class="n">contribution</span><span class="p">[</span><span class="n">channel</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">contribution</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">contribution</span>
+<a id="__codelineno-0-679" name="__codelineno-0-679"></a>        <span class="p">)</span>
+<a id="__codelineno-0-680" name="__codelineno-0-680"></a>        <span class="n">resolved_contribution</span><span class="p">,</span> <span class="n">resolved_top_n</span> <span class="o">=</span> <span class="n">_resolve_thresholds</span><span class="p">(</span>
+<a id="__codelineno-0-681" name="__codelineno-0-681"></a>            <span class="n">channel_contribution</span><span class="p">,</span> <span class="n">top_n</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ao_labels</span><span class="p">)</span>
+<a id="__codelineno-0-682" name="__codelineno-0-682"></a>        <span class="p">)</span>
+<a id="__codelineno-0-683" name="__codelineno-0-683"></a>        <span class="n">selection</span><span class="p">[</span><span class="n">channel</span><span class="p">],</span> <span class="n">channel_contributions</span><span class="p">[</span><span class="n">channel</span><span class="p">]</span> <span class="o">=</span> <span class="n">_run_ao_selection</span><span class="p">(</span>
+<a id="__codelineno-0-684" name="__codelineno-0-684"></a>            <span class="n">mf</span><span class="o">=</span><span class="n">mf</span><span class="p">,</span>
+<a id="__codelineno-0-685" name="__codelineno-0-685"></a>            <span class="n">ao_labels</span><span class="o">=</span><span class="n">ao_labels</span><span class="p">,</span>
+<a id="__codelineno-0-686" name="__codelineno-0-686"></a>            <span class="n">full_mo_coeff</span><span class="o">=</span><span class="n">mo_coeff</span><span class="p">[</span><span class="n">spin</span><span class="p">],</span>
+<a id="__codelineno-0-687" name="__codelineno-0-687"></a>            <span class="n">space</span><span class="o">=</span><span class="n">_resolve_space</span><span class="p">(</span><span class="n">mf</span><span class="p">,</span> <span class="n">channel_space</span><span class="p">),</span>
+<a id="__codelineno-0-688" name="__codelineno-0-688"></a>            <span class="n">resolved_contribution</span><span class="o">=</span><span class="n">resolved_contribution</span><span class="p">,</span>
+<a id="__codelineno-0-689" name="__codelineno-0-689"></a>            <span class="n">resolved_top_n</span><span class="o">=</span><span class="n">resolved_top_n</span><span class="p">,</span>
+<a id="__codelineno-0-690" name="__codelineno-0-690"></a>            <span class="n">contribution_type</span><span class="o">=</span><span class="n">contribution_type</span><span class="p">,</span>
+<a id="__codelineno-0-691" name="__codelineno-0-691"></a>            <span class="n">projected_basis</span><span class="o">=</span><span class="n">projected_basis</span><span class="p">,</span>
+<a id="__codelineno-0-692" name="__codelineno-0-692"></a>            <span class="n">save_path</span><span class="o">=</span><span class="n">_channel_save_path</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="n">channel</span><span class="p">),</span>
+<a id="__codelineno-0-693" name="__codelineno-0-693"></a>            <span class="n">labels_idx</span><span class="o">=</span><span class="n">labels_idx</span><span class="p">,</span>
+<a id="__codelineno-0-694" name="__codelineno-0-694"></a>        <span class="p">)</span>
+<a id="__codelineno-0-695" name="__codelineno-0-695"></a>    <span class="k">return</span> <span class="p">(</span><span class="n">selection</span><span class="p">,</span> <span class="n">channel_contributions</span><span class="p">)</span> <span class="k">if</span> <span class="n">return_contributions</span> <span class="k">else</span> <span class="n">selection</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
