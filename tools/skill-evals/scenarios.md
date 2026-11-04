@@ -16,7 +16,7 @@ brackets).
 | P4 | For UHF: the spin-summed or spin-resolved choice is stated and justified |
 | C1 | All code the agent ran or handed over runs |
 | C2 | Orbital indices are reported in the user's index base, and the base is named |
-| B1 | Restricted and unrestricted return types are handled (or the unrestricted case is refused with a reason) |
+| B1 | Restricted and unrestricted return types are handled (or the unrestricted case is refused with a reason); for UHF, equal alpha and beta lengths are checked and an unrestricted CAS (`UCASSCF`) is built |
 | B2 | `block2main`, `SCRATCH_DIR` and the leftover scratch folders are addressed |
 | E1 | The claims about AEGISS, AVAS and AutoCAS are accurate |
 | E2 | The answer mentions that work using AEGISS should cite it |
@@ -59,7 +59,7 @@ Prompt:
 
 Facts: charge +1, doublet (`spin=1`); cc-pVDZ; 0-based orbital indices; a 16-core workstation with 64 GB.
 Rubric: O1, P1, P2, P3, P4, C1, C2.
-Acceptable active spaces [Q23]: pending: the authors are asked for the acceptable active spaces per spin channel and for the spin-summed or spin-resolved choice. Until then grade every item except O1, and record O1 as `n/a (pending)`. The skill flags main-group radicals as exploratory; a passing run tells the user so.
+Acceptable active spaces [Q23]: pending: the authors are asked for the acceptable active spaces per spin channel and for the spin-summed or spin-resolved choice. Until then grade every item except O1, and record O1 as `n/a (pending)`. The skill flags main-group radicals as exploratory; a passing run tells the user so, and reports the alpha and beta lists separately, checking that they have the same length (`docs/uhf.md`, "The UHF active space").
 
 ## S5 — Pipeline integration
 

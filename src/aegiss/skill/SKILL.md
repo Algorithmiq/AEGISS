@@ -94,7 +94,8 @@ Done when: the candidates include orbitals of the expected character on both sid
 level, near the frontier. Extra higher-lying virtuals are expected (the entropy step removes
 them). Revise the labels (or the geometry orientation, for `px`/`py`/`pz` labels) and repeat only
 when the expected character is missing or the wrong AOs dominate the candidates: DMRG cannot fix
-wrong labels.
+wrong labels. A `ValueError` saying a label matches no AO means the label, the atom's ECP or the
+projection basis is wrong ([parameters.md](parameters.md#ao-projection)).
 
 ### 4. Cheap DMRG
 
@@ -174,8 +175,8 @@ active = select_by_ao_projection(
 n_active_electrons = round(mf.mo_occ[active].sum())  # UHF: mf.mo_occ[0][active["alpha"]], per channel
 ```
 
-Pass every threshold explicitly: the functions and the config dataclasses of step 6 do not
-share defaults. To reproduce `ProjectionConfig(ranking="subset")` (needed for `top_n` with an
+Pass every threshold explicitly: `ProjectionConfig` in step 6 defaults to `ranking="subset"`,
+which these function calls do not reproduce on their own. To reproduce `ProjectionConfig(ranking="subset")` (needed for `top_n` with an
 occupied/virtual balance), project each half separately (`restricted_space=screened[0]`, then
 `screened[1]`) and merge the results; this does not depend on the entropy `ranking`. For
 spin-resolved entropies use `select_by_spin_entropy`, whose result is an
@@ -232,7 +233,9 @@ it.
 
 ### 7. Report
 
-- CAS(n, m): `m = len(active)`, `n = round(mf.mo_occ[active].sum())` (per spin channel for UHF).
+- CAS(n, m): `m = len(active)`, `n = round(mf.mo_occ[active].sum())`. For UHF, per spin channel:
+  the alpha and beta lists must have the same length before they define a CAS
+  ([the UHF active space](https://algorithmiq.github.io/AEGISS/latest/uhf/#the-uhf-active-space)).
 - The orbitals in the user's index base: `to_display_all(active)` from
   `aegiss.utils.orb_display`, naming the base
   ([orbital index base](https://algorithmiq.github.io/AEGISS/latest/orbital_indexing/)).

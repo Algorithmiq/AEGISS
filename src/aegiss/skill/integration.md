@@ -15,17 +15,21 @@ stack, a library function.
 To try several thresholds, run DMRG once and screen its `soe1` repeatedly instead of calling
 `select_aegiss` again. Signatures and options:
 [API reference](https://algorithmiq.github.io/AEGISS/latest/api/). Pass every threshold
-explicitly: the config dataclasses and the selection functions do not share defaults, and
-the defaults are being changed (see the "Any run" rows of
-[parameters.md](parameters.md#entropy-screening) and
-[parameters.md](parameters.md#ao-projection)).
+explicitly: the values are choices for the system, and `ProjectionConfig` defaults to
+`ranking="subset"`, which a plain `select_by_ao_projection` call does not reproduce (see the
+"Any run" rows of [parameters.md](parameters.md#entropy-screening) and
+[parameters.md](parameters.md#ao-projection)). An AO label that matches no AO of the
+projection basis raises `ValueError`; `select_aegiss` checks this before the DMRG run.
 
 ## Return values
 
 - Restricted reference: a sorted `np.ndarray` of 0-based MO indices.
-- Unrestricted reference: `{"alpha": np.ndarray, "beta": np.ndarray}`. The channels are not
-  reconciled: index *k* is a different MO in each. Combining them is the caller's decision
-  ([UHF references](https://algorithmiq.github.io/AEGISS/latest/uhf/)).
+- Unrestricted reference: `{"alpha": np.ndarray, "beta": np.ndarray}`, two independent lists:
+  index *k* is a different MO in each, so never merge them. An unrestricted CAS needs the same
+  number of alpha and beta orbitals, which AEGISS does not enforce: check the lengths and
+  adjust the selection, then build `UCASCI`/`UCASSCF` with
+  `mc.sort_mo((list(alpha), list(beta)), base=0)`. PySCF's NEVPT2 does not accept an
+  unrestricted CAS ([the UHF active space](https://algorithmiq.github.io/AEGISS/latest/uhf/#the-uhf-active-space)).
 - No orbital passes the entropy screening: an empty flat `np.ndarray`, for an unrestricted
   reference too. Check the length before indexing or unpacking.
 
