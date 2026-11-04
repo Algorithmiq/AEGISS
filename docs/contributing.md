@@ -71,6 +71,9 @@ running the recipe it ran.
   workflow requires it, and it is copied into the changelog.
 - A bug fix that should also reach the current release gets the `backport` label, before
   or after merging. Features wait for the next minor release.
+- PRs into `main` land through a merge queue: once approved and green, choose *Merge when
+  ready* (or `gh pr merge --squash --auto`). The queue tests each PR on top of `main` and
+  the PRs ahead of it, so there is no need to update the branch from `main` by hand.
 - Fill in the PR template. Changes to the API or to user-facing behaviour come with
   tests and with the matching documentation update.
 - A new or changed runtime dependency must pass the license policy in `.grant.yaml`,
