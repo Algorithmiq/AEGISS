@@ -39,7 +39,7 @@ hooks = [
 
 [[repos]]
 repo = "https://github.com/astral-sh/ty-pre-commit"
-rev = "v0.0.89"
+rev = "v0.0.97"
 hooks = [{ id = "ty" }]
 
 [[repos]]
