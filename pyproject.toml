@@ -30,6 +30,7 @@ classifiers = [
 ]
 dependencies = [
     "block2==0.5.4",
+    "cyclopts>=5",
     "matplotlib>=3.9",
     "pyscf>=2.12.1",
     "seaborn>=0.13",
@@ -65,7 +66,7 @@ docs = [
 ]
 dev = [
     "prek>=0.5",
-    "ruff==0.17.1",
+    "ruff==0.17.3",
     "ty==0.0.97",
     { include-group = "test" },
 ]

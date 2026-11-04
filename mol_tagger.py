@@ -16,23 +16,27 @@
 
 from __future__ import annotations
 
-import argparse
-from pathlib import Path
+from cyclopts import App
+from cyclopts.types import ExistingFile  # noqa: TC002 (cyclopts reads the annotation at runtime)
 
 from aegiss.utils.mol_tagger import MolTagger
 
+app = App(
+    name="mol_tagger.py",
+    help="MolTagger — interactive 3D molecular viewer and atom tagger.",
+)
 
-def main() -> None:
-    """Parse CLI arguments and launch the interactive viewer."""
-    parser = argparse.ArgumentParser(
-        description="MolTagger — interactive 3D molecular viewer and atom tagger.",
-    )
-    parser.add_argument("filepath", type=Path, help="Path to an XYZ file.")
-    args = parser.parse_args()
 
-    tagger = MolTagger(args.filepath)
+@app.default
+def main(filepath: ExistingFile, /) -> None:
+    """Launch the interactive viewer.
+
+    Args:
+        filepath: Path to an XYZ file.
+    """
+    tagger = MolTagger(filepath)
     tagger.show()
 
 
 if __name__ == "__main__":
-    main()
+    app()
