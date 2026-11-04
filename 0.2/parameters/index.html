@@ -1,0 +1,2264 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Atomic Orbital and Entropy based Guided Inference for Space Selection">
+      
+      
+      
+        <link rel="canonical" href="https://algorithmiq.github.io/AEGISS/0.2/parameters/">
+      
+      
+        <link rel="prev" href="../orbital_indexing/">
+      
+      
+        <link rel="next" href="../tutorials/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
+    
+    
+      
+        <title>Choosing Parameters - AEGISS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#choosing-parameters" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="AEGISS" class="md-header__button md-logo" aria-label="AEGISS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AEGISS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Choosing Parameters
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal"  aria-label="To the Dark-side"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="To the Dark-side" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Algorithmiq/AEGISS" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Algorithmiq/AEGISS
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../installation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Installation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../orbital_indexing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Orbital Index Base
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Choosing Parameters
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorials/" class="md-tabs__link">
+          
+  
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../uhf/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  UHF References
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../moltagger/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  MolTagger
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../citing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Citing AEGISS
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../contributing/" class="md-tabs__link">
+          
+  
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../api/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="AEGISS" class="md-nav__button md-logo" aria-label="AEGISS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    AEGISS
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Algorithmiq/AEGISS" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Algorithmiq/AEGISS
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../orbital_indexing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orbital Index Base
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choosing Parameters
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choosing Parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#reference-and-orbitals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference and orbitals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dmrg-window" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DMRG window
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bond-dimension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bond dimension
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#entropy-screening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entropy screening
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#atom-labelling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Atom labelling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ao-projection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AO projection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#typical-ao-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typical AO labels
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stability-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stability check
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hand-off-limit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hand-off limit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#final-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Final checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-mistakes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common mistakes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/01_scf_and_localization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial 1 — SCF and Orbital Localization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/02_dmrg/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial 2 — DMRG and Single-Orbital Entropies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/03_ao_projection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial 3 — AO Projection and Chemical Character Screening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/04_aegiss/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial 4 — Complete AEGISS Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/05_unrestricted/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial 5 — Unrestricted (UHF) references
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../uhf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UHF References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../moltagger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MolTagger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../citing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Citing AEGISS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Developer Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documenting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Documenting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/active_space/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Active Space
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/initial_guess/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Initial Guess
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/wavefunction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Wavefunction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/localization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Localization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#reference-and-orbitals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference and orbitals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dmrg-window" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DMRG window
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bond-dimension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bond dimension
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#entropy-screening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entropy screening
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#atom-labelling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Atom labelling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ao-projection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AO projection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#typical-ao-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typical AO labels
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stability-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stability check
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hand-off-limit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hand-off limit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#final-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Final checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-mistakes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common mistakes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="choosing-parameters">Choosing parameters</h1>
+<p>How the AEGISS authors choose the DMRG window, the screening and projection thresholds and the
+atomic-orbital labels. The AEGISS agent skill follows the same rules: it ships the text below.</p>
+<p>Rules from the AEGISS authors (<a href="https://arxiv.org/abs/2508.10671">preprint</a> and an interview). Where
+the authors have no tested recipe the text says so: a selection made there is exploratory and the
+user must be told. Pass every threshold explicitly, and do not carry a threshold from one system to
+another: thresholds are not transferable.</p>
+<h2 id="reference-and-orbitals">Reference and orbitals</h2>
+<table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Rule</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Closed-shell molecule</td>
+<td>Start from canonical RHF orbitals.</td>
+<td>The DMRG window is an index window around the Fermi level, so it needs energy-ordered orbitals.</td>
+</tr>
+<tr>
+<td>Open-shell molecule</td>
+<td>Use UHF. ROHF is untested in AEGISS; use UHF for open shells.</td>
+<td>AEGISS offers only UHF for open shells.</td>
+</tr>
+<tr>
+<td>UHF reference</td>
+<td>Check ⟨S²⟩ before the DMRG: the deviation from S(S+1) must be at most 10% of S(S+1). Beyond that, flag it to the user instead of continuing silently.</td>
+<td>Spin contamination of the UHF orbitals carries into the entropies.</td>
+</tr>
+<tr>
+<td>Spin-summed or spin-resolved entropies</td>
+<td>Follow <a href="https://algorithmiq.github.io/AEGISS/latest/uhf/#which-to-use">the guidance on UHF references</a>. Spin-resolved needs <code>symm_type="SZ"</code>.</td>
+<td>The criteria are on that page.</td>
+</tr>
+<tr>
+<td>Many low-lying virtuals of little importance (Rydberg-like or diffuse functions in a large basis)</td>
+<td>Start from natural orbitals (NOs).</td>
+<td>Canonical virtuals with little correlation sit just above the LUMO and fill the window; NOs carry almost no occupation there and move them down the list.</td>
+</tr>
+<tr>
+<td>Canonical window would approach about 100 orbitals</td>
+<td>Use NOs together with <code>reorder="fiedler"</code>, with a smaller window.</td>
+<td>NOs concentrate the correlation in fewer orbitals, so a smaller window covers the same physics and the DMRG is cheaper.</td>
+</tr>
+<tr>
+<td>Canonical RHF is known beforehand to be a poor reference</td>
+<td>Use NOs from a correlated method (the paper uses MP2).</td>
+<td>They adapt better to the correlation than canonical RHF orbitals.</td>
+</tr>
+<tr>
+<td>Localized orbitals</td>
+<td>Do not use them as input.</td>
+<td>They have no orbital energies, so the index window is no longer a Fermi-level window, and there is no workaround yet.</td>
+</tr>
+<tr>
+<td>Cheap steps in a smaller basis</td>
+<td>Do it only if the basis is much smaller; the saving is otherwise small. Redo the final selection in the production basis.</td>
+<td>The DMRG dominates the cost and its cost is set by the window size. The setup (labels, thresholds) carries over, but orbital indices change with the basis, so the final selection does not.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="dmrg-window">DMRG window</h2>
+<table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Rule</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Starting <code>ncas</code></td>
+<td>Start with 3m, where m is the expected number of active orbitals.</td>
+<td>General guideline of the authors.</td>
+</tr>
+<tr>
+<td>Organic π systems</td>
+<td>Expect to need 3–5m.</td>
+<td>Range found for the systems of the paper.</td>
+</tr>
+<tr>
+<td>Transition-metal complexes</td>
+<td>Expect to need 6–8m.</td>
+<td>The d manifold is spread in energy and mixes with ligand orbitals.</td>
+</tr>
+<tr>
+<td>Bond breaking</td>
+<td>No tested factor; start with 3m and treat the result as exploratory.</td>
+<td>The authors have no example.</td>
+</tr>
+<tr>
+<td>Margin to the edge</td>
+<td>Keep at least 3 orbitals between the outermost orbital above τ_E and each edge of the window.</td>
+<td>A crowded edge means correlated orbitals may lie outside the window.</td>
+</tr>
+<tr>
+<td>Margin smaller than 3</td>
+<td>Widen the window by about 5 orbitals on the crowded side and rerun the DMRG.</td>
+<td>The entropy ranking is only meaningful for orbitals well inside the window.</td>
+</tr>
+<tr>
+<td>Closed-shell RHF</td>
+<td><code>symm_type="SU2"</code>.</td>
+<td>Cheaper at equal accuracy.</td>
+</tr>
+<tr>
+<td>UHF, spin-resolved entropies, or any open-shell case with per-spin data</td>
+<td><code>symm_type="SZ"</code> (the library default).</td>
+<td>UHF and spin-resolved entropies require it.</td>
+</tr>
+<tr>
+<td>Large window, or poor convergence at a given bond dimension</td>
+<td>Use <code>reorder="fiedler"</code>.</td>
+<td>Authors' guideline: reordering shortens the interaction range along the DMRG chain, which helps large windows converge.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="bond-dimension">Bond dimension</h2>
+<table>
+<thead>
+<tr>
+<th>Run</th>
+<th><code>max_bond_dim</code></th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cheap first look</td>
+<td>200. Trust the set of orbitals above τ_E only if a rerun at 500 gives the same set; If 500 is not converged, check at <code>800</code>/<code>1000</code> (based on the DMRG expected cost); With a <code>ncas &gt;= 50</code> the suggestion is to run the exploratory run at <code>500</code> and check with <code>800</code>/<code>1000</code></td>
+<td>The ranking can be unreliable at low bond dimension; an unchanged set at 500 shows it has converged.</td>
+</tr>
+<tr>
+<td>Production</td>
+<td>500, a multiple of 4. The library ramps from <code>max_bond_dim</code>/2; the paper ramps from 100 to 500 (Trans-Cl: fixed 500).</td>
+<td>Value used by every run of the paper.</td>
+</tr>
+<tr>
+<td>Checking convergence</td>
+<td>Rerun at a higher <code>max_bond_dim</code> and stop when the set above τ_E is unchanged.</td>
+<td>The library runs the whole ramp in one DMRG call and computes the entropies only from the final wavefunction, so there are no entropies partway through the ramp.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="entropy-screening">Entropy screening</h2>
+<table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Rule</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Starting point</td>
+<td><code>fraction=0.1</code>, <code>fraction_type="r"</code> (τ_E = S(1)max/10). The paper uses 0.2 for benzene.</td>
+<td>The AutoCAS criterion, used by the paper.</td>
+</tr>
+<tr>
+<td>Flat entropies (every orbital above the 0.1 threshold)</td>
+<td>Raise to <code>fraction=0.9</code>, relative.</td>
+<td>In the paper's DOBNA case with MP2 natural orbitals no orbital fell below 0.1; 0.9 isolated the strongly entropic subset.</td>
+</tr>
+<tr>
+<td>Comparing entropies across runs</td>
+<td><code>fraction_type="a"</code>.</td>
+<td>An absolute threshold is the same number in every run; a relative one moves with S(1)max.</td>
+</tr>
+<tr>
+<td>S(1)max itself is small</td>
+<td><code>fraction_type="a"</code>.</td>
+<td>A relative cut then keeps orbitals that are only weakly correlated.</td>
+</tr>
+<tr>
+<td>Occupied and virtual entropies differ strongly in scale</td>
+<td><code>ranking="subset"</code>.</td>
+<td>A global cut would empty one side.</td>
+</tr>
+<tr>
+<td>Any run</td>
+<td>Pass <code>fraction</code>, <code>fraction_type</code> and <code>ranking</code> explicitly.</td>
+<td>The defaults differ between the config classes and the selection functions, and are being aligned (open PRs <a href="https://github.com/Algorithmiq/AEGISS/pull/112">#112</a> and <a href="https://github.com/Algorithmiq/AEGISS/pull/114">#114</a>).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="atom-labelling">Atom labelling</h2>
+<table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Rule</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Localized process (d–d, π→π*, bond dissociation)</td>
+<td>Use 2–3 clusters and put labels only on the active cluster. In ferrocene only <code>"Fe 3d"</code> is labelled; the Cp orbitals enter through the entropy step. Select the cluster's atoms in <a href="https://algorithmiq.github.io/AEGISS/latest/moltagger/">MolTagger</a> to get atom-specific <code>ao_labels</code>.</td>
+<td>The entropy step brings in the correlated partners; the labels only say which process matters.</td>
+</tr>
+<tr>
+<td>Delocalized or charge-transfer process</td>
+<td>Put donor and acceptor in separate clusters (Trans-Cl: Ru and the ligand).</td>
+<td>Each channel then gets its own threshold or <code>top_n</code>.</td>
+</tr>
+<tr>
+<td>Extended ligand</td>
+<td>One cluster per ring or fragment (TLD-1433).</td>
+<td>Each ring or fragment then gets its own threshold or <code>top_n</code> (TLD-1433 uses 4 clusters).</td>
+</tr>
+<tr>
+<td>Cannot anticipate where the relevant orbitals are localised</td>
+<td>Skip clustering: the labels apply to every atom of that element (the AVAS-like limit).</td>
+<td>Without clusters the labels are not tied to a region of the molecule.</td>
+</tr>
+<tr>
+<td>Refining the labels</td>
+<td>Go from coarse to fine and refine only when the selection is unbalanced. Relabelling does not need a new DMRG run, only the AO projection step.</td>
+<td>The DMRG is the expensive part and does not depend on the labels.</td>
+</tr>
+<tr>
+<td>Choosing the molecular plane for <code>2pz</code> labels</td>
+<td>Orient the molecule so the π orbitals are along z, or use the matching label (<code>2px</code> if the molecule lies in the yz plane, as DOBNA does). Use <a href="https://algorithmiq.github.io/AEGISS/latest/moltagger/">MolTagger</a> to check. <a href="https://algorithmiq.github.io/AEGISS/latest/moltagger/">MolTagger</a> can be used to identify the plane in which the selected atoms are placed.</td>
+<td>A label on the wrong p orbital selects nothing useful.</td>
+</tr>
+<tr>
+<td>Bad clustering</td>
+<td>Expect a less compact space, not a lost orbital.</td>
+<td>Clustering never removes correlated orbitals from the entropy-screened pool.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="ao-projection">AO projection</h2>
+<table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Rule</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clean, well-separated target manifold (benzene π, ferrocene Fe 3d, DOBNA π)</td>
+<td><code>contribution=0.5</code> with <code>contribution_type="a"</code>.</td>
+<td>The weights separate cleanly, so a threshold picks the manifold.</td>
+</tr>
+<tr>
+<td>Strongly mixed orbitals (metal–ligand hybridization, Rydberg virtuals)</td>
+<td><code>top_n</code> instead of <code>contribution</code>. Trans-Cl: <code>top_n=1</code> per Ru 4d component and (4,4) occupied/virtual on the bipyridine π (space II: 2 per component and (6,6)); TLD-1433 uses <code>top_n</code> per cluster.</td>
+<td>A threshold takes either everything or nothing there.</td>
+</tr>
+<tr>
+<td>Balance between occupied and virtual orbitals</td>
+<td><code>top_n</code> with <code>ranking="subset"</code> (<code>ProjectionConfig</code> only).</td>
+<td>This gives the (n_occ, n_virt) count.</td>
+</tr>
+<tr>
+<td>Reading the weights</td>
+<td>Do not treat a <code>contribution</code> value as a probability.</td>
+<td>The weight sums the absolute AO–MO overlaps over the label's AOs (an L1 norm of non-orthogonal overlaps), so it is not bounded by 1 (open issue, <a href="https://github.com/Algorithmiq/AEGISS/pull/10">PR #10</a>).</td>
+</tr>
+<tr>
+<td>Distinct correlation channels (metal and ligand)</td>
+<td>One group per channel, each with its own threshold or <code>top_n</code>.</td>
+<td>Each channel then gets its own selection.</td>
+</tr>
+<tr>
+<td>One manifold described by several labels (<code>["C 2pz", "N 2pz"]</code> for one π system)</td>
+<td>A flat list or a single group.</td>
+<td>One threshold fits one manifold.</td>
+</tr>
+<tr>
+<td>4d/5d metal without a pseudopotential</td>
+<td>Do not run with <code>basis="minao"</code>.</td>
+<td>Without a pseudopotential <code>minao</code> mis-numbers the 4d/5d labels and the selection comes out empty; open <a href="https://github.com/Algorithmiq/AEGISS/pull/113">PR #113</a> makes it raise.</td>
+</tr>
+<tr>
+<td>Label outside the minimal valence shell (a second d shell, Rydberg or diffuse functions)</td>
+<td><code>ProjectionConfig(basis=None)</code> (<code>projected_basis=None</code> in <code>select_by_ao_projection</code>).</td>
+<td>The minimal basis has no such functions.</td>
+</tr>
+<tr>
+<td>Any run</td>
+<td>Pass <code>contribution</code>, <code>contribution_type</code>, <code>top_n</code> and, in <code>ProjectionConfig</code>, <code>ranking</code> explicitly.</td>
+<td>The defaults differ between the config classes and the selection functions (open PRs <a href="https://github.com/Algorithmiq/AEGISS/pull/112">#112</a> and <a href="https://github.com/Algorithmiq/AEGISS/pull/114">#114</a>).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="typical-ao-labels">Typical AO labels</h2>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th><code>ao_labels</code></th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Conjugated π</td>
+<td><code>"C 2pz"</code>, plus the heteroatoms (<code>"N 2pz"</code>, <code>"B 2pz"</code>, <code>"O 2pz"</code>)</td>
+<td><code>2pz</code> assumes the molecule lies in the xy plane; the paper writes <code>C/B 2px</code> for DOBNA, which lies in the yz plane.</td>
+</tr>
+<tr>
+<td>3d metal</td>
+<td><code>"Fe 3d"</code></td>
+<td></td>
+</tr>
+<tr>
+<td>4d metal</td>
+<td><code>"Ru 4d"</code>, or the five d components separately with <code>top_n=1</code> each</td>
+<td>Needs a pseudopotential, see above.</td>
+</tr>
+<tr>
+<td>Ligand of a metal</td>
+<td>Its own group, e.g. <code>["C 2pz", "N 2pz"]</code> on the ligand atoms</td>
+<td>The paper writes this as <code>C/N 2pz</code>.</td>
+</tr>
+<tr>
+<td>Bond breaking (σ/σ*)</td>
+<td>No tested recipe</td>
+<td>Not analysed by the authors; the selection is exploratory.</td>
+</tr>
+<tr>
+<td>Lone pairs</td>
+<td>No tested recipe</td>
+<td>Not analysed by the authors; the selection is exploratory.</td>
+</tr>
+<tr>
+<td>Main-group radical</td>
+<td>No tested recipe</td>
+<td>Not analysed by the authors; the selection is exploratory.</td>
+</tr>
+<tr>
+<td>4s, or a second d shell (3d′) on a metal</td>
+<td>No tested recipe</td>
+<td>Not analysed by the authors; the selection is exploratory.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="stability-check">Stability check</h2>
+<p>Rerun the <code>fraction_type=r</code> selection with <code>fraction</code> 0.08, 0.10 and 0.12. The final active space should be identical;
+the entropy-screened pool may shift by an orbital or two, because the AO projection absorbs that. If
+the final space changes, an orbital sits right at the threshold: inspect it (cube file, AO composition)
+and look for a plateau in the threshold plot, AutoCAS style. The paper does not test this check.</p>
+<h2 id="hand-off-limit">Hand-off limit</h2>
+<p>You may run DMRG yourself (as an agent) unless both <code>ncas</code> ≥ 30 and <code>max_bond_dim</code> ≥ 500; then hand
+the user a script. A cheap, low-bond-dimension run is fine on any window. For reference, block2
+defaults on one node:</p>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>CAS</th>
+<th><code>max_bond_dim</code></th>
+<th>Threads</th>
+<th>DMRG time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ferrocene</td>
+<td>(40,40)</td>
+<td>300</td>
+<td>32 (LEONARDO)</td>
+<td>654 s (about 11 min)</td>
+</tr>
+<tr>
+<td>DOBNA</td>
+<td>(40,40)</td>
+<td>300</td>
+<td>32 (LEONARDO)</td>
+<td>291 s (about 5 min)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="final-checks">Final checks</h2>
+<p>Check the final active space against this list; each line gives the check and what is a red flag.</p>
+<ul>
+<li>Electron count: an odd count for a closed shell, or a count that does not match the chemistry.</li>
+<li>Occupied/virtual pairs: an occupied orbital whose correlating partner is missing, or an almost all-virtual space.</li>
+<li>Degenerate partners: one orbital of a degenerate pair selected without the other (<code>top_n</code> can split a pair; use it carefully).</li>
+<li>Frontier orbitals: HOMO or LUMO missing.</li>
+<li>Rydberg-like or diffuse virtuals: a virtual with a diffuse shape, or a low total weight on the minimal-basis AOs. Remove it by hand (the paper does so for TLD-1433).</li>
+<li>Window edge: high entropy near the edge of the window; widen the window.</li>
+<li>Occupations after CASSCF: natural occupation numbers above 1.98 or below 0.02 (generic thresholds).</li>
+<li>UHF: an unequal number of alpha and beta orbitals.</li>
+<li>Symmetry: optionally compare irreducible representations (the paper uses them as a post-selection criterion).</li>
+</ul>
+<h2 id="common-mistakes">Common mistakes</h2>
+<ul>
+<li>Choosing the wrong plane for the <code>2pz</code> labels. <a href="https://algorithmiq.github.io/AEGISS/latest/moltagger/">MolTagger</a> helps.</li>
+<li>Labelling a 4d/5d metal without a pseudopotential.</li>
+<li>Using too small a window.</li>
+<li>Carrying thresholds from one system to another: they are not transferable.</li>
+<li>Index base confusion: inputs follow <code>AEGISS_ORB_BASE</code>, but the returned indices are always 0-based; see <a href="https://algorithmiq.github.io/AEGISS/latest/orbital_indexing/">Orbital index base</a>.</li>
+<li>Accepting the output without looking at the orbitals.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../orbital_indexing/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Orbital Index Base">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Orbital Index Base
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../tutorials/" class="md-footer__link md-footer__link--next" aria-label="Next: Overview">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Overview
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Algorithmiq Ltd &middot; Released under the <a href="https://github.com/Algorithmiq/AEGISS/blob/main/LICENSE">Apache License 2.0</a>
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tracking", "navigation.sections", "navigation.top", "navigation.footer", "search.highlight", "content.code.copy", "content.tooltips"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c21346df.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  <script data-mkdocs-jupyter-mathjax="{&quot;url&quot;: &quot;https://cdn.jsdelivr.net/npm/mathjax@4.1.3/tex-mml-chtml.js&quot;, &quot;version&quot;: 4}">
+/* Shared by full pages and Material's instant navigation. */
+(() => {
+  const config = JSON.parse(document.currentScript.dataset.mkdocsJupyterMathjax);
+  if (window.mkdocsJupyterMathJax) return;
+
+  let loading;
+  let queue = Promise.resolve();
+  let previous = [];
+
+  const ready = async () => {
+    if (!loading) {
+      loading = (async () => {
+        let math = window.MathJax;
+        if (!math?.typesetPromise) {
+          const url = new URL(config.url, document.baseURI).href;
+          const existing = Array.from(document.scripts).find(script =>
+            script.src && (script.src === url || script.id === 'MathJax-script' ||
+              (/mathjax/i.test(script.src) &&
+               /\/(?:MathJax|latest|(?:tex|mml)(?:-mml)?-(?:chtml|svg))\.js(?:[?#]|$)/i.test(script.src))));
+          if (existing) {
+            if (!math?.startup?.promise) {
+              await new Promise((resolve, reject) => {
+                existing.addEventListener('load', resolve, { once: true });
+                existing.addEventListener('error', reject, { once: true });
+              });
+            }
+          } else {
+            // Keep site macros, delimiters and startup hooks when supplied.
+            const options = math || {};
+            window.MathJax = {
+              ...options,
+              loader: {
+                ...options.loader,
+                load: Array.from(new Set(['ui/safe', ...(options.loader?.load || [])]))
+              },
+              startup: { typeset: false, ...options.startup },
+              tex: {
+                tags: 'ams',
+                useLabelIds: true,
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true,
+                ...options.tex
+              }
+            };
+            await new Promise((resolve, reject) => {
+              const script = document.createElement('script');
+              script.src = config.url;
+              script.id = 'MathJax-script';
+              script.async = true;
+              script.onload = resolve;
+              script.onerror = reject;
+              document.head.appendChild(script);
+            });
+          }
+        }
+        math = window.MathJax;
+        await math.startup.promise;
+        return math;
+      })();
+    }
+    const math = await loading;
+    // A site owner can extend the v3 queue again on each navigation.
+    await math.startup.promise;
+    return math;
+  };
+
+  const unrendered = node => {
+    if (node.matches('mjx-container')) return [];
+    if (!node.querySelector('mjx-container')) return [node];
+    // In v3, scanning generated assistive MathML again produces nested output.
+    return Array.from(node.children).flatMap(unrendered);
+  };
+
+  const refresh = () => {
+    // A separate chain also serializes v3, without changing v4's startup promise.
+    queue = queue.then(async () => {
+      const notebooks = Array.from(document.querySelectorAll('.jupyter-wrapper'));
+      if (!notebooks.length && !previous.length) return;
+      if (notebooks.length === previous.length &&
+          notebooks.every((node, index) => node === previous[index])) return;
+      const math = await ready();
+      if (previous.length) {
+        math.typesetClear(previous);
+        math.texReset();
+      }
+      previous = notebooks.filter(node => node.isConnected);
+      const pending = previous.flatMap(unrendered);
+      if (pending.length) await math.typesetPromise(pending);
+    }).catch(error => console.error('mkdocs-jupyter: MathJax rendering failed', error));
+    return queue;
+  };
+
+  window.mkdocsJupyterMathJax = { refresh };
+  const start = () => {
+    if (typeof document$ !== 'undefined') document$.subscribe(refresh);
+    else refresh();
+  };
+  // Theme bundles and user-provided MathJax scripts can follow notebook content.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, { once: true });
+  } else start();
+})();
+
+</script>
+</body>
+</html>
