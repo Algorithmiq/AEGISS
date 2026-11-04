@@ -41,6 +41,13 @@ _SPIN_SCREENED = {
 }
 
 
+@pytest.fixture(autouse=True)
+def _skip_label_check():
+    """The mocked ``mf`` has no real basis to check labels against."""
+    with patch(f"{_MODULE}._check_ao_labels"):
+        yield
+
+
 @pytest.fixture
 def mf_mock() -> MagicMock:
     mf = MagicMock()
@@ -711,3 +718,27 @@ class TestParameterValidation:
     def test_invalid_projection_ranking_raises(self) -> None:
         with pytest.raises(ValueError, match="ranking"):
             ProjectionConfig(ao_labels=["C 2pz"], ranking="bad")  # type: ignore[arg-type]
+
+    def test_unmatched_ao_label_raises_before_dmrg(
+        self,
+        mol_mock: MagicMock,
+        mf_mock: MagicMock,
+        dmrg_config: DMRGConfig,
+        projection_config_subset: ProjectionConfig,
+    ) -> None:
+        with (
+            patch(
+                f"{_MODULE}._check_ao_labels", side_effect=ValueError("matches no AO")
+            ),
+            patch(f"{_MODULE}.run_dmrg_subprocess") as mock_dmrg,
+            pytest.raises(ValueError, match="matches no AO"),
+        ):
+            select_aegiss(
+                mol_mock,
+                mf_mock,
+                dmrg_config=dmrg_config,
+                entropy_config=EntropyConfig(),
+                projection_config=projection_config_subset,
+                output_config=OutputConfig(save_orb=False),
+            )
+        mock_dmrg.assert_not_called()
