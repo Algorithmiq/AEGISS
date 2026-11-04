@@ -10,6 +10,8 @@ jobs:
     name: Update ${{ matrix.tool }}
     runs-on: ubuntu-26.04
     permissions:
+      # the job reads its own entry in the run to link the log of the hooks
+      actions: read
       contents: write
       pull-requests: write
     strategy:
@@ -30,44 +32,100 @@ jobs:
         env:
           TOOL: ${{ matrix.tool }}
         run: |
-          latest="$(curl -fsSL "https://pypi.org/pypi/${TOOL}/json" | jq -r .info.version)"
+          json="$(curl -fsSL "https://pypi.org/pypi/${TOOL}/json")"
+          latest="$(jq -r .info.version <<< "$json")"
           current="$(sed -nE "s/.*\"${TOOL}==([0-9.]+)\".*/\1/p" pyproject.toml)"
-          echo "latest=$latest" >> "$GITHUB_OUTPUT"
-          echo "current=$current" >> "$GITHUB_OUTPUT"
+          # the releases after the pinned one, up to the latest, whose notes the PR links
+          releases="$(jq -r '.releases | keys[]' <<< "$json" | sort -V \
+            | sed -n "/^${current//./\\.}\$/,/^${latest//./\\.}\$/p" | tail -n +2 | paste -sd ' ')"
+          {
+            echo "latest=$latest"
+            echo "current=$current"
+            echo "releases=$releases"
+            echo "outdated=$([[ "$latest" != "$current" ]] && echo true || echo false)"
+            echo "branch=chore-deps-update-${TOOL}-${latest}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Bump the pin and the hook
-        if: steps.versions.outputs.latest != steps.versions.outputs.current
+        if: steps.versions.outputs.outdated == 'true'
         run: just bump-tool "${{ matrix.tool }}" "${{ steps.versions.outputs.latest }}"
 
+      # ty resolves imports against the project environment, the viz extra included, as in lint.yml
       - name: Install package
-        if: steps.versions.outputs.latest != steps.versions.outputs.current
-        run: just build --all-groups
+        if: steps.versions.outputs.outdated == 'true'
+        run: just build --all-groups --all-extras
 
       - name: Apply the new formatting
-        if: matrix.tool == 'ruff' && steps.versions.outputs.latest != steps.versions.outputs.current
+        if: matrix.tool == 'ruff' && steps.versions.outputs.outdated == 'true'
         run: just fmt
 
+      # The PR body links this step by name; rename it there too.
       - name: Run the hooks
         id: check
-        if: steps.versions.outputs.latest != steps.versions.outputs.current
+        if: steps.versions.outputs.outdated == 'true'
         continue-on-error: true
+        # bash, not the default `bash -e`: pipefail makes the step fail with the hooks, not with tee
+        shell: bash
         env:
           # this workflow runs on a checkout of main, where the always-run no-commit-to-branch hook fails by design
           SKIP: no-commit-to-branch
-        run: just lint
+        run: just lint 2>&1 | tee "$RUNNER_TEMP/lint.log"
+
+      - name: Find the log of the hooks
+        id: log
+        if: steps.versions.outputs.outdated == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_NAME: Update ${{ matrix.tool }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          # The job and step ids are only known while the job runs; without them, link the run.
+          job="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}/jobs" \
+            --paginate --jq '.jobs[] | select(.name == env.JOB_NAME)' || true)"
+          job_url="$(jq -r '.html_url // empty' <<< "$job" || true)"
+          step="$(jq -r '(.steps // [])[] | select(.name == "Run the hooks") | .number' <<< "$job" || true)"
+          hooks_url="${job_url:-$RUN_URL}"
+          if [[ -n "$job_url" && -n "$step" ]]; then
+            hooks_url="${job_url}#step:${step}:1"
+          fi
+          {
+            echo "run-url=$RUN_URL"
+            echo "job-url=${job_url:-$RUN_URL}"
+            echo "hooks-url=$hooks_url"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Write the pull request body
+        if: steps.versions.outputs.outdated == 'true'
+        env:
+          TOOL: ${{ matrix.tool }}
+          CURRENT: ${{ steps.versions.outputs.current }}
+          LATEST: ${{ steps.versions.outputs.latest }}
+          RELEASES: ${{ steps.versions.outputs.releases }}
+          BRANCH: ${{ steps.versions.outputs.branch }}
+          LINT_OUTCOME: ${{ steps.check.outcome }}
+          RUN_URL: ${{ steps.log.outputs.run-url }}
+          JOB_URL: ${{ steps.log.outputs.job-url }}
+          HOOKS_URL: ${{ steps.log.outputs.hooks-url }}
+          WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/workflows/update-tools.yml
+        run: |
+          git diff --name-only HEAD > "$RUNNER_TEMP/changed-files.txt"
+          python3 tools/update-tool-pr-body.py \
+            --tool "$TOOL" --current "$CURRENT" --latest "$LATEST" --releases "$RELEASES" \
+            --branch "$BRANCH" --lint-log "$RUNNER_TEMP/lint.log" --lint-outcome "$LINT_OUTCOME" \
+            --changed-files "$RUNNER_TEMP/changed-files.txt" --run-url "$RUN_URL" \
+            --job-url "$JOB_URL" --hooks-url "$HOOKS_URL" --workflow-url "$WORKFLOW_URL" \
+            --output "$RUNNER_TEMP/pr-body.md"
 
       - name: Create pull request
-        if: steps.versions.outputs.latest != steps.versions.outputs.current
+        if: steps.versions.outputs.outdated == 'true'
         uses: peter-evans/create-pull-request@v8.1.1
         with:
           token: ${{ secrets.APPROVE_AUTO_MERGE_PAT }}
           draft: ${{ steps.check.outcome == 'failure' }}
           commit-message: "chore(deps-dev): ⬆️ update ${{ matrix.tool }} from ${{ steps.versions.outputs.current }} to ${{ steps.versions.outputs.latest }}"
           title: "chore(deps-dev): ⬆️ update ${{ matrix.tool }} from ${{ steps.versions.outputs.current }} to ${{ steps.versions.outputs.latest }}"
-          body: |
-            Moves the `${{ matrix.tool }}` pin in `pyproject.toml` and its hook in `prek.toml` together, and refreshes `uv.lock`.
-            ${{ steps.check.outcome == 'failure' && 'The hooks fail with the new version; the PR is a draft until they are fixed.' || 'All hooks pass.' }}
-          branch: chore-deps-update-${{ matrix.tool }}-${{ steps.versions.outputs.latest }}
+          body-path: ${{ runner.temp }}/pr-body.md
+          branch: ${{ steps.versions.outputs.branch }}
           delete-branch: true
           labels: |
             dependencies
