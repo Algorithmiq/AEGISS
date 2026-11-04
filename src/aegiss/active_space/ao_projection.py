@@ -39,6 +39,85 @@ _RestrictedSpace = (
 _AoContributions = dict[int, list[tuple[int, float]]]
 
 
+def _projection_mol(mol: Any, basis: str | None) -> Any:
+    """Build the molecule whose AOs the MOs are projected onto.
+
+    Args:
+        mol (pyscf.gto.Mole): Molecule of the mean-field calculation.
+        basis (str or None): Projection basis; ``None`` returns *mol* itself.
+
+    Returns:
+        projection_mol (pyscf.gto.Mole): *mol* in the projection basis. It keeps
+            the ECPs of *mol*, which set how PySCF numbers the shells.
+    """
+    if basis is None:
+        return mol
+    projection_mol = mol.copy()
+    projection_mol.atom = mol._atom  # noqa: SLF001 -- pyscf keeps the parsed geometry only here
+    projection_mol.unit = (
+        "B"  # in Bohr because `mol._atom` returns the coordinates in Bohr
+    )
+    projection_mol.symmetry = False
+    projection_mol.basis = basis
+    projection_mol.build(False, False)  # noqa: FBT003
+    return projection_mol
+
+
+def _check_ao_labels(
+    mol: Any, ao_labels: list[str | list[str]], basis: str | None
+) -> None:
+    """Check that every AO label entry matches at least one projection AO.
+
+    A label that matches nothing would silently select no orbital. The usual
+    cause is PySCF's shell numbering: a valence-only basis such as ``minao`` for
+    4d and 5d elements is numbered from 1s unless the atom carries an ECP, so
+    ``"Ru 4d"`` only exists with an ECP. Within a group, a label that matches
+    nothing is only logged, as long as another label of the group matches.
+
+    Args:
+        mol (pyscf.gto.Mole): Molecule of the mean-field calculation.
+        ao_labels (list[str | list[str]]): AO label entries, as in
+            :func:`select_by_ao_projection`.
+        basis (str or None): Projection basis; ``None`` uses the basis of *mol*.
+
+    Raises:
+        ValueError: If an entry matches no AO of the projection basis.
+    """
+    projection_mol = _projection_mol(mol, basis)
+    basis_name = f"{basis!r} projection" if basis is not None else "molecular"
+    symbols = {projection_mol.atom_symbol(i) for i in range(projection_mol.natm)}
+    for entry in ao_labels:
+        group = [entry] if isinstance(entry, str) else entry
+        unmatched = [
+            lbl for lbl in group if len(projection_mol.search_ao_label(lbl)) == 0
+        ]
+        if len(unmatched) < len(group):
+            for lbl in unmatched:
+                logger.warning(
+                    "AO label %r of group %s matches no AO in the %s basis.",
+                    lbl,
+                    group,
+                    basis_name,
+                )
+            continue
+        named = {tok for lbl in group for tok in lbl.split() if tok in symbols}
+        shells = sorted(
+            {
+                f"{sym} {nl}"
+                for _, sym, nl, _ in projection_mol.ao_labels(fmt=False)
+                if sym in named
+            }
+        )
+        available = f" Shells available: {', '.join(shells)}." if shells else ""
+        msg = (
+            f"AO label {entry!r} matches no AO in the {basis_name} basis.{available} "
+            "PySCF numbers the shells of a valence-only basis (e.g. 'minao' for 4d "
+            "and 5d elements) from 1s unless the atom carries an ECP: give the "
+            "molecule an ECP, or project onto the molecular basis (basis=None)."
+        )
+        raise ValueError(msg)
+
+
 def _compute_contribution(
     mf: Any,
     label: str | list[str],
@@ -65,16 +144,8 @@ def _compute_contribution(
             order of *reduced_space_indices*, for potential further analysis or plotting.
     """
     mol2 = mf.mol  # original basis
-    projection_mol = mol2.copy()  # extended basis
-    if secondary_basis is not None:
-        projection_mol.atom = mol2._atom  # noqa: SLF001 -- pyscf keeps the parsed geometry only here
-        projection_mol.unit = (
-            "B"  # in Bohr because `mol._atom` returns the coordinates in Bohr
-        )
-        projection_mol.symmetry = False
-        projection_mol.basis = secondary_basis
-        projection_mol.build(False, False)  # noqa: FBT003
-    else:
+    projection_mol = _projection_mol(mol2, secondary_basis)
+    if secondary_basis is None:
         logger.info(
             "No secondary basis provided. Using original molecule for projection."
         )
@@ -533,7 +604,8 @@ def select_by_ao_projection(
 
     Raises:
         ValueError: If *restricted_space* or *contribution* is a spin-resolved
-            ``{"alpha", "beta"}`` dict but *mf* is restricted.
+            ``{"alpha", "beta"}`` dict but *mf* is restricted, or if an entry of
+            *ao_labels* matches no AO of the projection basis.
     """
     logger.info("----------------AO Projection Screening for AEGISS----------------\n")
     logger.info("AO labels for projection: %s", ao_labels)
@@ -549,6 +621,7 @@ def select_by_ao_projection(
     else:
         logger.info("Using molecule for AO projection")
 
+    _check_ao_labels(mf.mol, ao_labels, projected_basis)
     labels_idx: dict[int, str | list[str]] = dict(enumerate(ao_labels))
     mo_coeff = np.asarray(mf.mo_coeff)
 

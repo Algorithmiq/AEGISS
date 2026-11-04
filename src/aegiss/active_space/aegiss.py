@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from aegiss.active_space.ao_projection import select_by_ao_projection
+from aegiss.active_space.ao_projection import _check_ao_labels, select_by_ao_projection
 from aegiss.active_space.entropy_screening import (
     select_by_entropy,
     select_by_spin_entropy,
@@ -391,7 +391,12 @@ def select_aegiss(
             mapping (kept separate, not reconciled) for an unrestricted one.
             When no orbital passes the entropy screening, an empty flat
             ``np.ndarray`` is returned, also for an unrestricted reference.
+
+    Raises:
+        ValueError: If an entry of ``projection_config.ao_labels`` matches no AO
+            of the projection basis. This is checked before the DMRG run.
     """
+    _check_ao_labels(mf.mol, projection_config.ao_labels, projection_config.basis)
     active_orbs, virt_orbs = get_subspaces_from_cas(
         mf, ncas=dmrg_config.ncas, nelecas=dmrg_config.nelecas
     )
