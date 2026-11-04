@@ -149,5 +149,7 @@ patch release. Check a release and its files with `gh release verify vX.Y.Z` and
 
 Dependabot opens weekly grouped updates for the Python dependencies and the GitHub
 Actions; ruff and ty are bumped monthly by `update-tools.yml`, together with their
-prek hooks. `block2` is never bumped automatically, since DMRG results depend on its
-version.
+prek hooks. Their pull requests link the release notes and list what changed; when a hook
+fails with the new release, the pull request is a draft whose description lists the
+failing hooks with their output and links to the log of the run. `block2` is never bumped
+automatically, since DMRG results depend on its version.
