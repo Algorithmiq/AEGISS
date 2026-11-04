@@ -295,6 +295,16 @@ class TestResolveContribution:
     def test_zero_threshold_broadcast(self) -> None:
         assert _resolve_contribution(0.0, 2) == [0.0, 0.0]
 
+    def test_list_wrong_length_warns(self, caplog) -> None:
+        _resolve_contribution([0.3, 0.6], 4)
+        assert [
+            r.levelname for r in caplog.records if "contribution values" in r.message
+        ] == ["WARNING"]
+
+    def test_single_value_list_broadcasts_without_warning(self, caplog) -> None:
+        assert _resolve_contribution([0.3], 3) == [0.3, 0.3, 0.3]
+        assert not [r for r in caplog.records if r.levelname == "WARNING"]
+
     def test_output_length_matches_n_labels(self) -> None:
         for n in (1, 2, 5):
             assert len(_resolve_contribution(0.5, n)) == n
@@ -329,6 +339,16 @@ class TestResolveTopN:
         for n in (1, 2, 5):
             assert len(_resolve_top_n(1, n)) == n
             assert len(_resolve_top_n([1, 2], n)) == n
+
+    def test_list_wrong_length_warns(self, caplog) -> None:
+        _resolve_top_n([3, 7], 4)
+        assert [r.levelname for r in caplog.records if "top-N values" in r.message] == [
+            "WARNING"
+        ]
+
+    def test_single_value_list_broadcasts_without_warning(self, caplog) -> None:
+        assert _resolve_top_n([2], 3) == [2, 2, 2]
+        assert not [r for r in caplog.records if r.levelname == "WARNING"]
 
     def test_output_values_are_ints(self) -> None:
         for v in _resolve_top_n(4, 3):
