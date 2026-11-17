@@ -4,6 +4,8 @@ All notable changes to this project are listed here.
 
 ## 0.3.0 (2026-11-17)
 
+- Infrastructure updates with no user-facing changes.
+
 ## 0.2.0 (2026-11-04)
 
 ### Breaking changes
