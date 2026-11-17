@@ -11,9 +11,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-
 env:
   FORCE_COLOR: 3
   COLUMNS: 120
@@ -22,6 +19,11 @@ jobs:
   coverage:
     name: Coverage and SonarQube analysis
     runs-on: ubuntu-26.04
+
+    permissions:
+      id-token: write
+      contents: read
+
     env:
       # the uploads below skip until the secret exists (and on forks, which get no secrets)
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -52,10 +54,10 @@ jobs:
           disable_search: true
           fail_ci_if_error: true
 
-      # Needs the Algorithmiq_AEGISS project on SonarCloud; set the repository variable
-      # SONAR_ENABLED=true once it exists. Secrets are not available to PRs from forks.
+      - name: SonarQube authentication
+        if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        uses: SonarSource/sonarqube-auth-action@v1.1.0
+
       - name: SonarQube Scan
         if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
         uses: SonarSource/sonarqube-scan-action@v8.4.1
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
