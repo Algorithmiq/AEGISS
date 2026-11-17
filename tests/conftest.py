@@ -109,7 +109,9 @@ def h2o_rhf() -> Any:
 @pytest.fixture(scope="session")
 def ne_rhf() -> Any:
     """Ne atom RHF/sto-3g mean-field object."""
-    mol = build_mol("Ne 0 0 0", basis="sto-3g", symmetry=False, verbose=0, spin=0)
+    # Symmetry pins the degenerate 2p MOs to pure px/py/pz; without it LAPACK may return any
+    # rotation of the shell, and the L1 AO-projection weights pinned in test_ao_projection change.
+    mol = build_mol("Ne 0 0 0", basis="sto-3g", symmetry=True, verbose=0, spin=0)
     return run_scf(mol, method="RHF", verbose=0)
 
 
