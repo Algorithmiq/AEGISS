@@ -29,16 +29,18 @@ Run AEGISS as a workflow of cached, resumable, file-based steps, so that users c
 | Batch description | Python: a `Study` of `Run`s built from the config dataclasses, written to a manifest |
 | Launching | `aegiss run` / `Study.run()` wrap Snakemake; the Snakefile is public and documented for direct use |
 | Provenance | Rerun level (settings and versions) and audit level (checksum chain), no query database |
-| Feature coverage | Full matrix in v1: RHF/ROHF/UHF, spin-summed and spin-resolved entropies, SU2/SZ, `global`/`subset` ranking, optional localization |
+| Feature coverage | Full matrix in v1: RHF/UHF (and their RKS/UKS counterparts), spin-summed and spin-resolved entropies, SU2/SZ, `global`/`subset` ranking, optional localization. ROHF is untested in AEGISS and out of scope |
 | Deliverables | Selection, active-space Hamiltonian (FCIDUMP; TREXIO later), per-study summary table |
 | Split UHF selections | No Hamiltonian in v1; a reconciliation step is future work |
 | Result storage | Content-addressed store: each step's output folder is named by a hash of its inputs and settings |
+| Restarts | SCF through PySCF chkfiles; DMRG through `block2main` keywords only, never the `block2` Python API |
 
 Rejected alternatives: Snakemake paths with the settings encoded as wildcards (the layout breaks
 whenever a setting is added and reuse stops at identical paths); a Snakefile calling the private
 helpers directly (couples a public artifact to internals, steps not usable without Snakemake);
 submit-and-exit via `--immediate-submit` (unreliable with Snakemake 8+ and the SLURM plugin); an
-AiiDA-style queryable provenance database (heavier than the requirements).
+AiiDA-style queryable provenance database (heavier than the requirements); a `pyblock2` driver for
+DMRG restarts (AEGISS never imports `block2`, without exception).
 
 ## Architecture
 
@@ -67,14 +69,14 @@ Steps are cut where caching or resources matter, not one per function.
 
 | Step | Output folder | Resources | Why it is a separate step |
 |---|---|---|---|
-| `scf` | `store/scf/<h>/` | SLURM, moderate | expensive; shared by many runs |
+| `scf` | `store/scf/<h>/` | SLURM, moderate, resumable | expensive; shared by many runs |
 | `import_chk` | `store/scf/<h>/` | local | user-supplied mean field |
 | `localize` (optional) | `store/orb/<h>/` | SLURM, moderate | expensive; has its own settings |
 | `dmrg` | `store/dmrg/<h>/` | SLURM, heavy, resumable | the expensive step; must survive the walltime |
 | `select` | `store/sel/<h>/` | grouped | cheap; what parameter sweeps vary |
 | `hamiltonian` | `store/ham/<h>/` | grouped | skipped for split UHF selections |
 | `render` (on request) | `store/render/<h>/` | grouped | cube files and plots |
-| `summary` | `studies/<study>/` | local | human-readable view of the store |
+| `summary` | `studies/<study>/`, `results/<study>/` | local | human-readable view of the store |
 
 - Entropy screening, AO projection and merging form one `select` step: they take seconds, and
   separate jobs would only add queue waits. `screened.json` is still written for provenance.
@@ -109,8 +111,9 @@ folder = store/<step>/<key[:16]>/
 
 ## File formats
 
-Every JSON file carries a `schema` field (`aegiss.<kind>/<major>`). The schemas are public API and
-follow the deprecation policy. Orbital indices in files are always 0-based and say so
+Every JSON file carries a `schema` field (`aegiss.<kind>/<major>`) and, for step outputs, the
+full `key` of the step that wrote it, so a file copied out of the store still says which setup
+produced it. The schemas are public API and follow the deprecation policy. Orbital indices in files are always 0-based and say so
 (`"index_base": 0`); `AEGISS_ORB_BASE` only affects printed output and `summary.tsv`.
 
 ### Manifest
@@ -135,21 +138,25 @@ The Snakefile has one rule per step type with a `{h}` wildcard; each rule's inpu
 
 | Folder | Files |
 |---|---|
-| `scf/<h>/` | `scf.chk`: PySCF chkfile (`mol`, `scf/{mo_coeff, mo_occ, mo_energy, e_tot}`) plus an `aegiss/` group with `{reference: RHF \| ROHF \| UHF, converged}`. `load_mean_field()` rebuilds the matching SCF object without rerunning it. |
+| `scf/<h>/` | `scf.chk`: PySCF chkfile (`mol`, `scf/{mo_coeff, mo_occ, mo_energy, e_tot}`) plus an `aegiss/` group with `{method: RHF \| UHF \| RKS \| UKS, xc, solvent, relativistic, converged}`. `load_mean_field()` rebuilds the matching SCF object, solvent and X2C wrappers included, without rerunning it. Working state, not declared: `work/progress.chk` and `work/diis.h5` (see SCF restart). |
 | `orb/<h>/` | `orbitals.chk`: same layout with the localized `mo_coeff`; `mo_energy` optional. |
 | `dmrg/<h>/` | Declared outputs: `pdm1.npy`, `npc1.npy`, `result.json` (`{energy, converged, sweeps_done, attempts, resumed_from_sweep, window: {occ, virt}}`). Working state, not declared: `FCIDUMP`, `dmrg.conf`, `restart/`, `state.json`. |
 | `sel/<h>/` | `soe1.npy`, `screened.json` (`{index, entropy}` pairs per window and per spin), `active_space.json`. |
+| `render/<h>/` | Cube files and plots named `<run>_<key[:8]>_<kind>...` (for example `benzene-frac0.1_e5f6a7b8_AEGISS_17.cube`), because these are the files users copy out of the store and open elsewhere. |
 | `ham/<h>/` | `FCIDUMP` and `ham.json` (`{norb, nelec, ms2, e_core}`); for a split UHF selection only `ham.json` with `"status": "skipped", "reason": "unrestricted_split"` (Snakemake needs every declared output to exist). |
 
 Every step folder also holds `provenance.json` and, while it is being computed, `.claim/`.
+Machine-readable files keep fixed names, which the Snakefile declares as outputs; their identity
+comes from the folder and from the `key` inside them.
 
 ### `active_space.json`
 
 ```json
-{"schema": "aegiss.active_space/1", "index_base": 0, "reference": "RHF",
+{"schema": "aegiss.active_space/1", "key": "<sha256>", "index_base": 0, "reference": "restricted",
  "status": "ok", "indices": [17, 18, 20], "occupied": [17, 18], "virtual": [20]}
 ```
 
+- `reference` is `restricted` (RHF, RKS) or `unrestricted` (UHF, UKS).
 - Unrestricted: `"split": true` with `"alpha"` and `"beta"` objects, each holding `indices`,
   `occupied` and `virtual`.
 - No orbital passes the screening: `"status": "empty_screening"` and empty lists, matching the
@@ -161,7 +168,28 @@ Every step folder also holds `provenance.json` and, while it is being computed, 
   active-space size, occupied/virtual split, DMRG energy, `converged`, wall time, and store keys.
 - `studies/<study>/`: a copy of the manifest and a study record (command line, versions, user,
   start and end times).
-- `results/<study>/<run>/`: links into the store.
+- `results/<study>/<run>/`: one folder per run, which is the grouping of everything a selection
+  setup produced. It holds links named after the steps (`scf/`, `orb/`, `dmrg/`, `sel/`, `ham/`,
+  `render/`; absent steps have no link) and a `run.json` with the run's name, the resolved
+  settings of every step and every step's key. Deleting it never deletes store data.
+
+## SCF restart
+
+A large SCF can also exceed the walltime, so the `scf` step resumes like `dmrg`, following
+PySCF's chkfile restart ([example](https://github.com/pyscf/pyscf/blob/master/examples/scf/14-restart.py)):
+
+- The step sets `mf.chkfile` to `store/scf/<h>/work/progress.chk`, which PySCF updates during the
+  iterations, and `mf.diis_file` to `work/diis.h5`. Neither is a declared output, so both survive
+  a failed attempt.
+- On a retry, if `work/progress.chk` exists, the step sets `mf.init_guess = "chk"` with that
+  chkfile and restores the DIIS history, so the iterations continue rather than restart.
+- Resuming does not change the step's key. `provenance.json` records `resumed: true` and the
+  attempts.
+- Caveat for UHF/UKS: continuing from a partly converged guess can reach a different solution
+  from an uninterrupted run. The resumed flag makes this visible; users who need a specific
+  solution give an explicit initial guess.
+- An explicit initial guess (a user-supplied chkfile) is a separate setting and is hashed, because
+  it can change which solution the SCF reaches.
 
 ## DMRG restart protocol
 
@@ -194,7 +222,8 @@ rule dmrg:
      (`restart_onepdm`).
    - Otherwise: copy the last complete MPS backup into scratch, then write a `dmrg.conf` with
      `fullrestart` and a schedule trimmed to the remaining sweeps (bond-dimension steps and the
-     two-site to one-site switch shifted by `sweeps_done`).
+     two-site to one-site switch shifted by `sweeps_done`). The loaded MPS is used as it is: no
+     bond-dimension change before the first resumed sweep.
 2. Run `block2main` and follow its output. After each completed sweep, update `state.json`
    atomically (write a temporary file, then rename) with `sweeps_done`, the energy, the bond
    dimension and the complete backup slot.
@@ -211,22 +240,46 @@ rule dmrg:
   the study continue.
 - The local executor uses the same protocol: interrupt, rerun, resume.
 
+### Relation to block2's restart procedure
+
+The block2 tutorial [Restarting DMRG](https://block2.readthedocs.io/en/latest/tutorial/restarting-dmrg.html)
+describes the clean restart from a backup: copy the `restart_dir` backup into scratch, load the
+MPS, keep the original schedule and pass the index of the next sweep (`sweep_start`). Because the
+backup is taken at the end of a sweep, block2 determines the sweep direction itself. The MPS must
+not be adjusted after loading.
+
+The tutorial uses the `pyblock2` Python API. **AEGISS never imports `block2` or `pyblock2`
+(`AGENTS.md`), with no exception for restarts**: every step of the procedure is translated to
+`block2main` input keywords, and the experiment below uses `block2main` only. The trimmed schedule
+is the `block2main` translation of `sweep_start`, unless the experiment finds a direct keyword.
+
+Only end-of-sweep backups are resumed. Restarting from the middle of a sweep (the tutorial's
+other case) needs the scratch folder of the killed job, which lives on node-local disk and is lost.
+
 ### Experiment before implementation
 
-The `block2` documentation does not settle these points; a throwaway experiment must answer them
-before the step is built:
+The `block2main` documentation does not settle these points. A throwaway experiment, driving
+`block2main` only, must answer them before the step is built:
 
 1. Whether `fullrestart` reads an MPS copied from `restart_dir`, or needs a particular tag or
    layout (`mps_tags`).
-2. How sweep counting and the schedule behave on restart, and that a one-site MPS resumes in
-   one-site mode.
+2. Whether `block2main` accepts a starting sweep index (the `sweep_start` of the tutorial); if not,
+   how sweep counting and the schedule behave on restart, so the trimmed schedule matches the
+   original one. Also that a one-site MPS resumes in one-site mode, and that the loaded MPS is not
+   adjusted before the first sweep.
 3. That orbital reordering (`reorder`) gives the same site order on every restart.
 4. That sweep completion is detectable from `block2main`'s output, and that a backup interrupted
    mid-write does not corrupt the other slot.
 5. That an interrupted-and-resumed run matches an uninterrupted one within a set tolerance.
 
-Fallback if any point fails: resume coarsely by loading the last MPS and running a short fixed
-schedule at the final bond dimension until convergence.
+Fallbacks, all through `block2main`:
+
+- If the schedule cannot be resumed exactly (point 2): resume coarsely by loading the last MPS
+  and running a short fixed schedule at the final bond dimension until convergence. The result
+  records `resume_mode: "coarse"`.
+- If no backup can be loaded (point 1): there is no mid-run resume. The `dmrg` step then fails
+  at the walltime with guidance (more threads, a lower `max_bond_dim`, a longer partition), and
+  the restart protocol is dropped from v1.
 
 ## Provenance
 
@@ -278,14 +331,15 @@ Snakemake locks its working directory, not the store. Before computing, a step c
 
 | Layer | Tests |
 |---|---|
-| Refactor safety net | Before `select_aegiss` changes, freeze its output over the full matrix (RHF/ROHF/UHF x spin-summed/spin-resolved x global/subset) on H2O and N2 in STO-3G, with DMRG mocked by fixed density matrices. The tests must pass unchanged after the refactor. |
+| Refactor safety net | Before `select_aegiss` changes, freeze its output over the full matrix (RHF/UHF x spin-summed/spin-resolved x global/subset) on H2O and N2 in STO-3G, with DMRG mocked by fixed density matrices. The tests must pass unchanged after the refactor. |
 | Steps match `select_aegiss` | The same matrix through the file-based steps gives identical selections. |
 | Hashing | Fixed expected keys for reference settings, so a key change is deliberate; key order, float formatting and default filling. |
-| File formats | Chkfile round-trips (RHF, ROHF, UHF, localized); save/load round-trips for every schema; the empty-screening and split-UHF cases. |
+| File formats | Chkfile round-trips (RHF, UHF, localized, and solvent and X2C wrappers); save/load round-trips for every schema; the empty-screening and split-UHF cases; render file names. |
+| SCF restart | An SCF stopped after a few iterations (small `max_cycle`) and resumed reaches the same energy as an uninterrupted run; the step's key does not change; provenance records the resume. |
 | DMRG restart | A fake `block2main` on `PATH` that simulates sweeps, writes backups and can be killed at any point, mid-backup included: resume, schedule trimming, the no-progress guard, density-matrix-only runs, claims. |
-| DMRG restart, real | One `@pytest.mark.slow` test: a small CAS killed after k sweeps and resumed, compared with an uninterrupted run and with PySCF FCI. |
+| DMRG restart, real | One `@pytest.mark.slow` test, through `block2main` only: a small CAS killed after k sweeps and resumed with the procedure above, compared with an uninterrupted run and with PySCF FCI. |
 | Integrity | `verify` and `trace` on a tampered store and a broken chain; two processes racing for one claim. |
-| Workflow | The shipped Snakefile with the local executor on a tiny study and the fake `block2main`: store layout, `summary.tsv`, `results/` links, and no DMRG rerun when only `fraction` changes (Snakemake dry-run job list). |
+| Workflow | The shipped Snakefile with the local executor on a tiny study and the fake `block2main`: store layout, `summary.tsv`, `results/` run folders and `run.json`, and no DMRG rerun when only `fraction` changes (Snakemake dry-run job list). |
 | SLURM | Not in CI. A documented manual checklist: submission, a forced timeout and resume, a concurrent claim. |
 
 New `just` recipes for any new CI lane (for example `test-workflow`); `just build --all-extras`
@@ -304,12 +358,13 @@ installs the `workflow` extra. `just sbom sbom-check` must pass with Snakemake's
 
 ## Delivery
 
-0. Experiment (no PR): the `block2` restart questions; findings in `local/`, plan adjusted if the
-   fallback is needed.
+0. Experiment (no PR, `block2main` only): the restart questions; findings in `local/`, plan
+   adjusted if a fallback is needed.
 1. `refactor(active_space): ♻️ expose the AEGISS pipeline steps`: safety-net tests, the DMRG split,
    public helpers, `select_aegiss` rebuilt from them. No behaviour change.
 2. `feat(steps): ✨ add file formats, hashing and provenance for pipeline steps`
-3. `feat(steps): ✨ add file-based scf, localize, select and hamiltonian steps`
+3. `feat(steps): ✨ add file-based scf, localize, select and hamiltonian steps`: the `scf` step
+   includes the SCF restart.
 4. `feat(steps): ✨ add a resumable DMRG step`: after 0 and 2; can run alongside 3.
 5. `feat(workflow): ✨ run AEGISS studies with Snakemake on SLURM`: `Study`/`Run`, manifest,
    Snakefile, profile, `aegiss run`, summary, `trace`/`verify`, the `workflow` extra, docs.
@@ -319,6 +374,7 @@ signatures; everything else is new API.
 
 ## Out of scope for v1
 
+- ROHF references (untested in AEGISS).
 - TREXIO import and export.
 - Reconciling UHF alpha/beta selections into one spatial active space.
 - Store cleanup (deleting results no study references).
