@@ -12,16 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Command-line entry point for AEGISS configuration.
+"""Command-line entry point for AEGISS.
 
 Installed as the ``aegiss`` console script (see ``[project.scripts]`` in
-``pyproject.toml``). Its main purpose is the one-time, post-install step of
-choosing the base used when orbital indices are printed and interpreted::
+``pyproject.toml``). It chooses the base used when orbital indices are printed
+and interpreted, and installs the AEGISS agent skill::
 
     aegiss config set-base 1     # print/read orbital indices 1-based
     aegiss config set-base 0     # back to the 0-based default
     aegiss config get-base       # show the currently resolved base
     aegiss config path           # show the config-file location
+    aegiss skill install         # install the agent skill in ./.agents/skills
+    aegiss skill path            # show where the bundled skill lives
 
 The value is persisted to :func:`aegiss.utils.orb_display.config_path`. It can
 always be overridden for a single run with the ``AEGISS_ORB_BASE`` environment
@@ -32,10 +34,13 @@ from __future__ import annotations
 
 import sys
 import tomllib
+from pathlib import Path  # noqa: TC003 (cyclopts resolves the annotations at runtime)
 from typing import TYPE_CHECKING
 
 from cyclopts import App
 
+from aegiss._version import __version__
+from aegiss.utils import skill_bundle
 from aegiss.utils.orb_display import (
     ORB_BASE_ENV_VAR,
     OrbitalBase,
@@ -47,9 +52,11 @@ from aegiss.utils.orb_display import (
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-app = App(name="aegiss", help="AEGISS configuration.")
+app = App(name="aegiss", help="AEGISS command-line tools.")
 config_app = App(name="config", help="Inspect or change persisted settings.")
 app.command(config_app)
+skill_app = App(name="skill", help="Install the AEGISS agent skill.")
+app.command(skill_app)
 
 
 def _load_config() -> dict[str, object]:
@@ -121,6 +128,47 @@ def _get_base() -> None:
 def _print_path() -> None:
     """Show the config-file location."""
     print(config_path())
+
+
+# The skill functions are called through the module so tests can swap the bundled skill.
+@skill_app.command(name="path")
+def _skill_path() -> None:
+    """Show where the bundled skill lives."""
+    print(skill_bundle.bundled_skill_dir())
+
+
+@skill_app.command(name="install")
+def _skill_install(
+    directory: Path | None = None,
+    /,
+    *,
+    agent: skill_bundle.Agent = "agents",
+    user: bool = False,
+    force: bool = False,
+) -> int:
+    """Copy the skill into an agent's skills folder, with docs links for this AEGISS version.
+
+    Args:
+        directory: Skills folder to install into; overrides ``--agent`` and ``--user``.
+        agent: Agent family: ``agents`` (.agents/skills: pi, Codex, ...) or ``claude``
+            (.claude/skills).
+        user: Install in the home directory instead of the current project.
+        force: Replace an installed copy.
+
+    Returns:
+        Process exit code: 1 when the skill is already installed and ``--force`` is not set.
+    """
+    skills_dir = directory or skill_bundle.skills_root(agent, user=user)
+    try:
+        target = skill_bundle.install_skill(skills_dir, force=force)
+    except FileExistsError as exc:
+        print(
+            f"{exc.filename} already exists; rerun with --force to replace it.",
+            file=sys.stderr,
+        )
+        return 1
+    print(f"Installed the AEGISS {__version__} skill in {target}.")
+    return 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:

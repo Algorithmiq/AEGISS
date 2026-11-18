@@ -37,7 +37,7 @@ test-ci LABEL:
     uv run --no-sync pytest -r aR --durations=20 --durations-min=5.0 -o log_cli=false \
         --junit-xml=pytest-{{ LABEL }}.xml -o junit_family=legacy
 
-# Run the Python code blocks of README.md and docs/ in a scratch directory (they write files).
+# Run the Python code blocks of README.md, docs/ and the agent skill in a scratch directory (they write files).
 doctest:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -46,7 +46,7 @@ doctest:
     uv run --project "$root" --no-sync pytest --markdown-docs --markdown-docs-syntax=superfences \
         -p no:cacheprovider --rootdir "$root" -c "$root/pyproject.toml" -o log_cli=false \
         --ignore="$root/docs/scripts" --ignore="$root/docs/tutorials" \
-        "$root/README.md" "$root/docs"
+        "$root/README.md" "$root/docs" "$root/src/aegiss/skill"
 
 # Run the examples in a scratch directory (they write files).
 example:

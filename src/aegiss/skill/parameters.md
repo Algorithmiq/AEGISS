@@ -48,7 +48,7 @@ another: thresholds are not transferable.
 | Comparing entropies across runs | `fraction_type="a"`. | An absolute threshold is the same number in every run; a relative one moves with S(1)max. |
 | S(1)max itself is small | `fraction_type="a"`. | A relative cut then keeps orbitals that are only weakly correlated. |
 | Occupied and virtual entropies differ strongly in scale | `ranking="subset"`. | A global cut would empty one side. |
-| Any run | Pass `fraction`, `fraction_type` and `ranking` explicitly. | The defaults differ between the config classes and the selection functions, and are being aligned (open PRs [#112](https://github.com/Algorithmiq/AEGISS/pull/112) and [#114](https://github.com/Algorithmiq/AEGISS/pull/114)). |
+| Any run | Pass `fraction`, `fraction_type` and `ranking` explicitly. | The values above are choices for the system, not defaults to rely on. `EntropyConfig` and `select_by_entropy` share their defaults (`ranking="global"` since [#112](https://github.com/Algorithmiq/AEGISS/pull/112)). |
 
 ## Atom labelling
 
@@ -72,9 +72,9 @@ another: thresholds are not transferable.
 | Reading the weights | Do not treat a `contribution` value as a probability. | The weight sums the absolute AO–MO overlaps over the label's AOs (an L1 norm of non-orthogonal overlaps), so it is not bounded by 1 (open issue, [PR #10](https://github.com/Algorithmiq/AEGISS/pull/10)). |
 | Distinct correlation channels (metal and ligand) | One group per channel, each with its own threshold or `top_n`. | Each channel then gets its own selection. |
 | One manifold described by several labels (`["C 2pz", "N 2pz"]` for one π system) | A flat list or a single group. | One threshold fits one manifold. |
-| 4d/5d metal without a pseudopotential | Do not run with `basis="minao"`. | Without a pseudopotential `minao` mis-numbers the 4d/5d labels and the selection comes out empty; open [PR #113](https://github.com/Algorithmiq/AEGISS/pull/113) makes it raise. |
+| 4d/5d metal without a pseudopotential | Give the atom an ECP, or project onto the molecular basis (`basis=None`). | `minao` numbers the shells of a 4d/5d atom from 1s unless it carries an ECP, so `"Ru 4d"` matches no AO; AEGISS then raises a `ValueError` before the DMRG run ([#113](https://github.com/Algorithmiq/AEGISS/pull/113)). |
 | Label outside the minimal valence shell (a second d shell, Rydberg or diffuse functions) | `ProjectionConfig(basis=None)` (`projected_basis=None` in `select_by_ao_projection`). | The minimal basis has no such functions. |
-| Any run | Pass `contribution`, `contribution_type`, `top_n` and, in `ProjectionConfig`, `ranking` explicitly. | The defaults differ between the config classes and the selection functions (open PRs [#112](https://github.com/Algorithmiq/AEGISS/pull/112) and [#114](https://github.com/Algorithmiq/AEGISS/pull/114)). |
+| Any run | Pass `contribution`, `contribution_type`, `top_n` and, in `ProjectionConfig`, `ranking` explicitly. | The values above are choices for the system. `ProjectionConfig` and `select_by_ao_projection` share the `contribution` default (0.5 since [#114](https://github.com/Algorithmiq/AEGISS/pull/114)), but `ProjectionConfig` defaults to `ranking="subset"`, which projects the occupied and virtual halves separately, while the function projects them together. |
 
 ## Typical AO labels
 

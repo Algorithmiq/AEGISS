@@ -20,6 +20,24 @@ An interactive 3D molecular viewer for selecting atoms and generating PySCF-comp
 uv sync --extra viz
 ```
 
+## Using AEGISS with coding agents
+
+AEGISS ships an [agent skill](https://agentskills.io) that teaches coding agents (Claude Code,
+Codex, pi and others) the AEGISS workflow: which parameters to choose, which cheap checks to run
+before DMRG, and when to hand a long calculation back to you.
+
+```bash
+aegiss skill install                  # ./.agents/skills/aegiss: pi, Codex and other agents
+aegiss skill install --agent claude   # ./.claude/skills/aegiss: Claude Code
+aegiss skill install --user           # in your home directory instead of the project
+aegiss skill install --force          # replace an installed copy, e.g. after upgrading AEGISS
+```
+
+The installed skill matches the installed AEGISS version and links to the documentation of that
+version. Reinstall it with `--force` after upgrading; the agent tells you when the two differ.
+Without installing the package, `npx skills add Algorithmiq/AEGISS --skill aegiss` installs the
+skill from the `main` branch; that copy links to the latest docs and carries no version stamp.
+
 ## Environment variables
 
 Set these before running any calculation to control memory and scratch space:

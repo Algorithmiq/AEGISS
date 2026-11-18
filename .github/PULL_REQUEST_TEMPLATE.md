@@ -23,6 +23,7 @@
 
 - [ ] Tests added or updated to cover the changes
 - [ ] Documentation updated (docstrings, `docs/`, `mkdocs.yml` nav) if needed
+- [ ] Agent skill evals rerun (`tools/skill-evals/`) if `src/aegiss/skill/` or the public API changed
 - [ ] `prek run --all-files` passes (ruff, ruff-format, ty)
 - [ ] Breaking change or deprecation: the Migration section says what users must change
 
