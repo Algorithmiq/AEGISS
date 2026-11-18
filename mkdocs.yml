@@ -19,9 +19,11 @@ watch:
 
 # Contributor-facing readme for the docs/ dir; not a site page (would clash with index.md).
 # scripts/ holds helpers that regenerate documentation assets — not site content.
+# superpowers/ holds internal design specs — not site content.
 exclude_docs: |
   README.md
   scripts/
+  superpowers/
 
 theme:
   icon:
