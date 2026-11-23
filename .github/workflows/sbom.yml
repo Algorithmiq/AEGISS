@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-slim
 
     steps:
-      - uses: actions/dependency-review-action@v5.0.0
+      - uses: actions/dependency-review-action@v5.0.1
         with:
           fail-on-severity: high
           # the license policy is .grant.yaml, checked on the runtime SBOMs above
